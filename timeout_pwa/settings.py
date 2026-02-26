@@ -23,7 +23,7 @@ SECRET_KEY = 'django-insecure-change-this-in-production-use-environment-variable
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ["*"]
 
 
 # Application definition
@@ -41,9 +41,6 @@ INSTALLED_APPS = [
     'allauth.account',
     'allauth.socialaccount',
     'allauth.socialaccount.providers.google',
-    'allauth.socialaccount.providers.github',
-    'allauth.socialaccount.providers.discord',
-    'allauth.socialaccount.providers.linkedin_oauth2',
     # Local apps
     'timeout',
 ]
@@ -174,7 +171,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Login/Logout URLs
 LOGIN_URL = 'login'
-LOGIN_REDIRECT_URL = 'dashboard'
+LOGIN_REDIRECT_URL = '/complete-profile/'
 LOGOUT_REDIRECT_URL = 'landing'
 
 
@@ -183,48 +180,48 @@ LOGOUT_REDIRECT_URL = 'landing'
 # =============================================================================
 
 # Account settings
-ACCOUNT_LOGIN_METHODS = {'username'}
-ACCOUNT_SIGNUP_FIELDS = ['email*', 'username*', 'password1*', 'password2*']
+ACCOUNT_LOGIN_METHODS = {'email'}
+ACCOUNT_SIGNUP_FIELDS = ['email*', 'password1*', 'password2*']
 ACCOUNT_EMAIL_VERIFICATION = 'none'
 ACCOUNT_SIGNUP_REDIRECT_URL = '/complete-profile/'
+# ACCOUNT_USERNAME_REQUIRED = False is expressed via ACCOUNT_SIGNUP_FIELDS above (that setting is deprecated in allauth >= 0.56; SIGNUP_FIELDS is the new API)
+ACCOUNT_ADAPTER = 'timeout.adapters.TimeoutAccountAdapter'
 
 # Social account settings
 SOCIALACCOUNT_AUTO_SIGNUP = True
 SOCIALACCOUNT_EMAIL_AUTHENTICATION = True
 SOCIALACCOUNT_EMAIL_AUTHENTICATION_AUTO_CONNECT = True
 SOCIALACCOUNT_ADAPTER = 'timeout.adapters.TimeoutSocialAccountAdapter'
+SOCIALACCOUNT_STORE_TOKENS = True
+
+# The button click goes straight to Google's OAuth consent screen.
+SOCIALACCOUNT_LOGIN_ON_GET = True
 
 # Provider-specific configuration
-# Add your OAuth keys via Django admin > Social Applications
-# or set them here for development:
+# ─────────────────────────────────────────────────────────────────────────────
+# Credentials are loaded from the database (Django Admin ▸ Social Applications).
+#
+# Do NOT add an 'APP' dict here with empty client_id / secret — allauth will
+# use it *instead of* the database record, sending an empty client_id to Google.
+#
+# Setup checklist:
+#   1. Django Admin ▸ Social Applications ▸ Add
+#      • Provider: Google
+#      • Client ID:  <your OAuth 2.0 Client ID>
+#      • Secret key: <your Client Secret>
+#      • Sites:      select "127.0.0.1:8000" (must match SITE_ID = 1)
+#
+#   2. Google Cloud Console ▸ APIs & Services ▸ Credentials
+#      • Authorised redirect URI:
+#        http://127.0.0.1:8000/accounts/google/login/callback/
+# ─────────────────────────────────────────────────────────────────────────────
 SOCIALACCOUNT_PROVIDERS = {
     'google': {
         'SCOPE': ['profile', 'email'],
-        'AUTH_PARAMS': {'access_type': 'online'},
-        'APP': {
-            'client_id': '',
-            'secret': '',
+        'AUTH_PARAMS': {
+            'access_type': 'online',
+            'prompt': 'select_account',   # always show the account-picker
         },
-    },
-    'github': {
-        'SCOPE': ['user:email'],
-        'APP': {
-            'client_id': '',
-            'secret': '',
-        },
-    },
-    'discord': {
-        'SCOPE': ['identify', 'email'],
-        'APP': {
-            'client_id': '',
-            'secret': '',
-        },
-    },
-    'linkedin_oauth2': {
-        'SCOPE': ['openid', 'profile', 'email'],
-        'APP': {
-            'client_id': '',
-            'secret': '',
-        },
+        'FETCH_USERINFO': True,            # pull name/avatar from userinfo endpoint
     },
 }

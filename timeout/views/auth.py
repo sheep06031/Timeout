@@ -7,7 +7,7 @@ from timeout.forms import SignupForm, LoginForm, CompleteProfileForm
 
 
 def signup_view(request):
-    """Handle user registration."""
+    """Handle user registration (email + password only)."""
     if request.user.is_authenticated:
         return redirect('dashboard')
 
@@ -19,8 +19,8 @@ def signup_view(request):
                 request, user,
                 backend='django.contrib.auth.backends.ModelBackend'
             )
-            messages.success(request, 'Account created successfully!')
-            return redirect('dashboard')
+            messages.success(request, 'Account created! Please complete your profile.')
+            return redirect('complete_profile')
     else:
         form = SignupForm()
 
@@ -58,15 +58,28 @@ def logout_view(request):
 
 @login_required
 def complete_profile(request):
-    """Let social-auth users fill in missing profile fields."""
+    """
+    Let all users (local and social) fill in missing profile fields.
+    Social users arrive here with email/name pre-populated; they still
+    need to choose a username and supply university/year details.
+    """
+    user = request.user
+
     if request.method == 'POST':
-        form = CompleteProfileForm(request.POST, instance=request.user)
+        form = CompleteProfileForm(request.POST, instance=user)
         if form.is_valid():
             form.save()
             messages.success(request, 'Profile completed successfully!')
             return redirect('dashboard')
     else:
-        form = CompleteProfileForm(instance=request.user)
+        form = CompleteProfileForm(instance=user)
 
-    context = {'form': form}
+    # Tell the template whether the user has a temporary auto-generated username
+    # so it can show the username field as empty / hint text.
+    has_temp_username = user.username.startswith('user_')
+
+    context = {
+        'form': form,
+        'has_temp_username': has_temp_username,
+    }
     return render(request, 'auth/complete_profile.html', context)

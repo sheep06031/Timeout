@@ -4,10 +4,13 @@
 
 {% block title %}Login - Timeout{% endblock %}
 
+<<<<<<< HEAD
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'css/auth-styles.css' %}">
 {% endblock %}
 
+=======
+>>>>>>> main
 {% block content %}
 <div class="auth-container">
     <div class="auth-card">
@@ -15,11 +18,34 @@
             <h2>Welcome Back</h2>
             <p>Sign in to continue to Timeout</p>
         </div>
+<<<<<<< HEAD
         
         <div class="auth-body">
+=======
+
+        <div class="auth-body">
+
+            <!-- Google Sign-In (shown first, per industry convention) -->
+            <a href="{% provider_login_url 'google' %}" class="btn-google w-100" rel="nofollow">
+                <!-- Official Google G logo — each path keeps its brand colour -->
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="20" height="20" aria-hidden="true">
+                    <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+                    <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+                    <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+                    <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+                    <path fill="none" d="M0 0h48v48H0z"/>
+                </svg>
+                <span>Continue with Google</span>
+            </a>
+
+            <div class="divider">
+                <span>or sign in with email</span>
+            </div>
+
+>>>>>>> main
             <form method="post" novalidate id="loginForm">
                 {% csrf_token %}
-                
+
                 {% if form.non_field_errors %}
                 <div class="alert alert-danger" role="alert">
                     {% for error in form.non_field_errors %}
@@ -27,7 +53,7 @@
                     {% endfor %}
                 </div>
                 {% endif %}
-                
+
                 <!-- Username -->
                 <div class="mb-3">
                     <label for="id_username" class="form-label">Username</label>
@@ -38,7 +64,7 @@
                     </div>
                     {% endif %}
                 </div>
-                
+
                 <!-- Password -->
                 <div class="mb-3">
                     <label for="id_password" class="form-label">Password</label>
@@ -57,18 +83,19 @@
                     </div>
                     {% endif %}
                 </div>
-                
-                <div class="d-flex justify-content-between align-items-center mb-3">
+
+                <div class="d-flex justify-content-between align-items-center mb-4">
                     <div class="form-check">
-                        <input class="form-check-input" type="checkbox" id="rememberMe">
+                        <input class="form-check-input" type="checkbox" id="rememberMe" name="remember">
                         <label class="form-check-label" for="rememberMe" style="font-size: 0.9rem;">
                             Remember me
                         </label>
                     </div>
-                    <a href="{% url 'password_reset' %}" class="forgot-password-link">
+                    <a href="{% url 'account_reset_password' %}" class="forgot-password-link">
                         Forgot password?
                     </a>
                 </div>
+<<<<<<< HEAD
                 
                 <button type="submit" class="btn btn-auth btn-primary w-100">
                     Log In
@@ -114,6 +141,14 @@
                 </a>
             </div>
             
+=======
+
+                <button type="submit" class="btn btn-auth w-100">
+                    Sign In
+                </button>
+            </form>
+
+>>>>>>> main
             <p class="auth-link">
                 Don't have an account? <a href="{% url 'signup' %}">Sign up</a>
             </p>
@@ -121,5 +156,28 @@
     </div>
 </div>
 
+<<<<<<< HEAD
 <script src="{% static 'js/auth-scripts.js' %}"></script>
 {% endblock %}
+=======
+<script>
+function togglePassword() {
+    const passwordInput = document.getElementById('id_password');
+    const eyeIcon = document.getElementById('eyeIcon');
+
+    if (passwordInput.type === 'password') {
+        passwordInput.type = 'text';
+        eyeIcon.innerHTML = `
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+        `;
+    } else {
+        passwordInput.type = 'password';
+        eyeIcon.innerHTML = `
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+        `;
+    }
+}
+</script>
+{% endblock %}
+>>>>>>> main

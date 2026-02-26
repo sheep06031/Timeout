@@ -1,9 +1,11 @@
 from django.contrib.auth.decorators import login_required
-from django.shortcuts import render
+from django.shortcuts import redirect, render
 
 
 def landing(request):
-    """Landing page view."""
+    """Landing page view. Authenticated users go straight to the dashboard."""
+    if request.user.is_authenticated:
+        return redirect('dashboard')
     return render(request, 'pages/landing.html')
 
 

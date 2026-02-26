@@ -1,9 +1,31 @@
 from django.contrib.auth import get_user_model
 from django.shortcuts import resolve_url
 
+from allauth.account.adapter import DefaultAccountAdapter
 from allauth.socialaccount.adapter import DefaultSocialAccountAdapter
 
 User = get_user_model()
+
+
+class TimeoutAccountAdapter(DefaultAccountAdapter):
+    """
+    Custom local-account adapter.
+    Redirects users to the profile-completion page after signup
+    so they can choose a username and fill in university details.
+    """
+
+    def get_signup_redirect_url(self, request):
+        return resolve_url('complete_profile')
+
+    def get_login_redirect_url(self, request):
+        """
+        After email/password login, redirect to "Complete Profile" if
+        essential fields are missing, otherwise go to the dashboard.
+        """
+        user = request.user
+        if TimeoutSocialAccountAdapter._profile_incomplete(user):
+            return resolve_url('complete_profile')
+        return resolve_url('dashboard')
 
 
 class TimeoutSocialAccountAdapter(DefaultSocialAccountAdapter):
@@ -37,6 +59,14 @@ class TimeoutSocialAccountAdapter(DefaultSocialAccountAdapter):
 
         # Connect the social account to the existing local user
         sociallogin.connect(request, user)
+
+    def get_signup_redirect_url(self, request):
+        """
+        After a new social user is auto-created (SOCIALACCOUNT_AUTO_SIGNUP = True),
+        send them straight to the profile-completion page to pick a username, etc.
+        This bypasses the default /accounts/social/signup/ form entirely.
+        """
+        return resolve_url('complete_profile')
 
     def get_login_redirect_url(self, request):
         """

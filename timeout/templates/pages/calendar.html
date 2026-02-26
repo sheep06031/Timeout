@@ -1,7 +1,130 @@
 {% extends "base.html" %}
+{% load static %}
+{% block title %}Calendar — Timeout{% endblock %}
 
-{% block title %}Calendar - Timeout{% endblock %}
+{% block extra_css %}
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{% static 'css/calendar.css' %}">
+{% endblock %}
 
 {% block content %}
-<!-- Calendar page content placeholder -->
+<div class="cal-page">
+  <div class="cal-card">
+
+    <!-- Toolbar -->
+    <div class="cal-toolbar">
+      <div class="cal-toolbar__left">
+        <div class="cal-nav">
+          <a href="?year={{ prev_year }}&month={{ prev_month }}" class="cal-nav__btn" aria-label="Previous month">&#8249;</a>
+          <a href="?year={{ next_year }}&month={{ next_month }}" class="cal-nav__btn" aria-label="Next month">&#8250;</a>
+        </div>
+        <h1 class="cal-month">{{ month_name }} {{ year }}</h1>
+      </div>
+      <div class="cal-toolbar__right">
+        <a href="{% url 'calendar' %}" class="cal-today-btn">Today</a>
+        <a href="#" class="cal-add-btn" data-bs-toggle="modal" data-bs-target="#addEventModal">
+          + <span class="cal-add-label">Add Event</span>
+        </a>
+      </div>
+    </div>
+
+    <!-- Calendar table -->
+    <table class="cal-table">
+      <thead>
+        <tr>
+          {% for name in weekdays %}
+          <th>{{ name }}</th>
+          {% endfor %}
+        </tr>
+      </thead>
+      <tbody>
+        {% for week in weeks %}
+        <tr>
+          {% for day in week %}
+          <td class="{% if not day.in_month %}cal-outside{% endif %} {% if day.is_today %}cal-today{% endif %}">
+            <span class="cal-day-num">{{ day.day_num }}</span>
+
+            {% if day.in_month and day.events %}
+            <div class="cal-events">
+              {% for ev in day.events|slice:":3" %}
+              <div class="cal-chip cal-chip--{{ ev.event_type }}"
+                   title="{{ ev.title }} — {{ ev.start_datetime|date:'H:i' }}">
+                {{ ev.title }}
+              </div>
+              {% endfor %}
+              {% with total=day.events|length %}
+              {% if total > 3 %}
+              <span class="cal-chip-overflow">+{{ total|add:"-3" }} more</span>
+              {% endif %}
+              {% endwith %}
+            </div>
+            {% endif %}
+          </td>
+          {% endfor %}
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+  </div>
+</div>
+
+<!-- Add Event Modal -->
+<div class="modal fade" id="addEventModal" tabindex="-1" aria-labelledby="addEventLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="addEventLabel">Add Event</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <form method="post" action="{% url 'event_create' %}">
+        {% csrf_token %}
+        <div class="modal-body">
+          <div class="mb-3">
+            <label for="eventTitle" class="form-label">Title</label>
+            <input type="text" class="form-control" id="eventTitle" name="title" placeholder="e.g. Algorithms Problem Set 3" required>
+          </div>
+          <div class="mb-3">
+            <label for="eventType" class="form-label">Type</label>
+            <select class="form-select" id="eventType" name="event_type">
+              <option value="deadline">Deadline</option>
+              <option value="exam">Exam</option>
+              <option value="class">Class</option>
+              <option value="meeting">Meeting</option>
+              <option value="study_session">Study Session</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label for="eventStart" class="form-label">Start</label>
+              <input type="datetime-local" class="form-control" id="eventStart" name="start_datetime" required>
+            </div>
+            <div class="col-md-6 mb-3">
+              <label for="eventEnd" class="form-label">End</label>
+              <input type="datetime-local" class="form-control" id="eventEnd" name="end_datetime" required>
+            </div>
+          </div>
+          <div class="mb-3">
+            <label for="eventLocation" class="form-label">Location <small class="text-muted">(optional)</small></label>
+            <input type="text" class="form-control" id="eventLocation" name="location" placeholder="e.g. Bush House Room 2.1">
+          </div>
+          <div class="mb-3">
+            <label for="eventDesc" class="form-label">Description <small class="text-muted">(optional)</small></label>
+            <textarea class="form-control" id="eventDesc" name="description" rows="2" placeholder="Any extra details..."></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-nep text-white">Add Event</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Mobile FAB -->
+<a href="#" class="cal-fab" data-bs-toggle="modal" data-bs-target="#addEventModal" aria-label="Add event">+</a>
 {% endblock %}

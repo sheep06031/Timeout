@@ -1,1 +1,340 @@
-/* Custom CSS for Timeout PWA */
+/* =============================================================
+   Custom CSS for Timeout PWA
+   Consolidates styles from:
+     - auth/login.html
+     - auth/signup.html
+     - auth/complete_profile.html
+   ============================================================= */
+
+
+/* -------------------------------------------------------------
+   Shared Auth Page Layout
+   Used by: login, signup, complete_profile
+   ------------------------------------------------------------- */
+
+.auth-container {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #8FD9FB 0%, #4AB5B5 50%, #525AFF 100%);
+    padding: 20px;
+}
+
+.auth-card {
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 20px 60px rgba(82, 90, 255, 0.3);
+    overflow: hidden;
+    max-width: 440px;
+    width: 100%;
+}
+
+/* Wider variant used by signup and complete_profile */
+.auth-card--wide {
+    max-width: 540px;
+}
+
+/* Slide-up entrance animation used by complete_profile */
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.auth-card--animate {
+    animation: slideUp 0.5s ease;
+}
+
+.auth-header {
+    background: linear-gradient(135deg, #6D8BC0 0%, #525AFF 100%);
+    padding: 2rem;
+    text-align: center;
+    color: white;
+}
+
+.auth-header h2 {
+    margin: 0;
+    font-weight: 600;
+    font-size: 1.75rem;
+}
+
+.auth-header p {
+    margin: 0.5rem 0 0 0;
+    opacity: 0.95;
+    font-size: 0.95rem;
+}
+
+.auth-body {
+    padding: 2rem;
+}
+
+
+/* -------------------------------------------------------------
+   Form Controls
+   ------------------------------------------------------------- */
+
+.form-label {
+    font-weight: 500;
+    color: #2d3748;
+    margin-bottom: 0.5rem;
+}
+
+.form-control {
+    border: 2px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+}
+
+.form-control:focus {
+    border-color: #525AFF;
+    box-shadow: 0 0 0 3px rgba(82, 90, 255, 0.1);
+    outline: none;
+}
+
+.form-select {
+    border: 2px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    width: 100%;
+}
+
+.form-select:focus {
+    border-color: #525AFF;
+    box-shadow: 0 0 0 3px rgba(82, 90, 255, 0.1);
+    outline: none;
+}
+
+.form-text {
+    font-size: 0.875rem;
+    color: #718096;
+    margin-top: 0.25rem;
+}
+
+.form-check-input:checked {
+    background-color: #525AFF;
+    border-color: #525AFF;
+}
+
+.alert {
+    border-radius: 8px;
+    border: none;
+}
+
+
+/* -------------------------------------------------------------
+   Primary Auth Action Button
+   ------------------------------------------------------------- */
+
+.btn-auth {
+    background: linear-gradient(135deg, #6D8BC0 0%, #525AFF 100%);
+    border: none;
+    border-radius: 8px;
+    padding: 0.875rem;
+    font-weight: 600;
+    font-size: 1rem;
+    color: white;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.btn-auth:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px rgba(82, 90, 255, 0.3);
+    background: linear-gradient(135deg, #5a75b0 0%, #4248dd 100%);
+    color: white;
+}
+
+
+/* -------------------------------------------------------------
+   Password Toggle
+   ------------------------------------------------------------- */
+
+.password-toggle {
+    position: relative;
+}
+
+.password-toggle-btn {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: #718096;
+    cursor: pointer;
+    padding: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.password-toggle-btn:hover {
+    color: #525AFF;
+}
+
+.password-toggle-btn svg {
+    width: 20px;
+    height: 20px;
+}
+
+
+/* -------------------------------------------------------------
+   Divider ( "or continue with" )
+   ------------------------------------------------------------- */
+
+.divider {
+    display: flex;
+    align-items: center;
+    text-align: center;
+    margin: 1.5rem 0;
+}
+
+.divider::before,
+.divider::after {
+    content: '';
+    flex: 1;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.divider span {
+    padding: 0 1rem;
+    color: #718096;
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+
+/* -------------------------------------------------------------
+   Google Sign-In / Sign-Up Button
+   Follows Google's official identity branding guidelines:
+   https://developers.google.com/identity/branding-guidelines
+   ------------------------------------------------------------- */
+
+.btn-google {
+    /* Layout */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    width: 100%;
+
+    /* Sizing & shape — Google specifies min-height 40 dp */
+    height: 44px;
+    padding: 0 16px;
+    border-radius: 4px;
+
+    /* Google-mandated colours */
+    background-color: #ffffff;
+    border: 1px solid #dadce0;
+
+    /* Typography — Google Sans not available via CDN so fall back to Roboto */
+    font-family: Roboto, 'Segoe UI', system-ui, sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    letter-spacing: 0.25px;
+    color: #3c4043;
+
+    /* Behaviour */
+    text-decoration: none;
+    cursor: pointer;
+    transition: background-color 0.15s ease, box-shadow 0.15s ease;
+
+    /* Prevent text wrapping */
+    white-space: nowrap;
+}
+
+.btn-google:hover {
+    background-color: #f8f9fa;
+    box-shadow: 0 1px 3px rgba(60, 64, 67, 0.20), 0 1px 2px rgba(60, 64, 67, 0.12);
+    color: #3c4043;
+    text-decoration: none;
+}
+
+.btn-google:focus-visible {
+    outline: 3px solid #4285F4;
+    outline-offset: 2px;
+}
+
+.btn-google:active {
+    background-color: #f1f3f4;
+    box-shadow: none;
+}
+
+/* Keep the SVG icon sharp at any DPI */
+.btn-google svg {
+    flex-shrink: 0;
+}
+
+
+/* -------------------------------------------------------------
+   Bottom Link  ("Already have an account? Log in")
+   ------------------------------------------------------------- */
+
+.auth-link {
+    text-align: center;
+    margin-top: 1.5rem;
+    color: #718096;
+}
+
+.auth-link a {
+    color: #525AFF;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.auth-link a:hover {
+    text-decoration: underline;
+}
+
+
+/* -------------------------------------------------------------
+   Login-specific extras
+   ------------------------------------------------------------- */
+
+.forgot-password-link {
+    font-size: 0.9rem;
+    color: #525AFF;
+    text-decoration: none;
+}
+
+.forgot-password-link:hover {
+    text-decoration: underline;
+}
+
+
+/* -------------------------------------------------------------
+   University "Other" reveal field
+   Used by: complete_profile
+   ------------------------------------------------------------- */
+
+.uni-other-field {
+    /* Hidden by default; JS adds --visible modifier to show it */
+    display: none;
+    overflow: hidden;
+}
+
+.uni-other-field--visible {
+    display: block;
+    animation: uniOtherReveal 0.25s ease forwards;
+}
+
+@keyframes uniOtherReveal {
+    from {
+        opacity: 0;
+        transform: translateY(-6px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}

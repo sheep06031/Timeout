@@ -5,15 +5,20 @@ Usage:
     python manage.py seed
 """
 
+import os
 import random
 from datetime import timedelta
 
+from dotenv import load_dotenv
+
 from django.contrib.auth import get_user_model
+from django.contrib.sites.models import Site
 from django.core.management.base import BaseCommand
 from django.db import IntegrityError
 from django.utils import timezone
 from faker import Faker
 
+from allauth.socialaccount.models import SocialApp
 from timeout.models import Event, Post, Comment, Like, Bookmark
 
 User = get_user_model()
@@ -64,34 +69,43 @@ INTERESTS = [
 
 MANAGEMENT_STYLES = ['early_bird', 'night_owl']
 
+SITE_DOMAIN = '127.0.0.1:8000'
+SITE_NAME = 'Timeout Local'
+
 
 class Command(BaseCommand):
-    help = 'Seed the database with a superuser and 25 random student users.'
+    help = 'Seed the database with site config, Google OAuth app, a superuser, and 25 random student users.'
 
     def handle(self, *args, **options):
         self.stdout.write('=' * 50)
         self.stdout.write('SEEDING DATABASE')
         self.stdout.write('=' * 50)
 
-        self.stdout.write('\n[1/7] Creating superuser...')
+        self.stdout.write('\n[1/9] Setting up Site...')
+        self._setup_site()
+
+        self.stdout.write('\n[2/9] Setting up Google SocialApp...')
+        self._setup_google_social_app()
+
+        self.stdout.write('\n[3/9] Creating superuser...')
         self._create_superuser()
 
-        self.stdout.write(f'\n[2/7] Creating {NUM_USERS} users...')
+        self.stdout.write(f'\n[4/9] Creating {NUM_USERS} users...')
         users = self._create_users(NUM_USERS)
 
-        self.stdout.write(f'\n[3/7] Creating follow relationships...')
+        self.stdout.write(f'\n[5/9] Creating follow relationships...')
         self._create_follow_relationships(users)
 
-        self.stdout.write(f'\n[4/7] Creating {NUM_EVENTS} events...')
+        self.stdout.write(f'\n[6/9] Creating {NUM_EVENTS} events...')
         events = self._create_events(users)
 
-        self.stdout.write(f'\n[5/7] Creating {NUM_POSTS} posts...')
+        self.stdout.write(f'\n[7/9] Creating {NUM_POSTS} posts...')
         posts = self._create_posts(users, events)
 
-        self.stdout.write('\n[6/7] Creating comments...')
+        self.stdout.write('\n[8/9] Creating comments...')
         self._create_comments(users, posts)
 
-        self.stdout.write('\n[7/7] Creating likes and bookmarks...')
+        self.stdout.write('\n[9/9] Creating likes and bookmarks...')
         self._create_likes_and_bookmarks(users, posts)
 
         total_users = User.objects.count()
@@ -100,6 +114,50 @@ class Command(BaseCommand):
         self.stdout.write(self.style.SUCCESS(
             f'\nDone! Users: {total_users}, '
             f'Posts: {total_posts}, Events: {total_events}'
+        ))
+
+    def _setup_site(self):
+        """Ensure Site(id=1) exists with the correct domain."""
+        Site.objects.all().delete()
+        Site.objects.create(id=1, domain=SITE_DOMAIN, name=SITE_NAME)
+        self.stdout.write(self.style.SUCCESS(
+            f'  Site(id=1, domain="{SITE_DOMAIN}") ready.'
+        ))
+
+    def _setup_google_social_app(self):
+        """Create the Google SocialApp from environment variables if missing."""
+        load_dotenv()
+        client_id = os.environ.get('GOOGLE_CLIENT_ID', '')
+        secret = os.environ.get('GOOGLE_CLIENT_SECRET', '')
+
+        if not client_id or not secret:
+            self.stdout.write(self.style.WARNING(
+                '  GOOGLE_CLIENT_ID and/or GOOGLE_CLIENT_SECRET not set.\n'
+                '  Skipping Google SocialApp creation.\n'
+                '  Set these env vars and re-run seed to enable Google login.'
+            ))
+            return
+
+        app, created = SocialApp.objects.get_or_create(
+            provider='google',
+            defaults={
+                'name': 'Google',
+                'client_id': client_id,
+                'secret': secret,
+            },
+        )
+
+        if not created:
+            app.client_id = client_id
+            app.secret = secret
+            app.save()
+
+        site = Site.objects.get(id=1)
+        app.sites.add(site)
+
+        label = 'Created' if created else 'Updated'
+        self.stdout.write(self.style.SUCCESS(
+            f'  {label} Google SocialApp and linked to site.'
         ))
 
     def _create_superuser(self):

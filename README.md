@@ -65,6 +65,13 @@ Timeout is a PWA designed to help university students balance academic deadlines
    python -m venv venv
    ```
 
+   or
+
+   ```bash
+   python3 -m venv venv
+   ```
+
+
 3. **Activate the virtual environment**
    - Windows:
      ```bash

@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+<<<<<<< HEAD
 {% load static %}
 
 {% block title %}Complete Your Profile - Timeout{% endblock %}
@@ -10,15 +11,36 @@
 {% block content %}
 <div class="auth-container">
     <div class="auth-card auth-card-wide">
+=======
+{% block title %}Complete Your Profile - Timeout{% endblock %}
+
+{% block content %}
+<div class="auth-container">
+    <div class="auth-card auth-card--wide auth-card--animate">
+>>>>>>> main
         <div class="auth-header">
             <h2>Complete Your Profile</h2>
             <p>Fill in a few details to finish setting up your account</p>
         </div>
+<<<<<<< HEAD
         
         <div class="auth-body">
             <form method="post" novalidate>
                 {% csrf_token %}
                 
+=======
+
+        <div class="auth-body">
+            {% if messages %}
+            {% for message in messages %}
+            <div class="alert alert-{{ message.tags }}" role="alert">{{ message }}</div>
+            {% endfor %}
+            {% endif %}
+
+            <form method="post" novalidate>
+                {% csrf_token %}
+
+>>>>>>> main
                 {% if form.non_field_errors %}
                 <div class="alert alert-danger" role="alert">
                     {% for error in form.non_field_errors %}
@@ -26,18 +48,42 @@
                     {% endfor %}
                 </div>
                 {% endif %}
+<<<<<<< HEAD
                 
                 <!-- Username -->
                 <div class="mb-3">
                     <label for="id_username" class="form-label">Username</label>
                     {{ form.username }}
+=======
+
+                <!-- Username -->
+                <div class="mb-3">
+                    <label for="id_username" class="form-label">Username <span class="text-danger">*</span></label>
+                    {% if has_temp_username %}
+                        <input type="text"
+                               class="form-control"
+                               id="id_username"
+                               name="username"
+                               placeholder="Choose a username"
+                               autocomplete="username"
+                               required>
+                    {% else %}
+                        {{ form.username }}
+                    {% endif %}
+>>>>>>> main
                     {% if form.username.errors %}
                     <div class="invalid-feedback d-block">
                         {% for error in form.username.errors %}{{ error }}{% endfor %}
                     </div>
                     {% endif %}
+<<<<<<< HEAD
                 </div>
                 
+=======
+                    <div class="form-text">This will be your public @handle.</div>
+                </div>
+
+>>>>>>> main
                 <!-- First Name & Last Name -->
                 <div class="row">
                     <div class="col-md-6 mb-3">
@@ -59,6 +105,7 @@
                         {% endif %}
                     </div>
                 </div>
+<<<<<<< HEAD
                 
                 <!-- University -->
                 <div class="mb-3">
@@ -83,10 +130,77 @@
                 </div>
                 
                 <button type="submit" class="btn btn-auth btn-primary w-100">
+=======
+
+                <!-- University dropdown -->
+                <div class="mb-2">
+                    <label for="id_university_choice" class="form-label">
+                        University <span class="text-danger">*</span>
+                    </label>
+                    {{ form.university_choice }}
+                    {% if form.university_choice.errors %}
+                    <div class="invalid-feedback d-block">
+                        {% for error in form.university_choice.errors %}{{ error }}{% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- "Other" free-text field (revealed by JS) -->
+                <div class="mb-3 uni-other-field" id="uni-other-wrapper">
+                    <label for="id_university_other" class="form-label">
+                        {{ form.university_other.label }}
+                    </label>
+                    {{ form.university_other }}
+                    {% if form.university_other.errors %}
+                    <div class="invalid-feedback d-block">
+                        {% for error in form.university_other.errors %}{{ error }}{% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Year of Study -->
+                <div class="mb-4">
+                    <label for="id_year_of_study" class="form-label">Year of Study <span class="text-danger">*</span></label>
+                    {{ form.year_of_study }}
+                    {% if form.year_of_study.errors %}
+                    <div class="invalid-feedback d-block">
+                        {% for error in form.year_of_study.errors %}{{ error }}{% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+
+                <button type="submit" class="btn btn-auth w-100">
+>>>>>>> main
                     Save Profile
                 </button>
             </form>
         </div>
     </div>
 </div>
+<<<<<<< HEAD
 {% endblock %}
+=======
+
+<script>
+(function () {
+    const select  = document.getElementById('id_university_choice');
+    const wrapper = document.getElementById('uni-other-wrapper');
+    const input   = document.getElementById('id_university_other');
+
+    function syncVisibility() {
+        const isOther = select.value === '__other__';
+        wrapper.classList.toggle('uni-other-field--visible', isOther);
+        input.required = isOther;
+        // Clear the hidden field when switching away from "Other"
+        if (!isOther) input.value = '';
+    }
+
+    select.addEventListener('change', syncVisibility);
+
+    // Run immediately on page load so a re-submitted form with "Other"
+    // selected (e.g. after a validation error) keeps the field visible.
+    syncVisibility();
+}());
+</script>
+{% endblock %}
+>>>>>>> main

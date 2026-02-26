@@ -3,5 +3,39 @@
 {% block title %}Dashboard - Timeout{% endblock %}
 
 {% block content %}
-<!-- Dashboard page content placeholder -->
+<div class="container py-4">
+    <h1>Welcome back, {{ request.user.first_name|default:request.user.username }}!</h1>
+    <p class="text-muted">Here's your dashboard overview.</p>
+
+    <div class="row g-4 mt-2">
+        <div class="col-md-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h5 class="card-title">Upcoming Events</h5>
+                    <p class="card-text text-muted">No upcoming events.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h5 class="card-title">Recent Activity</h5>
+                    <p class="card-text text-muted">Nothing new yet.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h5 class="card-title">Quick Links</h5>
+                    <ul class="list-unstyled mb-0">
+                        <li><a href="{% url 'calendar' %}">Calendar</a></li>
+                        <li><a href="{% url 'social_feed' %}">Social Feed</a></li>
+                        <li><a href="{% url 'profile' %}">Profile</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}
