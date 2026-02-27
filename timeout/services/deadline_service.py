@@ -69,6 +69,7 @@ class DeadlineService:
 # Function to create a human readable string for the reamining time
 def _format_timedelta(td):
     """Calculation for time left."""
+    """ Formatting to make it human readable for how much time has left in terms of days and hours"""
     total_seconds = int(td.total_seconds())
 
     if total_seconds < 0:
@@ -94,6 +95,7 @@ def _format_timedelta(td):
 # Calculation
 def _format_elapsed(td):
     """ Calculation for time passed since creation as 'Added x ago'."""
+    """ same as before formatting to make it human readable on the page"""
     total_seconds = int(td.total_seconds())
     if total_seconds < 0:
         return "Added just now"
