@@ -109,6 +109,9 @@ class Command(BaseCommand):
         self.stdout.write('\n[9/9] Creating likes and bookmarks...')
         self._create_likes_and_bookmarks(users, posts)
 
+        self.stdout.write(f'\n[6b/9] Creating global recurring events...')
+        self._create_global_events()
+
         total_users = User.objects.count()
         total_posts = Post.objects.count()
         total_events = Event.objects.count()
@@ -326,6 +329,42 @@ class Command(BaseCommand):
         self.stdout.write(self.style.SUCCESS(
             f'  Created {comment_count} comments.'
         ))
+
+    def _create_global_events(self):
+        """Create traditional recurring global events visible to all users."""
+        from datetime import datetime
+        from django.utils import timezone
+
+        global_events = [
+            {"title": "Christmas", "month": 12, "day": 25},
+            {"title": "Valentine's Day", "month": 2, "day": 14},
+            {"title": "New Year's Day", "month": 1, "day": 1},
+            {"title": "Halloween", "month": 10, "day": 31},
+        ]
+
+        created = 0
+        current_year = timezone.now().year
+
+        for ev in global_events:
+            start = timezone.make_aware(datetime(current_year, ev["month"], ev["day"], 0, 0))
+            end = timezone.make_aware(datetime(current_year, ev["month"], ev["day"], 23, 59))
+
+            event, created_flag = Event.objects.get_or_create(
+                title=ev["title"],
+                start_datetime=start,
+                end_datetime=end,
+                is_global=True,
+                recurrence="yearly",
+                defaults={
+                    "creator": None,  # global events have no creator
+                    "description": f"Global event: {ev['title']}",
+                    "visibility": Event.Visibility.PUBLIC,
+                }
+            )
+            created += 1
+            self.stdout.write(f'  Global event: {event.title} ({start.date()})')
+
+        self.stdout.write(self.style.SUCCESS(f'  Created {created} global recurring events.'))
 
     def _create_likes_and_bookmarks(self, users, posts):
         """Create likes and bookmarks."""

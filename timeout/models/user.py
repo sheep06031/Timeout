@@ -30,6 +30,9 @@ class User(AbstractUser):
     )
     academic_interests = models.CharField(max_length=300, blank=True)
 
+    # Focus timer
+    focus_started_at = models.DateTimeField(null=True, blank=True)
+
     # Settings
     privacy_private = models.BooleanField(default=False)
     management_style = models.CharField(

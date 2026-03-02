@@ -1,0 +1,106 @@
+{% load static %}
+
+<!-- Event Details Modal -->
+<div class="modal fade" id="eventDetailsModal" tabindex="-1" aria-labelledby="eventDetailsModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content" style="border-radius: 16px; overflow: hidden; box-shadow: 0 6px 24px rgba(91,115,232,0.14);">
+
+      <!-- Modal Header -->
+      <div class="modal-header" style="flex-direction: column; align-items: flex-start; gap: 8px; padding: 20px;">
+        <div style="display: flex; align-items: center; gap: 8px; width: 100%;">
+          <span class="badge" id="eventBadge" style="font-size:0.85rem; font-weight: 600;"></span>
+          <span class="badge" id="eventVisibilityBadge" style="font-size:0.85rem; font-weight: 600;"></span>
+          <h5 class="modal-title ms-2" id="eventDetailsModalLabel" style="margin: 0; font-weight: 700; font-size: 1.25rem;"></h5>
+          <button type="button" class="btn-close ms-auto" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <p class="text-muted mb-0" id="eventTime" style="font-size: 0.85rem;"></p>
+      </div>
+
+      <!-- Modal Body -->
+      <div class="modal-body" style="padding: 20px 22px; font-family: 'Nunito', sans-serif; color: #1A1F36;">
+        <div class="row mb-2">
+          <div class="col-md-6"><strong>Status:</strong> <span id="eventStatus"></span></div>
+          <div class="col-md-6"><strong>Recurrence:</strong> <span id="eventRecurrence"></span></div>
+        </div>
+
+        <div class="row mb-2">
+          <div class="col-md-6"><strong>All Day Event:</strong> <span id="eventAllDay"></span></div>
+          <div class="col-md-6"><strong>Duration:</strong> <span id="eventDuration"></span></div>
+        </div>
+
+        <div class="row mb-2">
+          <div class="col-md-6"><strong>Ongoing:</strong> <span id="eventOngoing"></span></div>
+          <div class="col-md-6"><strong>Past:</strong> <span id="eventPast"></span></div>
+        </div>
+
+        <p id="eventLocation" style="margin-top: 12px; font-size: 0.9rem;"></p>
+        <p id="eventDescription" style="margin-top: 8px; font-size: 0.9rem;"></p>
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="modal-footer" style="padding: 16px 22px; gap: 10px; flex-wrap: wrap;">
+
+        <!-- Edit Button -->
+        <a href="#" id="editEventBtn"
+          class="btn-auth text-center text-decoration-none"
+          style="flex: 1;">
+          Edit Event
+        </a>
+
+        <!-- Delete Button -->
+        <a href="#" id="deleteEventBtn"
+          onclick="return confirm('Are you sure you want to delete this event?');"
+          class="btn-auth text-center text-decoration-none"
+          style="flex: 1; background: #dc3545; border-color: #dc3545;">
+          Delete Event
+        </a>
+
+        <!-- Close Button -->
+        <button type="button"
+                data-bs-dismiss="modal"
+                class="btn-auth text-center"
+                style="flex: 1; background: #6c757d; border-color: #6c757d;">
+          Close
+        </button>
+
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- JS to populate modal -->
+<script>
+  const eventDetailsModal = document.getElementById('eventDetailsModal');
+  eventDetailsModal.addEventListener('show.bs.modal', function (event) {
+    const button = event.relatedTarget;
+    const eventId = button.getAttribute('data-event-id');
+
+    // Title & Badges
+    document.getElementById('eventDetailsModalLabel').textContent = button.getAttribute('data-event-title');
+
+    const typeBadge = document.getElementById('eventBadge');
+    typeBadge.textContent = button.getAttribute('data-event-type');
+    typeBadge.style.backgroundColor = button.getAttribute('data-event-color');
+
+    const visibilityBadge = document.getElementById('eventVisibilityBadge');
+    const visibility = button.getAttribute('data-event-visibility');
+    visibilityBadge.textContent = visibility.charAt(0).toUpperCase() + visibility.slice(1);
+    visibilityBadge.className = 'badge ' + (visibility === 'public' ? 'bg-success' : 'bg-secondary');
+
+    // Details
+    document.getElementById('eventTime').textContent = button.getAttribute('data-event-start') + ' – ' + button.getAttribute('data-event-end');
+    document.getElementById('eventStatus').textContent = button.getAttribute('data-event-status');
+    document.getElementById('eventRecurrence').textContent = button.getAttribute('data-event-recurrence');
+    document.getElementById('eventAllDay').textContent = button.getAttribute('data-event-all-day');
+    document.getElementById('eventDuration').textContent = button.getAttribute('data-event-duration');
+    document.getElementById('eventOngoing').textContent = button.getAttribute('data-event-ongoing');
+    document.getElementById('eventPast').textContent = button.getAttribute('data-event-past');
+    document.getElementById('eventLocation').textContent = button.getAttribute('data-event-location') ? 'Location: ' + button.getAttribute('data-event-location') : '';
+    document.getElementById('eventDescription').textContent = button.getAttribute('data-event-description') ? 'Description: ' + button.getAttribute('data-event-description') : '';
+
+    // Links
+    document.getElementById('editEventBtn').href = '/event/' + eventId + '/edit/';
+    document.getElementById('deleteEventBtn').href = '/event/' + eventId + '/delete/';
+  });
+</script>
