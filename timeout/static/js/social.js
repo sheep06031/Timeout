@@ -99,3 +99,23 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 });
+
+function renderUserList(users) {
+  if (users.length === 0) {
+    return '<p class="text-center text-muted py-3">No users yet.</p>';
+  }
+  return users.map(u => `
+    <div class="user-item">
+      <a href="/social/user/${u.username}/" class="d-flex align-items-center gap-3 mb-3 text-decoration-none text-dark">
+        ${u.profile_picture
+          ? `<img src="${u.profile_picture}" class="rounded-circle" width="40" height="40" style="object-fit:cover;">`
+          : `<div class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center fw-bold" style="width:40px;height:40px;">${u.username[0].toUpperCase()}</div>`
+        }
+        <div>
+          <div class="fw-semibold">@${u.username}</div>
+          ${u.full_name ? `<div class="text-muted small">${u.full_name}</div>` : ''}
+        </div>
+      </a>
+    </div>
+  `).join('');
+}

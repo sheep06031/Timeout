@@ -22,7 +22,11 @@ urlpatterns = [
     path('user/<str:username>/follow/', social.follow_user, name='follow_user'),
     path('status/update/', social.update_status, name='update_status'),
 
-    # Follow lists
+    # Follow lists (own)
     path('followers/', social.followers_api, name='followers_api'),
     path('following/', social.following_api, name='following_api'),
+
+    # Follow lists (other users)
+    path('user/<str:username>/followers/', social.user_followers_api, name='user_followers_api'),
+    path('user/<str:username>/following/', social.user_following_api, name='user_following_api'),
 ]
