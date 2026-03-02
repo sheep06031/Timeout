@@ -219,3 +219,35 @@ td.cal-today .cal-day-num {
   .cal-table td { height: 56px; }
   .cal-chip { height: 5px; padding: 0; border-radius: 3px; font-size: 0; overflow: hidden; }
 }
+
+/* View Switcher — shared component between calendar and deadline views */
+.cal-view-switcher {
+  display: flex;
+  border: 1px solid #e5eaf2;
+  border-radius: 6px;
+  overflow: hidden;
+}
+.cal-view-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 7px 12px;
+  background: #ffffff;
+  color: #5a6a85;
+  font-family: inherit;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: 0.18s ease;
+  border: none;
+}
+.cal-view-btn:first-child { border-right: 1px solid #e5eaf2; }
+.cal-view-btn:hover { background: #f0f2f8; color: #2a3547; }
+.cal-view-btn--active {
+  background: #5b5ddf;
+  color: #ffffff;
+}
+.cal-view-btn--active:hover {
+  background: #5b5ddf;
+  color: #ffffff;
+}

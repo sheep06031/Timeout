@@ -32,6 +32,7 @@ class Event(models.Model):
     is_all_day = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    is_completed = models.BooleanField(default=False) # Added to track event
 
     class Meta:
         ordering = ['-start_datetime']
