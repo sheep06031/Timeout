@@ -3,6 +3,7 @@ from django.shortcuts import redirect, render
 from timeout.models import User
 from timeout.services import FeedService
 from timeout.views.statistics import build_context
+from timeout.views.profile import get_profile_event
 
 
 
@@ -21,11 +22,13 @@ def dashboard(request):
 
 @login_required
 def profile(request):
-    """Profile page view."""
     posts = FeedService.get_user_posts(request.user, request.user)
+    event, event_status = get_profile_event(request.user)
     context = {
         'posts': posts,
         'status_choices': User.Status.choices,
+        'event': event,
+        'event_status': event_status,
     }
     return render(request, 'pages/profile.html', context)
 

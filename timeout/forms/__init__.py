@@ -10,6 +10,8 @@ from .social import (
     CommentForm,
 )
 from .notes import NoteForm
+from .profileEditForm import ProfileEditForm
+
 
 __all__ = [
     'SignupForm',
@@ -20,4 +22,6 @@ __all__ = [
     'PostForm',
     'CommentForm',
     'NoteForm',
+    'ProfileEditForm',
+
 ]

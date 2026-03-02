@@ -217,3 +217,23 @@ def update_status(request):
         'status': status,
         'status_display': request.user.get_status_display()
     })
+
+@login_required
+def followers_api(request):
+    users = request.user.followers.all()
+    return JsonResponse({'users': _serialize_users(users)})
+
+@login_required
+def following_api(request):
+    users = request.user.following.all()
+    return JsonResponse({'users': _serialize_users(users)})
+
+def _serialize_users(users):
+    return [
+        {
+            'username': u.username,
+            'full_name': u.get_full_name(),
+            'profile_picture': u.profile_picture.url if u.profile_picture else None,
+        }
+        for u in users
+    ]

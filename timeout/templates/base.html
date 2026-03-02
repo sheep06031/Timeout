@@ -20,7 +20,7 @@
 
     {% endblock %}
   </head>
-  <body>
+  <body class="d-flex flex-column min-vh-100">
     <!-- Navigation Bar -->
     {% include 'partials/_navbar.html' %}
 
@@ -28,7 +28,7 @@
     {% include 'partials/_messages.html' %}
 
     <!-- Main Content Area -->
-    <main class="container mt-4">
+    <main class="container mt-4 flex-grow-1">
       {% block content %}
 
       {% endblock %}

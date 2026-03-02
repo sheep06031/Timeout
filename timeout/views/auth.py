@@ -83,3 +83,4 @@ def complete_profile(request):
         'has_temp_username': has_temp_username,
     }
     return render(request, 'auth/complete_profile.html', context)
+
