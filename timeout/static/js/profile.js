@@ -21,9 +21,10 @@
 
   function setActiveStatusButton(status) {
     document.querySelectorAll('.status-btn').forEach((b) => {
-      const isActive = b.dataset.status === status;
-      b.classList.toggle('btn-primary', isActive);
-      b.classList.toggle('btn-outline-secondary', !isActive);
+      const val = b.dataset.status;
+      const isActive = val === status;
+      b.classList.remove('status-badge-focus', 'status-badge-social', 'status-badge-inactive', 'status-btn-idle');
+      b.classList.add(isActive ? `status-badge-${val}` : 'status-btn-idle');
     });
   }
 
@@ -70,7 +71,7 @@ function renderUserList(users) {
   `).join('');
 }
 
-document.getElementById('followersModal').addEventListener('show.bs.modal', () => {
+document.getElementById('followersModal')?.addEventListener('show.bs.modal', () => {
   const input = document.querySelector('[data-modal-search="followers-list"]');
   input.value = '';
   input.oninput = null;
@@ -89,7 +90,7 @@ document.getElementById('followersModal').addEventListener('show.bs.modal', () =
     });
 });
 
-document.getElementById('followingModal').addEventListener('show.bs.modal', () => {
+document.getElementById('followingModal')?.addEventListener('show.bs.modal', () => {
   const input = document.querySelector('[data-modal-search="following-list"]');
   input.value = '';
   input.oninput = null;

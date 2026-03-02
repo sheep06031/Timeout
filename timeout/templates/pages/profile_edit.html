@@ -91,11 +91,41 @@
               </div>
 
               <!-- Academic Interests -->
-              <div class="mb-4">
+              <div class="mb-3">
                 <label class="form-label fw-semibold">Academic Interests</label>
                 {{ form.academic_interests }}
                 {% if form.academic_interests.errors %}
                   <div class="text-danger small mt-1">{{ form.academic_interests.errors }}</div>
+                {% endif %}
+              </div>
+
+              <!-- Management Style -->
+              <div class="mb-3">
+                <label class="form-label fw-semibold">Management Style</label>
+                <div class="d-flex gap-3">
+                  {% for widget in form.management_style %}
+                    <div class="form-check">
+                      {{ widget.tag }}
+                      <label class="form-check-label" for="{{ widget.id_for_label }}">
+                        {{ widget.choice_label }}
+                      </label>
+                    </div>
+                  {% endfor %}
+                </div>
+                {% if form.management_style.errors %}
+                  <div class="text-danger small mt-1">{{ form.management_style.errors }}</div>
+                {% endif %}
+              </div>
+
+              <!-- Privacy -->
+              <div class="mb-4">
+                <div class="form-check form-switch">
+                  {{ form.privacy_private }}
+                  <label class="form-check-label fw-semibold" for="id_privacy_private">Private Account</label>
+                </div>
+                <div class="text-muted small mt-1">비공개 계정으로 설정하면 팔로워 외 다른 사람에게 게시글이 보이지 않습니다.</div>
+                {% if form.privacy_private.errors %}
+                  <div class="text-danger small mt-1">{{ form.privacy_private.errors }}</div>
                 {% endif %}
               </div>
 

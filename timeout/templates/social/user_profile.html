@@ -25,6 +25,9 @@
                                 {% if profile_user.year_of_study %}
                                     <span class="ms-2">Year {{ profile_user.year_of_study }}</span>
                                 {% endif %}
+                                {% if profile_user.management_style %}
+                                    <span class="ms-2">{% if profile_user.management_style == 'early_bird' %}🌅{% else %}🦉{% endif %} {{ profile_user.get_management_style_display }}</span>
+                                {% endif %}
                             </div>
                         </div>
 
