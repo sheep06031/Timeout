@@ -71,6 +71,7 @@
               <a href="#"
                  class="cal-chip cal-chip--{{ ev.event_type }} {% if ev.allow_conflict %}cal-chip--conflict{% endif %}"
                  data-bs-toggle="modal"
+                 onclick="event.stopPropagation();"
                  data-bs-target="#eventDetailsModal"
                  data-event-id="{{ ev.id }}"
                  data-event-title="{{ ev.title }}"
