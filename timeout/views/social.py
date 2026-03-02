@@ -171,10 +171,17 @@ def user_profile(request, username):
         id=profile_user.id
     ).exists() if request.user.is_authenticated else False
 
+    can_view = (
+        request.user == profile_user or
+        not profile_user.privacy_private or
+        is_following
+    )
+
     context = {
         'profile_user': profile_user,
         'posts': posts,
         'is_following': is_following,
+        'can_view': can_view,
     }
     return render(request, 'social/user_profile.html', context)
 
@@ -226,6 +233,32 @@ def followers_api(request):
 @login_required
 def following_api(request):
     users = request.user.following.all()
+    return JsonResponse({'users': _serialize_users(users)})
+
+@login_required
+def user_followers_api(request, username):
+    profile_user = get_object_or_404(User, username=username)
+    can_view = (
+        request.user == profile_user or
+        not profile_user.privacy_private or
+        request.user.following.filter(id=profile_user.id).exists()
+    )
+    if not can_view:
+        return JsonResponse({'error': 'This account is private.'}, status=403)
+    users = profile_user.followers.all()
+    return JsonResponse({'users': _serialize_users(users)})
+
+@login_required
+def user_following_api(request, username):
+    profile_user = get_object_or_404(User, username=username)
+    can_view = (
+        request.user == profile_user or
+        not profile_user.privacy_private or
+        request.user.following.filter(id=profile_user.id).exists()
+    )
+    if not can_view:
+        return JsonResponse({'error': 'This account is private.'}, status=403)
+    users = profile_user.following.all()
     return JsonResponse({'users': _serialize_users(users)})
 
 def _serialize_users(users):

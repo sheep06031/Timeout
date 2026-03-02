@@ -49,7 +49,7 @@ class ProfileEditForm(forms.ModelForm):
 
     class Meta:
         model = User
-        fields = ['first_name', 'last_name', 'bio', 'year_of_study', 'academic_interests', 'profile_picture']
+        fields = ['first_name', 'last_name', 'bio', 'year_of_study', 'academic_interests', 'profile_picture', 'management_style', 'privacy_private']
         widgets = {
             'first_name': forms.TextInput(attrs={
                 'class': 'form-control',
@@ -85,6 +85,11 @@ class ProfileEditForm(forms.ModelForm):
             }),
             'profile_picture': forms.ClearableFileInput(attrs={
                 'class': 'form-control',
+            }),
+            'management_style': forms.RadioSelect(),
+            'privacy_private': forms.CheckboxInput(attrs={
+                'class': 'form-check-input',
+                'role': 'switch',
             }),
         }
 

@@ -112,6 +112,46 @@
     padding: 20px 22px;
 }
 
+.status-btn {
+    cursor: pointer;
+    border: none;
+    background: none;
+    font-family: inherit;
+}
+
+.status-btn-idle {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    border-radius: 999px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    background-color: #f0f2f5;
+    color: #a0aec0;
+    border: 1px solid #e2e8f0;
+}
+
+/* Active state: solid fill for better visibility */
+.status-btn.status-badge-focus {
+    background-color: #e53e3e;
+    color: #fff;
+    border-color: #e53e3e;
+    font-weight: 600;
+}
+
+.status-btn.status-badge-social {
+    background-color: #38a169;
+    color: #fff;
+    border-color: #38a169;
+    font-weight: 600;
+}
+
+.status-btn.status-badge-inactive {
+    background-color: #718096;
+    color: #fff;
+    border-color: #718096;
+    font-weight: 600;
+}
+
 .post-header {
     display: flex;
     justify-content: space-between;
@@ -338,3 +378,31 @@
 .badge-upcoming { background: rgba(91, 115, 232, 0.12); color: var(--to-blue); }
 .badge-recent   { background: #f1f5f9; color: #64748b; }
 
+.post-event-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    margin-top: 12px;
+    padding: 9px 14px;
+    background: linear-gradient(135deg, rgba(91,115,232,0.08), rgba(78,205,196,0.10));
+    border: 1px solid rgba(91, 115, 232, 0.15);
+    border-radius: 10px;
+    font-size: 13px;
+    color: var(--to-text);
+    font-weight: 600;
+}
+
+.post-event-tag .event-date { font-size: 12px; color: var(--to-muted); font-weight: 500; }
+
+/* ── Mobile ── */
+@media (max-width: 575.98px) {
+  .profile-avatar {
+    width: 80px;
+    height: 80px;
+    font-size: 26px;
+  }
+
+  .post-card-body {
+    padding: 14px 16px;
+  }
+}

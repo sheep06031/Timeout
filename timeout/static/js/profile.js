@@ -21,9 +21,10 @@
 
   function setActiveStatusButton(status) {
     document.querySelectorAll('.status-btn').forEach((b) => {
-      const isActive = b.dataset.status === status;
-      b.classList.toggle('btn-primary', isActive);
-      b.classList.toggle('btn-outline-secondary', !isActive);
+      const val = b.dataset.status;
+      const isActive = val === status;
+      b.classList.remove('status-badge-focus', 'status-badge-social', 'status-badge-inactive', 'status-btn-idle');
+      b.classList.add(isActive ? `status-badge-${val}` : 'status-btn-idle');
     });
   }
 
@@ -50,10 +51,9 @@
   });
 })();
 
+
 function renderUserList(users) {
-  if (users.length === 0) {
-    return '<p class="text-center text-muted py-3">No users yet.</p>';
-  }
+  if (users.length === 0) return '<p class="text-center text-muted py-3">No users yet.</p>';
   return users.map(u => `
     <div class="user-item">
       <a href="/social/user/${u.username}/" class="d-flex align-items-center gap-3 mb-3 text-decoration-none text-dark">
@@ -70,7 +70,7 @@ function renderUserList(users) {
   `).join('');
 }
 
-document.getElementById('followersModal').addEventListener('show.bs.modal', () => {
+document.getElementById('followersModal')?.addEventListener('show.bs.modal', () => {
   const input = document.querySelector('[data-modal-search="followers-list"]');
   input.value = '';
   input.oninput = null;
@@ -89,7 +89,7 @@ document.getElementById('followersModal').addEventListener('show.bs.modal', () =
     });
 });
 
-document.getElementById('followingModal').addEventListener('show.bs.modal', () => {
+document.getElementById('followingModal')?.addEventListener('show.bs.modal', () => {
   const input = document.querySelector('[data-modal-search="following-list"]');
   input.value = '';
   input.oninput = null;
