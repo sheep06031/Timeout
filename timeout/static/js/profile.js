@@ -46,6 +46,22 @@
           setActiveStatusButton(data.status);
           if (navText) navText.textContent = data.status_display;
           setNavDot(data.status);
+
+          const navTimer = document.getElementById('nav-focus-timer');
+          const profileTimer = document.getElementById('profile-focus-timer');
+          if (data.status === 'focus' && data.focus_started_at) {
+            [navTimer, profileTimer].forEach(el => {
+              if (!el) return;
+              el.dataset.focusStartedAt = data.focus_started_at;
+              el.style.display = '';
+            });
+          } else {
+            [navTimer, profileTimer].forEach(el => {
+              if (!el) return;
+              el.style.display = 'none';
+              delete el.dataset.focusStartedAt;
+            });
+          }
         });
     });
   });
