@@ -2,7 +2,6 @@ from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from django.shortcuts import render
 from django.views.decorators.http import require_POST
-
 from timeout.services.deadline_service import DeadlineService
 
 
@@ -14,7 +13,8 @@ def deadline_list_view(request):
     context = {
         'deadlines': deadlines,
         'total_count': len(deadlines),
-        'overdue_count': sum(1 for d in deadlines if d['urgency_status'] == 'overdue'),
+        'overdue_count': sum(1 for d in deadlines if d['urgency_status'] == 'overdue'), # Get how much assignments are overdue
+        # Get how much assignments are urgent
         'urgent_count': sum(1 for d in deadlines if d['urgency_status'] == 'urgent'),
     }
     return render(request, 'pages/deadlines.html', context)

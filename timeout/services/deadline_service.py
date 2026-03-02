@@ -73,17 +73,19 @@ def _format_timedelta(td):
     """ Formatting to make it human readable for how much time has left in terms of days and hours"""
     total_seconds = int(td.total_seconds())
 
+    # Python calculations to show if an event is overdue, and show how much time passed
     if total_seconds < 0:
-        total_seconds = abs(total_seconds)
-        days, remainder = divmod(total_seconds, 86400)
-        hours, remainder = divmod(remainder, 3600)
-        minutes = remainder // 60
+        total_seconds = abs(total_seconds) # Turn number positive to calculate
+        days, remainder = divmod(total_seconds, 86400) # divide by 86400 to find how many days and get remainder
+        hours, remainder = divmod(remainder, 3600) # divide the remainder by 3600 to fund housr and get the remainder for minutes
+        minutes = remainder // 60 # divide the remainder by 60 to find how many minutes
         if days > 0:
             return f"{days}d {hours}h overdue"
         if hours > 0:
             return f"{hours}h {minutes}m overdue"
         return f"{minutes}m overdue"
-
+    
+    # If not overdue calculate how much time is left
     days, remainder = divmod(total_seconds, 86400)
     hours, remainder = divmod(remainder, 3600)
     minutes = remainder // 60
@@ -101,11 +103,11 @@ def _format_elapsed(td):
     if total_seconds < 0:
         return "Added just now"
 
-    days = total_seconds // 86400
+    days = total_seconds // 86400 # 86400 seconds in one day
     if days > 0:
         return f"Added {days} day{'s' if days != 1 else ''} ago"
 
-    hours = total_seconds // 3600
+    hours = total_seconds // 3600 # 3600 seconds in one hour
     if hours > 0:
         return f"Added {hours} hour{'s' if hours != 1 else ''} ago"
 

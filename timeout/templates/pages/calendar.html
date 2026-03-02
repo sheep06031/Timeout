@@ -62,7 +62,12 @@
         {% for week in weeks %}
         <tr>
           {% for day in week %}
-          <td class="{% if not day.in_month %}cal-outside{% endif %} {% if day.is_today %}cal-today{% endif %}">
+          <td class="{% if not day.in_month %}cal-outside{% endif %} {% if day.is_today %}cal-today{% endif %}"
+              {% if day.in_month %}
+              data-date="{{ day.date|date:'Y-m-d' }}"
+              onclick="openAddEvent(this.dataset.date)"
+              {% endif %}
+          >
             <span class="cal-day-num">{{ day.day_num }}</span>
             {% if day.events %}
             <div class="cal-events">
@@ -145,4 +150,16 @@
 
 <!-- Mobile FAB -->
 <a href="#" class="cal-fab" data-bs-toggle="modal" data-bs-target="#addEventModal" aria-label="Add event">+</a>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function openAddEvent(dateStr) {
+  document.getElementById('eventStart').value = dateStr + 'T09:00';
+  document.getElementById('eventEnd').value = dateStr + 'T10:00';
+
+  var modal = new bootstrap.Modal(document.getElementById('addEventModal'));
+  modal.show();
+}
+</script>
 {% endblock %}
