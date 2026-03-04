@@ -20,7 +20,7 @@ from django.utils import timezone
 from faker import Faker
 
 from allauth.socialaccount.models import SocialApp
-from timeout.models import Event, Post, Comment, Like, Bookmark
+from timeout.models import Event, Post, Comment, Like, Bookmark, FocusSession
 
 User = get_user_model()
 fake = Faker()
@@ -108,6 +108,12 @@ class Command(BaseCommand):
 
         self.stdout.write('\n[9/9] Creating likes and bookmarks...')
         self._create_likes_and_bookmarks(users, posts)
+
+        self.stdout.write('\n[10/9] Creating focus sessions...')
+        self._create_focus_sessions(users)
+
+        self.stdout.write('\n[11/9] Creating johndoe schedule...')
+        self._create_johndoe_schedule()
 
         self.stdout.write(f'\n[6b/9] Creating global recurring events...')
         self._create_global_events()
@@ -365,6 +371,151 @@ class Command(BaseCommand):
             self.stdout.write(f'  Global event: {event.title} ({start.date()})')
 
         self.stdout.write(self.style.SUCCESS(f'  Created {created} global recurring events.'))
+
+    def _create_johndoe_schedule(self):
+        """Create a realistic student schedule for johndoe."""
+        johndoe = User.objects.filter(username=SUPERUSER_USERNAME).first()
+        if not johndoe:
+            self.stdout.write(self.style.WARNING('  johndoe not found, skipping.'))
+            return
+
+        from django.utils.timezone import make_aware
+        from datetime import datetime
+
+        def dt(year, month, day, hour, minute=0):
+            return make_aware(datetime(year, month, day, hour, minute))
+
+        now = timezone.now()
+        y = now.year
+        m = now.month
+
+        # Helper: offset days from today
+        def days(n, hour=9, minute=0, duration_h=1):
+            start = timezone.now().replace(hour=hour, minute=minute, second=0, microsecond=0) + timedelta(days=n)
+            end = start + timedelta(hours=duration_h)
+            return start, end
+
+        events = []
+
+        # ── Weekly classes (recurring feel — 4 weeks around now) ──
+        weekly_classes = [
+            ('Software Engineering Group Project', 'class', 'Bush House, KCL', 10, 0, 2),
+            ('Algorithms & Complexity', 'class', 'Strand Building, KCL', 14, 0, 1),
+            ('Database Systems', 'class', 'Waterloo Campus', 9, 0, 1),
+            ('Machine Learning', 'class', 'Bush House, KCL', 13, 0, 2),
+        ]
+        weekday_offsets = {
+            'Software Engineering Group Project': 0,   # Monday
+            'Algorithms & Complexity': 2,              # Wednesday
+            'Database Systems': 1,                     # Tuesday
+            'Machine Learning': 3,                     # Thursday
+        }
+
+        for title, etype, loc, hour, minute, dur in weekly_classes:
+            base_offset = weekday_offsets[title]
+            today_weekday = timezone.now().weekday()
+            days_to_next = (base_offset - today_weekday) % 7
+            for week in range(-3, 5):
+                offset = days_to_next + week * 7
+                start, end = days(offset, hour, minute, dur)
+                events.append(dict(
+                    creator=johndoe, title=title, event_type=etype,
+                    start_datetime=start, end_datetime=end,
+                    location=loc, visibility='private',
+                    status='completed' if offset < 0 else 'upcoming',
+                ))
+
+        # ── Exams ──
+        exams = [
+            ('Algorithms & Complexity Exam', days(18, 9, 0, 3), 'Exam Hall A, KCL'),
+            ('Database Systems Exam', days(32, 14, 0, 2), 'Great Hall, KCL'),
+            ('Machine Learning Final Exam', days(45, 10, 0, 3), 'Exam Hall B, KCL'),
+        ]
+        for title, (start, end), loc in exams:
+            events.append(dict(
+                creator=johndoe, title=title, event_type='exam',
+                start_datetime=start, end_datetime=end,
+                location=loc, visibility='private', status='upcoming',
+            ))
+
+        # ── Deadlines ──
+        deadlines = [
+            ('SEG Coursework Submission', days(7, 23, 59, 0), ''),
+            ('ML Assignment 2 Due', days(14, 23, 59, 0), ''),
+            ('Database ER Diagram Submission', days(21, 23, 59, 0), ''),
+            ('SEG Final Report', days(50, 23, 59, 0), ''),
+        ]
+        for title, (start, end), loc in deadlines:
+            end = start + timedelta(minutes=1)
+            events.append(dict(
+                creator=johndoe, title=title, event_type='deadline',
+                start_datetime=start, end_datetime=end,
+                location=loc, visibility='private', status='upcoming',
+            ))
+
+        # ── Study sessions ──
+        study = [
+            ('Algorithms Revision', days(15, 14, 0, 2)),
+            ('ML Past Papers', days(40, 10, 0, 3)),
+            ('DB Exam Prep', days(28, 16, 0, 2)),
+            ('Group Study – SEG', days(5, 15, 0, 2)),
+        ]
+        for title, (start, end) in study:
+            events.append(dict(
+                creator=johndoe, title=title, event_type='study_session',
+                start_datetime=start, end_datetime=end,
+                location='Library, KCL', visibility='private', status='upcoming',
+            ))
+
+        # ── Meetings ──
+        meetings = [
+            ('SEG Team Meeting', days(3, 11, 0, 1)),
+            ('Supervisor Check-in', days(10, 14, 0, 1)),
+            ('Career Fair Prep', days(6, 13, 0, 1)),
+        ]
+        for title, (start, end) in meetings:
+            events.append(dict(
+                creator=johndoe, title=title, event_type='meeting',
+                start_datetime=start, end_datetime=end,
+                location='Bush House, KCL', visibility='private', status='upcoming',
+            ))
+
+        created = 0
+        for ev in events:
+            # Ensure end > start
+            if ev['end_datetime'] <= ev['start_datetime']:
+                ev['end_datetime'] = ev['start_datetime'] + timedelta(hours=1)
+            Event.objects.create(**ev)
+            created += 1
+
+        self.stdout.write(self.style.SUCCESS(f'  Created {created} events for @{SUPERUSER_USERNAME}.'))
+
+    def _create_focus_sessions(self, users):
+        """Create focus sessions for johndoe and a few random users for the last 7 days."""
+        johndoe = User.objects.filter(username=SUPERUSER_USERNAME).first()
+        targets = ([johndoe] if johndoe else []) + random.sample(users, min(5, len(users)))
+
+        count = 0
+        now = timezone.now()
+        for user in targets:
+            for day_offset in range(7):
+                if random.random() < 0.7:
+                    started_at = now - timedelta(
+                        days=day_offset,
+                        hours=random.randint(0, 10),
+                        minutes=random.randint(0, 59),
+                    )
+                    duration = random.randint(10 * 60, 120 * 60)
+                    ended_at = started_at + timedelta(seconds=duration)
+                    FocusSession.objects.create(
+                        user=user,
+                        started_at=started_at,
+                        ended_at=ended_at,
+                        duration_seconds=duration,
+                    )
+                    count += 1
+
+        self.stdout.write(self.style.SUCCESS(f'  Created {count} focus sessions.'))
 
     def _create_likes_and_bookmarks(self, users, posts):
         """Create likes and bookmarks."""

@@ -1,8 +1,9 @@
 from django.contrib.auth.decorators import login_required
+from django.db.models import Sum
 from django.shortcuts import render
 from django.utils import timezone
 
-from timeout.models import Event
+from timeout.models import Event, FocusSession
 
 
 def get_user_events(user):
@@ -61,6 +62,68 @@ def get_urgent_events(events):
     ).order_by('start_datetime')
 
 
+def _fmt(s):
+    h, m = divmod(s, 3600)
+    m = m // 60
+    return f"{h}h {m}m" if h else f"{m}m"
+
+
+def get_focus_stats(user):
+    """Return focus session stats for the last 7 days."""
+    week_start = timezone.now() - timezone.timedelta(days=7)
+    sessions = FocusSession.objects.filter(user=user, started_at__gte=week_start)
+    total_seconds = sessions.aggregate(total=Sum('duration_seconds'))['total'] or 0
+    days_with_sessions = sessions.values('started_at__date').distinct().count()
+    avg_seconds = total_seconds // days_with_sessions if days_with_sessions else 0
+
+    today = timezone.localtime(timezone.now()).date()
+    daily = []
+    for i in range(6, -1, -1):
+        day = today - timezone.timedelta(days=i)
+        day_seconds = sessions.filter(
+            started_at__date=day
+        ).aggregate(total=Sum('duration_seconds'))['total'] or 0
+        daily.append({
+            'label': day.strftime('%a'),
+            'date': day.day,
+            'duration': _fmt(day_seconds) if day_seconds else '—',
+            'seconds': day_seconds,
+            'is_today': i == 0,
+        })
+
+    max_seconds = max((d['seconds'] for d in daily), default=0) or 1
+
+    return {
+        'focus_total': _fmt(total_seconds),
+        'focus_avg': _fmt(avg_seconds),
+        'focus_sessions_count': sessions.count(),
+        'focus_daily': daily,
+        'focus_max_seconds': max_seconds,
+    }
+
+
+def get_friend_focus_leaderboard(user):
+    """Return this week's focus leaderboard for the user + people they follow."""
+    week_start = timezone.now() - timezone.timedelta(days=7)
+    candidates = list(user.following.all()) + [user]
+
+    leaderboard = []
+    for u in candidates:
+        total = FocusSession.objects.filter(
+            user=u,
+            started_at__gte=week_start,
+        ).aggregate(total=Sum('duration_seconds'))['total'] or 0
+        leaderboard.append({
+            'user': u,
+            'seconds': total,
+            'duration': _fmt(total) if total else '—',
+            'is_self': u.pk == user.pk,
+        })
+
+    leaderboard.sort(key=lambda x: x['seconds'], reverse=True)
+    return leaderboard
+
+
 def build_context(user):
     """Assemble all statistics data into a context dict."""
     events = get_user_events(user)
@@ -74,6 +137,8 @@ def build_context(user):
         'monthly_data': events_last_n_months(events),
         'urgent_events': urgent,
         'urgent_count': urgent.count(),
+        **get_focus_stats(user),
+        'friend_leaderboard': get_friend_focus_leaderboard(user),
     }
 
 
