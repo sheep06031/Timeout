@@ -1,66 +1,142 @@
 import calendar as cal
+from datetime import timedelta, date, datetime, time
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.utils import timezone
 from django.views.decorators.http import require_POST
 from timeout.models import Event
+from django.core.exceptions import ValidationError
+from django.db.models import Q
 
 
 @login_required
 def calendar_view(request):
-    """Renders a monthly calendar grid with events in day cells.
-    Calendar template that allows to add events calculates time left
-    Uses Built-in calendar from python to build a grid of dates
-    Gets events from the database for a visible range and maps event to the dates
-    """
+    """Renders a monthly calendar grid with events in day cells, including recurring events."""
     today = timezone.now().date()
+    weeks = []
 
-    # Get todays date from the url query string if nothing is provided use today's date
+    # Get today's date from the URL query string if nothing is provided
     try:
         year = int(request.GET.get("year", today.year))
         month = int(request.GET.get("month", today.month))
     except (ValueError, TypeError):
         year, month = today.year, today.month
 
-    # Get months from 1 to 12
-    # Handle navigating backwards or forwards when going before january of after december
+    # Get months from 1 to 12 
     if month < 1:
         month, year = 12, year - 1
+    # Handle navigating backwards or forwards when going before january of after december
     elif month > 12:
         month, year = 1, year + 1
 
     # Wrapper to make sure if the months go further than 12 so it skips to the next year
-    # Creates links for before or after the current month and year
-    prev_month = month - 1 if month > 1 else 12
-    prev_year = year if month > 1 else year - 1
-    next_month = month + 1 if month < 12 else 1
-    next_year = year if month < 12 else year + 1
+    # Creates links for before or after the current month and year 
+    if month > 1:
+        prev_month = month - 1
+        prev_year = year
+    else:
+        prev_month = 12
+        prev_year = year - 1
+    if month < 12:
+        next_month = month + 1
+        next_year = year
+    else:
+        next_month = 1
+        next_year = year + 1
 
-    # Build weeks grid starting from monday from python's calendar class
-    # class returns a list of weeks, every week a list of 7 datetime.date object
+    # Build weeks grid starting from Monday
     cal_obj = cal.Calendar(firstweekday=0)
     weeks_raw = cal_obj.monthdatescalendar(year, month)
 
-    # Grabs the users events that are within the rage (like the month) __date tocompare datetime filed
-    # Query events for visible date range
-    first_visible = weeks_raw[0][0] #Monday of first row
-    last_visible = weeks_raw[-1][-1] # Sunday of last row
-    # Filter only the user's events and order them chronologically
+    # Determine visible range
+    first_visible = weeks_raw[0][0]
+    last_visible = weeks_raw[-1][-1]
+
+    context = {
+        "weeks": weeks,
+        "month": month,
+        "year": year,
+        "weekdays": ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+        "now": timezone.now(),
+    }
+
+    # Fetch events for visible date range
+    lookahead_days = 365  # how far in the future you want to show recurring events
+    last_visible_datetime = timezone.make_aware(
+        datetime.combine(last_visible, time.max)
+    )
     events_qs = Event.objects.filter(
-        creator=request.user,
-        start_datetime__date__gte=first_visible,
-        start_datetime__date__lte=last_visible,
+        Q(creator=request.user) | Q(is_global=True),
+        start_datetime__lte=last_visible_datetime,
     ).order_by("start_datetime")
 
-    # Index by date lookup in template so it is more efficient and faster
-    # Build a dictionary to look up events like {date(2026,2,14): [event1, event2], date(2026,2,20): [event3]}
+    calendar_events = []
+    for event in events_qs:
+        if event.recurrence == "yearly" and event.is_global:
+            # Create a display instance for this year
+            event_start = event.start_datetime.replace(year=last_visible.year)
+            event_end = event.end_datetime.replace(year=last_visible.year)
+            calendar_events.append({
+                "title": event.title,
+                "description": event.description,
+                "start_datetime": event_start,
+                "end_datetime": event_end,
+                "is_global": True,
+                "visibility": event.visibility,
+            })
+        else:
+            calendar_events.append(event)
+
+    # Index events by date, including recurrence expansion
     events_by_date = {}
     for ev in events_qs:
+        # Always add original event
         events_by_date.setdefault(ev.start_datetime.date(), []).append(ev)
 
-    # TO-DO: get rid of the nested loop
-    # Structure for template, wraps each date into a dict so the template can read and loop throuh it efficiently
+        if ev.recurrence == 'none':
+            continue  # skip non-recurring
+
+        # Expand recurring events into visible range
+        current_date = ev.start_datetime.date()
+        while True:
+            if ev.recurrence == 'daily':
+                current_date += timedelta(days=1)
+            elif ev.recurrence == 'weekly':
+                current_date += timedelta(weeks=1)
+            elif ev.recurrence == 'monthly':
+                # Advance one month
+                month_num = current_date.month + 1
+                year_num = current_date.year
+                if month_num > 12:
+                    month_num = 1
+                    year_num += 1
+                day_num = min(current_date.day, cal.monthrange(year_num, month_num)[1])
+                current_date = date(year_num, month_num, day_num)
+            else:
+                break
+
+            if current_date > last_visible:
+                break
+
+            # Create a pseudo-event instance for display
+            pseudo_event = {
+                'original': ev,
+                'recurrence_instance': True,
+                'id': ev.id,  # pass the real ID
+                'title': ev.title,
+                'start_datetime': datetime.combine(current_date, ev.start_datetime.time()),
+                'end_datetime': datetime.combine(current_date, ev.end_datetime.time()),
+                'event_type': ev.event_type,
+                'location': ev.location,
+                'description': ev.description,
+                'is_all_day': ev.is_all_day,
+                'instance_date': current_date,  # the date this occurrence is shown
+            }
+
+            events_by_date.setdefault(current_date, []).append(pseudo_event)
+
+    # Build weeks structure for template
     weeks = []
     for week in weeks_raw:
         days = []
@@ -96,26 +172,44 @@ def calendar_view(request):
 @login_required
 @require_POST
 def event_create(request):
-    """
-    Handle the Add Event model form submission.
-    Uses the event model to add a function to add events to the calendar
-    """
+    is_all_day = request.POST.get("is_all_day") == "on"
+    allow_conflict = request.POST.get("allow_conflict") == "on"
+
+    start_datetime = request.POST.get("start_datetime")
+    end_datetime = request.POST.get("end_datetime")
+    recurrence = request.POST.get("recurrence", "none")  # default 'none'
+
+    if is_all_day:
+        if not start_datetime:
+            messages.error(request, "Please select a date for an all-day event.")
+            return redirect("calendar")
+        date_part = start_datetime.split("T")[0]
+        start_datetime = f"{date_part}T00:00"
+        end_datetime = f"{date_part}T23:59"
+    else:
+        if not start_datetime or not end_datetime:
+            messages.error(request, "Start and end times are required.")
+            return redirect("calendar")
+
+    event = Event(
+        creator=request.user,
+        title=request.POST["title"],
+        event_type=request.POST.get("event_type", "other"),
+        start_datetime=start_datetime,
+        end_datetime=end_datetime,
+        location=request.POST.get("location", ""),
+        description=request.POST.get("description", ""),
+        allow_conflict=allow_conflict,
+        visibility=request.POST.get("visibility", "public"),
+        is_all_day=is_all_day,
+        recurrence=recurrence,
+    )
+
     try:
-        event = Event(
-            # Build an event from the added user input
-            creator=request.user,
-            title=request.POST["title"],
-            event_type=request.POST.get("event_type", "other"),
-            start_datetime=request.POST["start_datetime"],
-            end_datetime=request.POST["end_datetime"],
-            location=request.POST.get("location", ""),
-            description=request.POST.get("description", ""),
-        )
-        event.full_clean() # Full validation for field type, length etc
+        event.full_clean()
         event.save()
         messages.success(request, f'"{event.title}" added to calendar.')
-    except Exception as e:
-        # Catch any error
-        messages.error(request, f"Could not create event: {e}")
+    except ValidationError as e:
+        messages.error(request, str(e))
 
     return redirect("calendar")

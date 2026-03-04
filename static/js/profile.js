@@ -21,9 +21,10 @@
 
   function setActiveStatusButton(status) {
     document.querySelectorAll('.status-btn').forEach((b) => {
-      const isActive = b.dataset.status === status;
-      b.classList.toggle('btn-primary', isActive);
-      b.classList.toggle('btn-outline-secondary', !isActive);
+      const val = b.dataset.status;
+      const isActive = val === status;
+      b.classList.remove('status-badge-focus', 'status-badge-social', 'status-badge-inactive', 'status-btn-idle');
+      b.classList.add(isActive ? `status-badge-${val}` : 'status-btn-idle');
     });
   }
 
@@ -45,15 +46,30 @@
           setActiveStatusButton(data.status);
           if (navText) navText.textContent = data.status_display;
           setNavDot(data.status);
+
+          const navTimer = document.getElementById('nav-focus-timer');
+          const profileTimer = document.getElementById('profile-focus-timer');
+          if (data.status === 'focus' && data.focus_started_at) {
+            [navTimer, profileTimer].forEach(el => {
+              if (!el) return;
+              el.dataset.focusStartedAt = data.focus_started_at;
+              el.style.display = '';
+            });
+          } else {
+            [navTimer, profileTimer].forEach(el => {
+              if (!el) return;
+              el.style.display = 'none';
+              delete el.dataset.focusStartedAt;
+            });
+          }
         });
     });
   });
 })();
 
+
 function renderUserList(users) {
-  if (users.length === 0) {
-    return '<p class="text-center text-muted py-3">No users yet.</p>';
-  }
+  if (users.length === 0) return '<p class="text-center text-muted py-3">No users yet.</p>';
   return users.map(u => `
     <div class="user-item">
       <a href="/social/user/${u.username}/" class="d-flex align-items-center gap-3 mb-3 text-decoration-none text-dark">
@@ -70,7 +86,7 @@ function renderUserList(users) {
   `).join('');
 }
 
-document.getElementById('followersModal').addEventListener('show.bs.modal', () => {
+document.getElementById('followersModal')?.addEventListener('show.bs.modal', () => {
   const input = document.querySelector('[data-modal-search="followers-list"]');
   input.value = '';
   input.oninput = null;
@@ -89,7 +105,7 @@ document.getElementById('followersModal').addEventListener('show.bs.modal', () =
     });
 });
 
-document.getElementById('followingModal').addEventListener('show.bs.modal', () => {
+document.getElementById('followingModal')?.addEventListener('show.bs.modal', () => {
   const input = document.querySelector('[data-modal-search="following-list"]');
   input.value = '';
   input.oninput = null;

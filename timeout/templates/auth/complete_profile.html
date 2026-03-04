@@ -1,13 +1,28 @@
 {% extends "base.html" %}
+<<<<<<< HEAD
 {% block title %}Complete Your Profile - Timeout{% endblock %}
 
 {% block content %}
 <div class="auth-container">
     <div class="auth-card auth-card--wide auth-card--animate">
+=======
+{% load static %}
+
+{% block title %}Complete Your Profile - Timeout{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/auth-styles.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="auth-container">
+    <div class="auth-card auth-card-wide">
+>>>>>>> 236f8bf (Refactor auth pages with separated CSS/JS and all social login options)
         <div class="auth-header">
             <h2>Complete Your Profile</h2>
             <p>Fill in a few details to finish setting up your account</p>
         </div>
+<<<<<<< HEAD
 
         <div class="auth-body">
             {% if messages %}
@@ -19,6 +34,13 @@
             <form method="post" novalidate>
                 {% csrf_token %}
 
+=======
+        
+        <div class="auth-body">
+            <form method="post" novalidate>
+                {% csrf_token %}
+                
+>>>>>>> 236f8bf (Refactor auth pages with separated CSS/JS and all social login options)
                 {% if form.non_field_errors %}
                 <div class="alert alert-danger" role="alert">
                     {% for error in form.non_field_errors %}
@@ -26,6 +48,7 @@
                     {% endfor %}
                 </div>
                 {% endif %}
+<<<<<<< HEAD
 
                 <!-- Username -->
                 <div class="mb-3">
@@ -41,14 +64,26 @@
                     {% else %}
                         {{ form.username }}
                     {% endif %}
+=======
+                
+                <!-- Username -->
+                <div class="mb-3">
+                    <label for="id_username" class="form-label">Username</label>
+                    {{ form.username }}
+>>>>>>> 236f8bf (Refactor auth pages with separated CSS/JS and all social login options)
                     {% if form.username.errors %}
                     <div class="invalid-feedback d-block">
                         {% for error in form.username.errors %}{{ error }}{% endfor %}
                     </div>
                     {% endif %}
+<<<<<<< HEAD
                     <div class="form-text">This will be your public @handle.</div>
                 </div>
 
+=======
+                </div>
+                
+>>>>>>> 236f8bf (Refactor auth pages with separated CSS/JS and all social login options)
                 <!-- First Name & Last Name -->
                 <div class="row">
                     <div class="col-md-6 mb-3">
@@ -70,6 +105,7 @@
                         {% endif %}
                     </div>
                 </div>
+<<<<<<< HEAD
 
                 <!-- University dropdown -->
                 <div class="mb-2">
@@ -109,12 +145,39 @@
                 </div>
 
                 <button type="submit" class="btn btn-auth w-100">
+=======
+                
+                <!-- University -->
+                <div class="mb-3">
+                    <label for="id_university" class="form-label">University</label>
+                    {{ form.university }}
+                    {% if form.university.errors %}
+                    <div class="invalid-feedback d-block">
+                        {% for error in form.university.errors %}{{ error }}{% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <!-- Year of Study -->
+                <div class="mb-3">
+                    <label for="id_year_of_study" class="form-label">Year of Study</label>
+                    {{ form.year_of_study }}
+                    {% if form.year_of_study.errors %}
+                    <div class="invalid-feedback d-block">
+                        {% for error in form.year_of_study.errors %}{{ error }}{% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <button type="submit" class="btn btn-auth btn-primary w-100">
+>>>>>>> 236f8bf (Refactor auth pages with separated CSS/JS and all social login options)
                     Save Profile
                 </button>
             </form>
         </div>
     </div>
 </div>
+<<<<<<< HEAD
 
 <script>
 (function () {
@@ -138,3 +201,6 @@
 }());
 </script>
 {% endblock %}
+=======
+{% endblock %}
+>>>>>>> 236f8bf (Refactor auth pages with separated CSS/JS and all social login options)

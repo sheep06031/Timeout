@@ -14,9 +14,9 @@
     <div class="row">
       <div class="col-lg-8 mx-auto">
         <!-- Profile Header -->
-        <div class="card mb-4">
-          <div class="card-body">
-            <div class="d-flex align-items-center gap-3">
+        <div class="post-card mb-4">
+          <div class="post-card-body">
+            <div class="d-flex flex-column flex-sm-row align-items-center align-items-sm-start gap-3">
               <!-- Profile picture -->
               <div>
                 {% if user.profile_picture %}
@@ -26,9 +26,19 @@
                 {% endif %}
               </div>
               <div class="w-100">
-                <div class="d-flex align-items-center justify-content-between">
-                  <h3 class="m-0">@{{ user.username }}</h3>
-                  <a href="{% url 'profile_edit' %}" class="btn btn-sm">⚙️ Edit Profile</a>
+                <div class="d-flex align-items-start justify-content-between gap-2 flex-wrap">
+                  <div class="d-flex align-items-center gap-2 flex-wrap">
+                    <h3 class="m-0">@{{ user.username }}</h3>
+                    {% if user.privacy_private %}
+                      <span class="badge bg-light text-dark">🔒 Private</span>
+                    {% else %}
+                      <span class="badge bg-light text-dark">🌐 Public</span>
+                    {% endif %}
+                    {% if user.management_style %}
+                      <span class="badge bg-light text-dark">{% if user.management_style == 'early_bird' %}🌅{% else %}🦉{% endif %} {{ user.get_management_style_display }}</span>
+                    {% endif %}
+                  </div>
+                  <a href="{% url 'profile_edit' %}" class="btn btn-sm flex-shrink-0">⚙️ Edit Profile</a>
                 </div>
 
                 <div class="d-flex flex-column flex-md-row align-items-start align-items-md-center gap-2 gap-md-3">
@@ -51,7 +61,7 @@
                 <div class="mt-3">
                   <span class="badge bg-light text-dark me-2">{{ posts|length }} Posts</span>
                   <span class="badge bg-light text-dark me-2" style="cursor:pointer;" data-bs-toggle="modal" data-bs-target="#followersModal">{{ user.follower_count }} Followers</span>
-                  <span class="badge bg-light text-dark" style="cursor:pointer;" data-bs-toggle="modal" data-bs-target="#followingModal">{{ user.following_count }} Following</span>
+                  <span class="badge bg-light text-dark me-2" style="cursor:pointer;" data-bs-toggle="modal" data-bs-target="#followingModal">{{ user.following_count }} Following</span>
                 </div>
               </div>
             </div>
@@ -59,58 +69,29 @@
         </div>
 
         <!-- Status Setter -->
-        <div class="card mb-4">
-          <div class="card-body">
-            <h5 class="card-title">My Status</h5>
-            <p class="text-muted small mb-3">
-              Current: <strong id="current-status-display">{{ user.get_status_display }}</strong>
-            </p>
-            <div class="d-flex gap-2 flex-wrap">
+        <div class="post-card mb-4">
+          <div class="post-card-body">
+            <h4 class="m-0 mb-3">My Status</h4>
+            <div class="d-flex gap-2 flex-wrap align-items-center">
               {% for value, label in status_choices %}
-                <button class="btn status-btn {% if user.status == value %}
-                    
-                    
-                    
-                    
-                    
-                    
-                    
-                    
-                    btn-primary
-
-
-
-
-
-
-
-
-                  {% else %}
-                    
-                    
-                    
-                    
-                    
-                    
-                    
-                    
-                    btn-outline-secondary
-
-
-
-
-
-
-
-
-                  {% endif %}"
+                <button class="status-btn {% if user.status == value %}status-badge-{{ value }}{% else %}status-btn-idle{% endif %}"
                   data-status="{{ value }}">
                   {{ label }}
                 </button>
               {% endfor %}
+              <div id="profile-focus-timer"
+                   class="focus-timer-badge"
+                   {% if user.status == 'focus' and user.focus_started_at %}
+                     data-focus-started-at="{{ user.focus_started_at|date:'U' }}"
+                   {% else %}
+                     style="display:none"
+                   {% endif %}>
+                ⏱ <span class="focus-timer-display">00:00</span>
+              </div>
             </div>
           </div>
         </div>
+
         <!-- Schedule -->
         <div class="post-card mb-4">
           <div class="post-card-body">

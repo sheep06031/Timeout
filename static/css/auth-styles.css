@@ -1,0 +1,244 @@
+/* Authentication Pages Styles - Neptune Color Palette */
+
+/* Container Styles */
+.auth-container {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #8FD9FB 0%, #4AB5B5 50%, #525AFF 100%);
+    padding: 20px;
+}
+
+/* Card Styles */
+.auth-card {
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 20px 60px rgba(82, 90, 255, 0.3);
+    overflow: hidden;
+    max-width: 440px;
+    width: 100%;
+}
+
+.auth-card-wide {
+    max-width: 540px;
+}
+
+/* Header Styles */
+.auth-header {
+    background: linear-gradient(135deg, #6D8BC0 0%, #525AFF 100%);
+    padding: 2rem;
+    text-align: center;
+    color: white;
+}
+
+.auth-header h2 {
+    margin: 0;
+    font-weight: 600;
+    font-size: 1.75rem;
+}
+
+.auth-header p {
+    margin: 0.5rem 0 0 0;
+    opacity: 0.95;
+    font-size: 0.95rem;
+}
+
+/* Body Styles */
+.auth-body {
+    padding: 2rem;
+}
+
+/* Form Styles */
+.form-label {
+    font-weight: 500;
+    color: #2d3748;
+    margin-bottom: 0.5rem;
+}
+
+.form-control,
+.form-select {
+    border: 2px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+}
+
+.form-control:focus,
+.form-select:focus {
+    border-color: #525AFF;
+    box-shadow: 0 0 0 3px rgba(82, 90, 255, 0.1);
+}
+
+/* Button Styles */
+.btn-auth {
+    background: linear-gradient(135deg, #6D8BC0 0%, #525AFF 100%);
+    border: none;
+    border-radius: 8px;
+    padding: 0.875rem;
+    font-weight: 600;
+    font-size: 1rem;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.btn-auth:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px rgba(82, 90, 255, 0.3);
+    background: linear-gradient(135deg, #5a75b0 0%, #4248dd 100%);
+}
+
+/* Divider Styles */
+.divider {
+    display: flex;
+    align-items: center;
+    text-align: center;
+    margin: 1.5rem 0;
+}
+
+.divider::before,
+.divider::after {
+    content: '';
+    flex: 1;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.divider span {
+    padding: 0 1rem;
+    color: #718096;
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+/* Social Button Styles */
+.social-btn {
+    border: 2px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 0.75rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.social-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.social-btn-google {
+    border-color: #ea4335;
+    color: #ea4335;
+}
+
+.social-btn-google:hover {
+    background-color: #ea4335;
+    color: white;
+}
+
+.social-btn-github {
+    border-color: #24292e;
+    color: #24292e;
+}
+
+.social-btn-github:hover {
+    background-color: #24292e;
+    color: white;
+}
+
+.social-btn-discord {
+    border-color: #5865f2;
+    color: #5865f2;
+}
+
+.social-btn-discord:hover {
+    background-color: #5865f2;
+    color: white;
+}
+
+.social-btn-linkedin {
+    border-color: #0a66c2;
+    color: #0a66c2;
+}
+
+.social-btn-linkedin:hover {
+    background-color: #0a66c2;
+    color: white;
+}
+
+/* Link Styles */
+.auth-link {
+    text-align: center;
+    margin-top: 1.5rem;
+    color: #718096;
+}
+
+.auth-link a {
+    color: #525AFF;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.auth-link a:hover {
+    text-decoration: underline;
+}
+
+.forgot-password-link {
+    font-size: 0.9rem;
+    color: #525AFF;
+    text-decoration: none;
+}
+
+.forgot-password-link:hover {
+    text-decoration: underline;
+}
+
+/* Alert Styles */
+.alert {
+    border-radius: 8px;
+    border: none;
+}
+
+/* Password Toggle Styles */
+.password-toggle {
+    position: relative;
+}
+
+.password-toggle-btn {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: #718096;
+    cursor: pointer;
+    padding: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.password-toggle-btn:hover {
+    color: #525AFF;
+}
+
+.password-toggle-btn svg {
+    width: 20px;
+    height: 20px;
+}
+
+/* Checkbox Styles */
+.form-check-input:checked {
+    background-color: #525AFF;
+    border-color: #525AFF;
+}
+
+/* Helper Text */
+.form-text {
+    font-size: 0.875rem;
+    color: #718096;
+    margin-top: 0.25rem;
+}
