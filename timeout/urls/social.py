@@ -26,7 +26,12 @@ urlpatterns = [
     path('followers/', social.followers_api, name='followers_api'),
     path('following/', social.following_api, name='following_api'),
 
+<<<<<<< HEAD
+    # User search
+    path('search/', social.search_users, name='search_users'),
+=======
     # Follow lists (other users)
     path('user/<str:username>/followers/', social.user_followers_api, name='user_followers_api'),
     path('user/<str:username>/following/', social.user_following_api, name='user_following_api'),
+>>>>>>> origin/main
 ]
