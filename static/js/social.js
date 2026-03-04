@@ -97,6 +97,94 @@ document.addEventListener('DOMContentLoaded', function() {
     window.addEventListener('resize', positionDropdown, { passive: true });
 });
 
+// Messaging — send & poll (only runs on conversation pages)
+document.addEventListener('DOMContentLoaded', function () {
+    const config = window.CONVO_CONFIG;
+    if (!config) return;   // not a conversation page, skip
+
+    const input     = document.getElementById('message-input');
+    const sendBtn   = document.getElementById('send-btn');
+    const container = document.getElementById('message-container');
+
+    let lastMessageId = 0;
+
+    // Seed lastMessageId from whatever messages are already on the page
+    document.querySelectorAll('[data-message-id]').forEach(el => {
+        const id = parseInt(el.dataset.messageId, 10);
+        if (id > lastMessageId) lastMessageId = id;
+    });
+
+    function scrollToBottom() {
+        container.scrollTop = container.scrollHeight;
+    }
+
+    function appendMessage(msg) {
+        // Remove the "say hello" empty state if present
+        const empty = container.querySelector('.convo-empty');
+        if (empty) empty.remove();
+
+        const row = document.createElement('div');
+        row.className = `msg-bubble-row ${msg.is_me ? 'msg-mine' : 'msg-theirs'}`;
+        row.dataset.messageId = msg.id;
+        row.innerHTML = `
+            <div class="msg-bubble">
+                <div class="msg-text">${msg.content}</div>
+                <div class="msg-time">${msg.created_at}</div>
+            </div>`;
+        container.appendChild(row);
+        scrollToBottom();
+    }
+
+    function sendMessage() {
+        const content = input.value.trim();
+        if (!content) return;
+
+        sendBtn.disabled = true;
+
+        fetch(config.sendUrl, {
+            method: 'POST',
+            headers: { 'X-CSRFToken': config.csrfToken },
+            body: new URLSearchParams({ content }),
+        })
+        .then(r => r.json())
+        .then(msg => {
+            if (msg.error) { console.error(msg.error); return; }
+            appendMessage(msg);
+            lastMessageId = msg.id;
+            input.value = '';
+        })
+        .catch(err => console.error('Send error:', err))
+        .finally(() => { sendBtn.disabled = false; input.focus(); });
+    }
+
+    function pollMessages() {
+        fetch(`${config.pollUrl}?last_id=${lastMessageId}`)
+            .then(r => r.json())
+            .then(data => {
+                data.messages.forEach(msg => {
+                    appendMessage(msg);
+                    lastMessageId = msg.id;
+                });
+            })
+            .catch(err => console.error('Poll error:', err));
+    }
+
+    // Wire up send button and Enter key
+    sendBtn.addEventListener('click', sendMessage);
+    input.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            sendMessage();
+        }
+    });
+
+    // Poll every 3 seconds
+    setInterval(pollMessages, 3000);
+
+    // Scroll to bottom on load
+    scrollToBottom();
+});
+
 // Like button functionality
 document.addEventListener('DOMContentLoaded', function() {
     // Like buttons
