@@ -1,11 +1,13 @@
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.db.models import Q
 from django.http import JsonResponse, HttpResponseForbidden
 from django.shortcuts import render, redirect, get_object_or_404
+from django.utils import timezone
 from django.views.decorators.http import require_POST
 
 from timeout.forms import PostForm, CommentForm
-from timeout.models import Post, Comment, Like, Bookmark, User, Conversation
+from timeout.models import Post, Comment, Like, Bookmark, User, Conversation, FocusSession
 from timeout.services import FeedService
 
 
@@ -218,11 +220,33 @@ def update_status(request):
     status = request.POST.get('status')
     if status not in [s[0] for s in User.Status.choices]:
         return JsonResponse({'error': 'Invalid status'}, status=400)
+
+    # Save focus session when leaving focus mode
+    if request.user.status == 'focus' and status != 'focus':
+        if request.user.focus_started_at:
+            ended_at = timezone.now()
+            duration = int((ended_at - request.user.focus_started_at).total_seconds())
+            if duration > 0:
+                FocusSession.objects.create(
+                    user=request.user,
+                    started_at=request.user.focus_started_at,
+                    ended_at=ended_at,
+                    duration_seconds=duration,
+                )
+            request.user.focus_started_at = None
+
+    # Set focus start time when entering focus mode
+    if status == 'focus':
+        request.user.focus_started_at = timezone.now()
+
     request.user.status = status
     request.user.save()
+
     return JsonResponse({
         'status': status,
-        'status_display': request.user.get_status_display()
+        'status_display': request.user.get_status_display(),
+        'focus_started_at': int(request.user.focus_started_at.timestamp())
+                            if request.user.focus_started_at else None,
     })
 
 @login_required
@@ -260,6 +284,32 @@ def user_following_api(request, username):
         return JsonResponse({'error': 'This account is private.'}, status=403)
     users = profile_user.following.all()
     return JsonResponse({'users': _serialize_users(users)})
+
+@login_required
+def search_users(request):
+    """Search users by username or name (GET ?q=...)."""
+    query = request.GET.get('q', '').strip()
+    if not query:
+        return JsonResponse({'users': []})
+
+    users = User.objects.filter(
+        Q(username__icontains=query) |
+        Q(first_name__icontains=query) |
+        Q(last_name__icontains=query)
+    ).exclude(id=request.user.id)[:10]
+
+    results = [
+        {
+            'username': u.username,
+            'full_name': u.get_full_name() or u.username,
+            'profile_picture': u.profile_picture.url if u.profile_picture else None,
+            'status': u.status,
+            'profile_url': f'/social/user/{u.username}/',
+        }
+        for u in users
+    ]
+    return JsonResponse({'users': results})
+
 
 def _serialize_users(users):
     return [

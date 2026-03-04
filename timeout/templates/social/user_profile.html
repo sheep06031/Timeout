@@ -1,7 +1,9 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}@{{ profile_user.username }} - Timeout{% endblock %}
+{% block title %}
+  @{{ profile_user.username }} - Timeout
+{% endblock %}
 
 {% block extra_css %}
   <link rel="stylesheet" href="{% static 'css/profile.css' %}" />
@@ -11,7 +13,6 @@
   <div class="container mt-4">
     <div class="row">
       <div class="col-lg-8 mx-auto">
-
         <!-- Profile Header -->
         <div class="post-card mb-4">
           <div class="post-card-body">
@@ -30,20 +31,27 @@
                     <h3 class="m-0">@{{ profile_user.username }}</h3>
                     <span class="status-dot status-{{ profile_user.status }}"></span>
                     {% if profile_user.management_style %}
-                      <span class="badge bg-light text-dark">{% if profile_user.management_style == 'early_bird' %}🌅{% else %}🦉{% endif %} {{ profile_user.get_management_style_display }}</span>
+                      <span class="badge bg-light text-dark">
+                        {% if profile_user.management_style == 'early_bird' %}
+                          🌅
+                        {% else %}
+                          🦉
+                        {% endif %} {{ profile_user.get_management_style_display }}
+                      </span>
                     {% endif %}
                   </div>
                   {% if user != profile_user %}
                     <div class="d-flex gap-2 flex-shrink-0">
-                      <button class="btn btn-sm {% if is_following %}btn-secondary{% else %}btn-primary{% endif %} follow-btn"
-                              data-username="{{ profile_user.username }}"
-                              data-following="{{ is_following|yesno:'true,false' }}">
+                      <button class="btn btn-sm {% if is_following %}
+                          btn-secondary
+                        {% else %}
+                          btn-primary
+                        {% endif %} follow-btn"
+                        data-username="{{ profile_user.username }}"
+                        data-following="{{ is_following|yesno:'true,false' }}">
                         {{ is_following|yesno:'Unfollow,Follow' }}
                       </button>
-                      <a href="{% url 'start_conversation' profile_user.username %}"
-                         class="btn btn-sm btn-outline-secondary">
-                        💬 Message
-                      </a>
+                      <a href="{% url 'start_conversation' profile_user.username %}" class="btn btn-sm btn-outline-secondary">💬 Message</a>
                     </div>
                   {% endif %}
                 </div>
@@ -98,7 +106,6 @@
             </div>
           </div>
         {% endif %}
-
       </div>
     </div>
   </div>
@@ -111,50 +118,9 @@
 
 {% block extra_js %}
   <script>
-    const FOLLOWERS_URL = "{% url 'user_followers_api' profile_user.username %}";
-    const FOLLOWING_URL = "{% url 'user_following_api' profile_user.username %}";
+    const FOLLOWERS_URL = "{% url 'user_followers_api' profile_user.username %}"
+    const FOLLOWING_URL = "{% url 'user_following_api' profile_user.username %}"
   </script>
   <script src="{% static 'js/social.js' %}"></script>
-  <script>
-    function renderUserList(users) {
-      if (users.length === 0) return '<p class="text-center text-muted py-3">No users yet.</p>';
-      return users.map(u => `
-        <div class="user-item">
-          <a href="/social/user/${u.username}/" class="d-flex align-items-center gap-3 mb-3 text-decoration-none text-dark">
-            ${u.profile_picture
-              ? `<img src="${u.profile_picture}" class="rounded-circle" width="40" height="40" style="object-fit:cover;">`
-              : `<div class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center fw-bold" style="width:40px;height:40px;">${u.username[0].toUpperCase()}</div>`
-            }
-            <div>
-              <div class="fw-semibold">@${u.username}</div>
-              ${u.full_name ? `<div class="text-muted small">${u.full_name}</div>` : ''}
-            </div>
-          </a>
-        </div>
-      `).join('');
-    }
-
-    function setupModal(modalId, url, listId, searchAttr) {
-      document.getElementById(modalId)?.addEventListener('show.bs.modal', () => {
-        const input = document.querySelector(`[data-modal-search="${searchAttr}"]`);
-        input.value = '';
-        input.oninput = null;
-
-        fetch(url)
-          .then(r => r.json())
-          .then(data => {
-            document.getElementById(listId).innerHTML = renderUserList(data.users);
-            input.oninput = function () {
-              const query = this.value.toLowerCase().trim();
-              document.getElementById(listId).querySelectorAll('.user-item').forEach(item => {
-                item.style.display = item.textContent.replace(/\s+/g, ' ').toLowerCase().includes(query) ? '' : 'none';
-              });
-            };
-          });
-      });
-    }
-
-    setupModal('followersModal', FOLLOWERS_URL, 'followers-list', 'followers-list');
-    setupModal('followingModal', FOLLOWING_URL, 'following-list', 'following-list');
-  </script>
+  <script src="{% static 'js/user_profile.js' %}"></script>
 {% endblock %}

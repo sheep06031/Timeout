@@ -59,6 +59,76 @@
     </div>
   </div>
 
+  <!-- Focus Stats + Friends Leaderboard -->
+  <div class="row g-3 mb-3 align-items-stretch">
+    <!-- Focus Mode -->
+    <div class="col-12 col-lg-7">
+      <div class="chart-card h-100">
+        <div class="d-flex align-items-center justify-content-between mb-3">
+          <div>
+            <h3 class="mb-0">Focus Mode</h3>
+            <p class="text-muted small mb-0">Last 7 days</p>
+          </div>
+          <div class="d-flex align-items-center gap-2">
+            <div class="focus-inline-stats">
+              <span>{{ focus_total }} <span class="focus-inline-label">total</span></span>
+              <span class="focus-inline-sep">·</span>
+              <span>{{ focus_avg }} <span class="focus-inline-label">avg</span></span>
+            </div>
+            <span class="focus-session-pill">{{ focus_sessions_count }} session{{ focus_sessions_count|pluralize }}</span>
+          </div>
+        </div>
+
+        <!-- Daily grid -->
+        <div class="focus-days-grid mb-3">
+          {% for day in focus_daily %}
+            <div class="focus-day-item{% if day.is_today %} focus-day-today{% endif %}{% if day.seconds == 0 %} focus-day-empty{% endif %}">
+              <div class="fdi-label">{{ day.label }}</div>
+              <div class="fdi-date">{{ day.date }}</div>
+              <div class="fdi-time">{{ day.duration }}</div>
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Friends Leaderboard -->
+    <div class="col-12 col-lg-5 lb-col">
+      <div class="chart-card lb-card d-flex flex-column">
+        <h3 class="mb-3">This Week</h3>
+        {% if friend_leaderboard|length > 1 %}
+          <div class="lb-list">
+            {% for entry in friend_leaderboard %}
+              <div class="lb-row{% if entry.is_self %} lb-self{% endif %}">
+                <span class="lb-rank">
+                  {% if forloop.counter == 1 %}
+                    🥇
+                  {% elif forloop.counter == 2 %}
+                    🥈
+                  {% elif forloop.counter == 3 %}
+                    🥉
+                  {% else %}
+                    #{{ forloop.counter }}
+                  {% endif %}
+                </span>
+                {% if entry.is_self %}
+                  <span class="lb-name">You</span>
+                {% else %}
+                  <a class="lb-name lb-link" href="{% url 'user_profile' entry.user.username %}">{{ entry.user.username }}</a>
+                {% endif %}
+                <span class="lb-time">{{ entry.duration }}</span>
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="text-center py-4">
+            <p class="text-muted small mb-1">Follow friends to compare focus time!</p>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
   <!-- Charts Row -->
   <div class="row g-3 mb-3">
     <!-- Event Type Breakdown -->
@@ -145,21 +215,51 @@
   <script id="stats-data"
     data-type-labels="{% for label, count in type_counts.items %}
       {{ label }},
+
+
+
+
+
     {% endfor %}"
     data-type-counts="{% for label, count in type_counts.items %}
       {{ count }},
+
+
+
+
+
     {% endfor %}"
     data-weekly-labels="{% for w in weekly_data %}
       {{ w.label }},
+
+
+
+
+
     {% endfor %}"
     data-weekly-counts="{% for w in weekly_data %}
       {{ w.count }},
+
+
+
+
+
     {% endfor %}"
     data-monthly-labels="{% for m in monthly_data %}
       {{ m.label }},
+
+
+
+
+
     {% endfor %}"
     data-monthly-counts="{% for m in monthly_data %}
       {{ m.count }},
+
+
+
+
+
     {% endfor %}"></script>
   <script src="{% static 'js/statistics.js' %}"></script>
 {% endblock %}

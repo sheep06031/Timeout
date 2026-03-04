@@ -394,6 +394,48 @@
 
 .post-event-tag .event-date { font-size: 12px; color: var(--to-muted); font-weight: 500; }
 
+/* ── Focus stats ── */
+.focus-stat-box {
+  background: rgba(229, 62, 62, 0.06);
+  border: 1px solid rgba(229, 62, 62, 0.15);
+  border-radius: 12px;
+  padding: 10px 20px;
+  text-align: center;
+  min-width: 90px;
+}
+
+.focus-stat-value {
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: #e53e3e;
+  line-height: 1.2;
+}
+
+.focus-stat-label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--to-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-top: 2px;
+}
+
+/* ── Focus timer badge ── */
+.focus-timer-badge {
+  display: inline-flex;
+  align-items: center;
+  align-self: center;
+  gap: 4px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #e53e3e;
+  background: rgba(229, 62, 62, 0.10);
+  padding: 1px 8px;
+  border-radius: 999px;
+  border: 1px solid rgba(229, 62, 62, 0.20);
+  white-space: nowrap;
+}
+
 /* ── Mobile ── */
 @media (max-width: 575.98px) {
   .profile-avatar {

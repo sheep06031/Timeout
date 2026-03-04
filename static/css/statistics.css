@@ -105,8 +105,179 @@ canvas {
   flex-shrink: 0;
 }
 
+/* ── Focus session pill ── */
+.focus-session-pill {
+  background: rgba(229, 62, 62, 0.10);
+  color: #e53e3e;
+  border: 1px solid rgba(229, 62, 62, 0.20);
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 999px;
+}
+
+/* ── Focus daily grid ── */
+.focus-days-grid {
+  display: flex;
+  gap: 4px;
+}
+
+.focus-day-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 8px 4px;
+  border-radius: 8px;
+  background: rgba(229, 62, 62, 0.05);
+}
+
+.focus-day-today {
+  background: rgba(229, 62, 62, 0.12);
+}
+
+.focus-day-empty {
+  background: rgba(0, 0, 0, 0.03);
+}
+
+.fdi-label {
+  font-size: 0.6rem;
+  font-weight: 600;
+  color: #adb5bd;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.focus-day-today .fdi-label {
+  color: #e53e3e;
+}
+
+.fdi-date {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #495057;
+}
+
+.focus-day-today .fdi-date {
+  color: #e53e3e;
+  font-weight: 700;
+}
+
+.fdi-time {
+  font-size: 0.6rem;
+  font-weight: 600;
+  color: #e53e3e;
+  white-space: nowrap;
+}
+
+.focus-day-empty .fdi-time {
+  color: #dee2e6;
+}
+
+.focus-inline-stats {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #e53e3e;
+}
+
+.focus-inline-label {
+  font-size: 0.7rem;
+  font-weight: 500;
+  color: #adb5bd;
+  text-transform: uppercase;
+}
+
+.focus-inline-sep {
+  color: #dee2e6;
+}
+
+/* ── Friends leaderboard ── */
+.lb-list {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.lb-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border-radius: 6px;
+}
+
+.lb-self {
+  background: rgba(229, 62, 62, 0.07);
+}
+
+.lb-rank {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #adb5bd;
+  width: 24px;
+  flex-shrink: 0;
+  text-align: center;
+}
+
+.lb-self .lb-rank {
+  color: #e53e3e;
+}
+
+.lb-name {
+  flex: 1;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #495057;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lb-self .lb-name {
+  font-weight: 700;
+  color: #e53e3e;
+}
+
+.lb-time {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #6c757d;
+  white-space: nowrap;
+}
+
+.lb-self .lb-time {
+  color: #e53e3e;
+}
+
+.lb-link {
+  text-decoration: none;
+}
+
+.lb-link:hover {
+  text-decoration: underline;
+  color: #495057;
+}
+
+.lb-col {
+  position: relative;
+}
+
+.lb-card {
+  position: absolute;
+  inset: 0;
+}
+
+
 /* responsive */
 @media (max-width: 768px) {
   .stats-card-value { font-size: 1.5rem; }
   .chart-card       { padding: 1rem; }
+  .focus-day-time   { font-size: 0.6rem; }
 }

@@ -30,6 +30,14 @@
             <a class="nav-status-pill" href="{% url 'profile' %}">
               <span id="nav-status-dot" class="status-dot-nav status-{{ user.status }}"></span>
               <span id="nav-status-text">{{ user.get_status_display }}</span>
+              <span id="nav-focus-timer"
+                    {% if user.status == 'focus' and user.focus_started_at %}
+                      data-focus-started-at="{{ user.focus_started_at|date:'U' }}"
+                    {% else %}
+                      style="display:none"
+                    {% endif %}>
+                · ⏱ <span class="focus-timer-display">00:00</span>
+              </span>
             </a>
           </li>
 
