@@ -9,6 +9,7 @@ from django.views.decorators.http import require_POST
 from timeout.forms import PostForm, CommentForm
 from timeout.models import Post, Comment, Like, Bookmark, User, Conversation, FocusSession
 from timeout.services import FeedService
+from timeout.views.profile import get_profile_event
 
 
 
@@ -179,11 +180,15 @@ def user_profile(request, username):
         is_following
     )
 
+    event, event_status = get_profile_event(profile_user) if can_view else (None, None)
+
     context = {
         'profile_user': profile_user,
         'posts': posts,
         'is_following': is_following,
         'can_view': can_view,
+        'event': event,
+        'event_status': event_status,
     }
     return render(request, 'social/user_profile.html', context)
 

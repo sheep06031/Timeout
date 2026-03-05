@@ -87,6 +87,48 @@
           </div>
         </div>
 
+        <!-- Schedule -->
+        {% if can_view %}
+          <div class="post-card mb-4">
+            <div class="post-card-body">
+              <div class="post-header">
+                <div><h4 class="m-0">Schedule</h4></div>
+              </div>
+              {% if event %}
+                <div class="schedule-row">
+                  <div class="schedule-status-bar bar-{{ event_status }}"></div>
+                  <div class="schedule-content">
+                    <div class="d-flex align-items-center gap-2 mb-2">
+                      {% if event_status == 'active' %}
+                        <span class="schedule-badge badge-active">🟢 In Progress</span>
+                      {% elif event_status == 'upcoming' %}
+                        <span class="schedule-badge badge-upcoming">🔵 Up Next</span>
+                      {% else %}
+                        <span class="schedule-badge badge-recent">⚪ Just Ended</span>
+                      {% endif %}
+                      <span class="cal-chip cal-chip--{{ event.event_type }}">{{ event.get_event_type_display }}</span>
+                    </div>
+                    <p class="post-content mb-1">{{ event.title }}</p>
+                    {% if event.is_all_day %}
+                      <p class="post-time">📅 All Day</p>
+                    {% else %}
+                      <p class="post-time">🕐 {{ event.start_datetime|date:'H:i' }} – {{ event.end_datetime|date:'H:i' }}</p>
+                    {% endif %}
+                    {% if event.location %}
+                      <p class="post-time">📍 {{ event.location }}</p>
+                    {% endif %}
+                    {% if event.description %}
+                      <p class="post-time">💬 {{ event.description|truncatechars:50 }}</p>
+                    {% endif %}
+                  </div>
+                </div>
+              {% else %}
+                <p class="post-content" style="color: var(--to-muted);">No upcoming schedule</p>
+              {% endif %}
+            </div>
+          </div>
+        {% endif %}
+
         <!-- Posts -->
         {% if can_view %}
           <h4 class="mb-3">Posts</h4>
