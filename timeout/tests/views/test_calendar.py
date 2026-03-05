@@ -199,6 +199,39 @@ class CalendarViewRecurringEventTests(TestCase):
         feb28_days = [d for d in all_days if d["date"] == date(2025, 2, 28)]
         self.assertTrue(any(feb28_days[0]["events"]))
 
+    def test_monthly_recurrence_crosses_year_boundary(self):
+        """
+        Monthly event starting in December, viewed in January.
+        The expansion loop goes: start Dec 15 → month_num=13 → triggers
+        the `if month_num > 12: month_num=1; year_num+=1` branch (lines 112-113).
+        """
+        ev = self._make_event(
+            title="Dec Monthly",
+            start_datetime=timezone.make_aware(datetime(2024, 12, 15, 9, 0)),
+            end_datetime=timezone.make_aware(datetime(2024, 12, 15, 10, 0)),
+            recurrence="monthly",
+        )
+        # Sanity: the event exists and is for the right user
+        self.assertEqual(Event.objects.filter(title="Dec Monthly", creator=self.user).count(), 1)
+
+        # View January 2025 – the grid's last_visible will be ~Feb 2, 2025.
+        # Expansion: current_date starts at Dec 15.  month+1 = 13 → Jan 15.
+        # Jan 15 <= last_visible → pseudo-event created.
+        resp = self.client.get(self.url, {"year": 2025, "month": 1})
+        self.assertEqual(resp.status_code, 200)
+
+        all_days = [d for week in resp.context["weeks"] for d in week]
+        jan15_cells = [d for d in all_days if d["date"] == date(2025, 1, 15)]
+        self.assertEqual(len(jan15_cells), 1, "Jan 15 should appear exactly once in the grid")
+
+        # The pseudo-event for the monthly recurrence should be on Jan 15
+        jan15_events = jan15_cells[0]["events"]
+        self.assertGreaterEqual(
+            len(jan15_events), 1,
+            f"Expected recurring event on Jan 15 but got {jan15_events}. "
+            f"Event recurrence={ev.recurrence}, start={ev.start_datetime}"
+        )
+
     def test_yearly_global_event_shown_in_current_year(self):
         """Yearly global events get their year replaced to the visible year."""
         self._make_event(
