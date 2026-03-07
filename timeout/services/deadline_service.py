@@ -115,4 +115,4 @@ def _format_elapsed(td):
     if minutes > 0:
         return f"Added {minutes} min ago"
 
-    return "Added just now"
+    return "Added just now" 
