@@ -1,52 +1,60 @@
 {% extends "base.html" %}
 {% load static %}
-{% block title %}Edit Note - Timeout{% endblock %}
+
+{% block title %}Edit Note — Timeout{% endblock %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="{% static 'css/notes-styles.css' %}">
+<link rel="stylesheet" href="{% static 'css/notes.css' %}">
 {% endblock %}
 
 {% block content %}
-<div class="container mt-4 notes-page">
-    <div class="row">
-        <div class="col-lg-8 mx-auto">
+<div class="nt-page">
+  <div class="nt-card">
 
-            <div class="notes-header">
-                <h2>Edit Note</h2>
-                <a href="{% url 'notes' %}" class="btn btn-neptune-outline">← Back to Notes</a>
-            </div>
-
-            <div class="notes-create-card">
-                <div class="card-body">
-                    <form method="post" action="{% url 'note_edit' note.id %}">
-                        {% csrf_token %}
-                        <div class="mb-3">
-                            <label class="form-label">Title</label>
-                            {{ form.title }}
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Content</label>
-                            {{ form.content }}
-                        </div>
-                        <div class="row mb-3">
-                            <div class="col-md-6">
-                                <label class="form-label">Category</label>
-                                {{ form.category }}
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label">Link to Event</label>
-                                {{ form.event }}
-                            </div>
-                        </div>
-                        <div class="d-flex gap-2">
-                            <button type="submit" class="btn btn-neptune">Save Changes</button>
-                            <a href="{% url 'notes' %}" class="btn btn-neptune-outline">Cancel</a>
-                        </div>
-                    </form>
-                </div>
-            </div>
-
-        </div>
+    <!-- Toolbar -->
+    <div class="nt-toolbar">
+      <div class="nt-toolbar__left">
+        <h1 class="nt-title">Edit Note</h1>
+      </div>
+      <div>
+        <a href="{% url 'notes' %}" class="nt-action-btn">&#8592; Back to Notes</a>
+      </div>
     </div>
+
+    <!-- Edit Form -->
+    <div class="nt-edit-body">
+      <form method="post" action="{% url 'note_edit' note.id %}">
+        {% csrf_token %}
+
+        <div class="mb-3">
+          <label for="id_title" class="form-label">Title</label>
+          {{ form.title }}
+        </div>
+
+        <div class="mb-3">
+          <label for="id_content" class="form-label">Content</label>
+          {{ form.content }}
+        </div>
+
+        <div class="row g-3 mb-4">
+          <div class="col-md-6">
+            <label for="id_category" class="form-label">Category</label>
+            {{ form.category }}
+          </div>
+          <div class="col-md-6">
+            <label for="id_event" class="form-label">Link to Event</label>
+            {{ form.event }}
+          </div>
+        </div>
+
+        <div class="d-flex gap-2">
+          <button type="submit" class="btn nt-modal-submit">Save Changes</button>
+          <a href="{% url 'notes' %}" class="btn btn-light">Cancel</a>
+        </div>
+
+      </form>
+    </div>
+
+  </div>
 </div>
 {% endblock %}
