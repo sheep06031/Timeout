@@ -314,6 +314,28 @@ body {
     text-decoration: none;
 }
 
+/* Navbar mobile */
+@media (max-width: 991.98px) {
+    .timeout-nav .navbar-collapse {
+        padding: 0.5rem 0 0.75rem;
+        border-top: 1px solid rgba(91, 115, 232, 0.10);
+        margin-top: 0.5rem;
+    }
+
+    .timeout-nav .navbar-nav .nav-link {
+        padding: 10px 12px !important;
+        border-radius: 10px;
+    }
+
+    .timeout-nav .navbar-nav.align-items-center {
+        align-items: flex-start !important;
+    }
+}
+
+/* Navbar desktop: nav-topbar-user를 오른쪽 끝으로 */
+@media (min-width: 992px) {
+    .nav-topbar-user { order: 10; }
+}
 
 /* -------------------------------------------------------------
    Status Dots & Badges (used app-wide)

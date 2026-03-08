@@ -2,7 +2,29 @@
 <nav class="navbar navbar-expand-lg sticky-top timeout-nav">
   <div class="container">
     <a class="navbar-brand" href="{% url 'landing' %}">Timeout</a>
+
+    {% if user.is_authenticated %}
+      <!-- Always-visible: status pill + username (모바일 topbar / 데스크톱 order:10) -->
+      <div class="nav-topbar-user d-flex align-items-center gap-2">
+        <a class="nav-status-pill" href="{% url 'profile' %}">
+          <span id="nav-status-dot" class="status-dot-nav status-{{ user.status }}"></span>
+          <span id="nav-status-text">{{ user.get_status_display }}</span>
+          <span id="nav-focus-timer"
+                {% if user.status == 'focus' and user.focus_started_at %}
+                  data-focus-started-at="{{ user.focus_started_at|date:'U' }}"
+                {% else %}
+                  style="display:none"
+                {% endif %}>
+            · ⏱ <span class="focus-timer-display">00:00</span>
+          </span>
+        </a>
+        <a class="nav-link nav-user-btn" href="{% url 'profile' %}">{{ user.username }}</a>
+        <a class="nav-link nav-logout-btn d-none d-lg-block" href="{% url 'logout' %}">Logout</a>
+      </div>
+    {% endif %}
+
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"><span class="navbar-toggler-icon"></span></button>
+
     <div class="collapse navbar-collapse" id="navbarNav">
       <ul class="navbar-nav me-auto gap-1">
         {% if user.is_authenticated %}
@@ -25,26 +47,7 @@
       </ul>
       <ul class="navbar-nav align-items-center gap-2">
         {% if user.is_authenticated %}
-          <!-- Status indicator — click goes to profile to change -->
-          <li class="nav-item">
-            <a class="nav-status-pill" href="{% url 'profile' %}">
-              <span id="nav-status-dot" class="status-dot-nav status-{{ user.status }}"></span>
-              <span id="nav-status-text">{{ user.get_status_display }}</span>
-              <span id="nav-focus-timer"
-                    {% if user.status == 'focus' and user.focus_started_at %}
-                      data-focus-started-at="{{ user.focus_started_at|date:'U' }}"
-                    {% else %}
-                      style="display:none"
-                    {% endif %}>
-                · ⏱ <span class="focus-timer-display">00:00</span>
-              </span>
-            </a>
-          </li>
-
-          <li class="nav-item">
-            <a class="nav-link nav-user-btn" href="{% url 'profile' %}">{{ user.username }}</a>
-          </li>
-          <li class="nav-item">
+          <li class="nav-item d-lg-none">
             <a class="nav-link nav-logout-btn" href="{% url 'logout' %}">Logout</a>
           </li>
         {% else %}
