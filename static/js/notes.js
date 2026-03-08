@@ -1,5 +1,4 @@
-/* Notes page — pin toggle
-   ========================================================================= */
+/* Notes page*/
 
 function getCsrfToken() {
   for (const cookie of document.cookie.split(';')) {
