@@ -8,3 +8,4 @@ requests
 pyJWT
 cryptography
 python-dotenv
+openai
