@@ -1,4 +1,4 @@
-/* Notes page*/
+/* Notes page */
 
 function getCsrfToken() {
   for (const cookie of document.cookie.split(';')) {
@@ -9,11 +9,11 @@ function getCsrfToken() {
 }
 
 function updatePinIcon(item, pinned) {
-  const header = item.querySelector('.nt-item__header');
-  const existing = header.querySelector('.nt-pin-icon');
+  const header = item.querySelector('.note-header');
+  const existing = header.querySelector('.pin-icon');
   if (pinned && !existing) {
     const icon = document.createElement('span');
-    icon.className = 'nt-pin-icon';
+    icon.className = 'pin-icon';
     icon.title = 'Pinned';
     icon.textContent = '\uD83D\uDCCC';
     header.insertBefore(icon, header.firstChild);

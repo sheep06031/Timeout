@@ -8,34 +8,25 @@
 {% endblock %}
 
 {% block content %}
-<div class="nt-page">
-  <div class="nt-card">
+<div class="notes-page">
+  <div class="notes-card">
 
-    <!-- Toolbar -->
-    <div class="nt-toolbar">
-      <div class="nt-toolbar__left">
-        <h1 class="nt-title">Edit Note</h1>
-      </div>
-      <div>
-        <a href="{% url 'notes' %}" class="nt-action-btn">&#8592; Back to Notes</a>
-      </div>
+    <div class="notes-toolbar">
+      <h1 class="notes-title">Edit Note</h1>
+      <a href="{% url 'notes' %}" class="note-btn">&#8592; Back</a>
     </div>
 
-    <!-- Edit Form -->
-    <div class="nt-edit-body">
+    <div class="p-4">
       <form method="post" action="{% url 'note_edit' note.id %}">
         {% csrf_token %}
-
         <div class="mb-3">
           <label for="id_title" class="form-label">Title</label>
           {{ form.title }}
         </div>
-
         <div class="mb-3">
           <label for="id_content" class="form-label">Content</label>
           {{ form.content }}
         </div>
-
         <div class="row g-3 mb-4">
           <div class="col-md-6">
             <label for="id_category" class="form-label">Category</label>
@@ -46,12 +37,10 @@
             {{ form.event }}
           </div>
         </div>
-
         <div class="d-flex gap-2">
-          <button type="submit" class="btn nt-modal-submit">Save Changes</button>
+          <button type="submit" class="btn submit-btn">Save Changes</button>
           <a href="{% url 'notes' %}" class="btn btn-light">Cancel</a>
         </div>
-
       </form>
     </div>
 

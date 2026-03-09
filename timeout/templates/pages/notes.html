@@ -8,104 +8,73 @@
 {% endblock %}
 
 {% block content %}
-<div class="nt-page">
-  <div class="nt-card">
+<div class="notes-page">
+  <div class="notes-card">
 
-    <!-- Toolbar -->
-    <div class="nt-toolbar">
-      <div class="nt-toolbar__left">
-        <h1 class="nt-title">Notes</h1>
-        {% if notes %}
-          <span class="nt-count">{{ notes|length }}</span>
-        {% endif %}
+    <div class="notes-toolbar">
+      <div class="d-flex align-items-center gap-2">
+        <h1 class="notes-title">Notes</h1>
+        {% if notes %}<span class="notes-count">{{ notes|length }}</span>{% endif %}
       </div>
-      <div>
-        <button class="nt-add-btn" data-bs-toggle="modal" data-bs-target="#newNoteModal">
-          + <span class="nt-add-label">New Note</span>
-        </button>
-      </div>
+      <button class="add-btn" data-bs-toggle="modal" data-bs-target="#newNoteModal">
+        + <span class="add-label">New Note</span>
+      </button>
     </div>
 
-    <!-- Search & Filter -->
-    <form method="get" action="{% url 'notes' %}" class="nt-filter">
-      <input
-        type="text"
-        name="q"
-        class="nt-search"
-        placeholder="Search notes..."
-        value="{{ search_query }}"
-      >
-      <select name="category" class="nt-select" onchange="this.form.submit()">
+    <form method="get" action="{% url 'notes' %}" class="notes-filter">
+      <input type="text" name="q" class="search-input" placeholder="Search notes..." value="{{ search_query }}">
+      <select name="category" class="filter-select" onchange="this.form.submit()">
         <option value="">All categories</option>
         {% for value, label in categories %}
-          <option value="{{ value }}" {% if active_category == value %}selected{% endif %}>
-            {{ label }}
-          </option>
+          <option value="{{ value }}" {% if active_category == value %}selected{% endif %}>{{ label }}</option>
         {% endfor %}
       </select>
       {% if search_query %}
-        <button type="submit" class="nt-search-btn">Search</button>
+        <button type="submit" class="search-btn">Search</button>
       {% endif %}
     </form>
 
-    <!-- Notes List -->
-    <div class="nt-list">
+    <div>
       {% if notes %}
         {% for note in notes %}
-          <div class="nt-item nt-item--{{ note.category }}" id="note-{{ note.id }}">
+          <div class="note-row note-row-{{ note.category }}" id="note-{{ note.id }}">
 
-            <div class="nt-item__body">
-              <div class="nt-item__header">
-                {% if note.is_pinned %}
-                  <span class="nt-pin-icon" title="Pinned">&#128204;</span>
-                {% endif %}
-                <span class="nt-item__title">{{ note.title }}</span>
-                <span class="nt-cat-tag nt-cat-tag--{{ note.category }}">
-                  {{ note.get_category_display }}
-                </span>
+            <div class="flex-grow-1">
+              <div class="note-header d-flex align-items-center gap-2 mb-1">
+                {% if note.is_pinned %}<span class="pin-icon" title="Pinned">&#128204;</span>{% endif %}
+                <span class="note-title">{{ note.title }}</span>
+                <span class="note-tag note-tag-{{ note.category }}">{{ note.get_category_display }}</span>
               </div>
-
-              <p class="nt-item__preview">{{ note.content|truncatewords:20 }}</p>
-
-              <div class="nt-item__meta">
-                <span class="nt-meta">{{ note.updated_at|timesince }} ago</span>
+              <p class="note-preview">{{ note.content|truncatewords:20 }}</p>
+              <div class="d-flex align-items-center gap-3">
+                <span class="note-meta">{{ note.updated_at|timesince }} ago</span>
                 {% if note.event %}
-                  <span class="nt-meta nt-meta--event">&#128197; {{ note.event.title }}</span>
+                  <span class="note-meta note-meta-event">&#128197; {{ note.event.title }}</span>
                 {% endif %}
               </div>
             </div>
 
-            <div class="nt-item__actions">
-              <button
-                class="nt-action-btn"
-                onclick="togglePin({{ note.id }}, this)"
-                data-pinned="{{ note.is_pinned|yesno:'true,false' }}"
-              >
+            <div class="note-actions">
+              <button class="note-btn" onclick="togglePin({{ note.id }}, this)" data-pinned="{{ note.is_pinned|yesno:'true,false' }}">
                 {{ note.is_pinned|yesno:"Unpin,Pin" }}
               </button>
-              <a href="{% url 'note_edit' note.id %}" class="nt-action-btn">Edit</a>
-              <form method="post" action="{% url 'note_delete' note.id %}" class="nt-delete-form">
+              <a href="{% url 'note_edit' note.id %}" class="note-btn">Edit</a>
+              <form method="post" action="{% url 'note_delete' note.id %}" class="d-inline">
                 {% csrf_token %}
-                <button
-                  type="submit"
-                  class="nt-action-btn nt-action-btn--danger"
-                  onclick="return confirm('Delete this note?')"
-                >Delete</button>
+                <button type="submit" class="note-btn note-btn-delete" onclick="return confirm('Delete this note?')">Delete</button>
               </form>
             </div>
 
           </div>
         {% endfor %}
       {% else %}
-        <div class="nt-empty">
+        <div class="d-flex flex-column align-items-center py-5 gap-3">
           <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
             <rect x="8" y="4" width="32" height="40" rx="4" stroke="#c8cfe0" stroke-width="2"/>
             <path d="M16 16h16M16 22h16M16 28h10" stroke="#c8cfe0" stroke-width="2" stroke-linecap="round"/>
           </svg>
-          <p class="nt-empty__text">No notes yet &mdash; create your first one!</p>
-          <button class="nt-add-btn" data-bs-toggle="modal" data-bs-target="#newNoteModal">
-            + New Note
-          </button>
+          <p class="text-secondary small mb-0">No notes yet &mdash; create your first one!</p>
+          <button class="add-btn" data-bs-toggle="modal" data-bs-target="#newNoteModal">+ New Note</button>
         </div>
       {% endif %}
     </div>
@@ -113,7 +82,6 @@
   </div>
 </div>
 
-<!-- New Note Modal -->
 <div class="modal fade" id="newNoteModal" tabindex="-1" aria-labelledby="newNoteLabel" aria-hidden="true">
   <div class="modal-dialog">
     <div class="modal-content">
@@ -126,13 +94,11 @@
         <div class="modal-body">
           <div class="mb-3">
             <label for="noteTitle" class="form-label">Title</label>
-            <input type="text" class="form-control" id="noteTitle" name="title"
-                   placeholder="Note title" required maxlength="200">
+            <input type="text" class="form-control" id="noteTitle" name="title" placeholder="Note title" required maxlength="200">
           </div>
           <div class="mb-3">
             <label for="noteContent" class="form-label">Content</label>
-            <textarea class="form-control" id="noteContent" name="content" rows="5"
-                      placeholder="Write your note here..." maxlength="5000" required></textarea>
+            <textarea class="form-control" id="noteContent" name="content" rows="5" placeholder="Write your note here..." maxlength="5000" required></textarea>
           </div>
           <div class="row g-3">
             <div class="col-6">
@@ -151,17 +117,14 @@
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
-          <button type="submit" class="btn nt-modal-submit">Create Note</button>
+          <button type="submit" class="btn submit-btn">Create Note</button>
         </div>
       </form>
     </div>
   </div>
 </div>
 
-<!-- Mobile FAB -->
-<button class="nt-fab" data-bs-toggle="modal" data-bs-target="#newNoteModal" aria-label="New note">
-  +
-</button>
+<button class="fab" data-bs-toggle="modal" data-bs-target="#newNoteModal" aria-label="New note">+</button>
 
 {% endblock %}
 
