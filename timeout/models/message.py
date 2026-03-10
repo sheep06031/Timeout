@@ -1,5 +1,7 @@
 from django.conf import settings
 from django.db import models
+from timeout.models.notification import Notification
+
 
 
 class Conversation(models.Model):

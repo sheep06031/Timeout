@@ -1,5 +1,9 @@
 from django.conf import settings
 from django.db import models
+from timeout.models.notification import Notification
+from django.dispatch import receiver
+from django.db.models.signals import post_save
+
 
 
 class Comment(models.Model):
@@ -49,3 +53,28 @@ class Comment(models.Model):
         if not user.is_authenticated:
             return False
         return self.author == user or user.is_staff
+
+@receiver(post_save, sender=Comment)
+def create_comment_notification(sender, instance, created, **kwargs):
+    """
+    Send notification to post author when someone comments,
+    or to parent comment author if it's a reply.
+    """
+    if created:
+        # Notify post author if not self
+        if instance.post.author != instance.author:
+            Notification.objects.create(
+                user=instance.post.author,
+                title=f"{instance.author.username} commented on your post",
+                message=f"{instance.author.username} commented on your post #{instance.post.id}",
+                type=Notification.Type.MESSAGE  # you can create a COMMENT type if desired
+            )
+
+        # Notify parent comment author if this is a reply
+        if instance.parent and instance.parent.author != instance.author:
+            Notification.objects.create(
+                user=instance.parent.author,
+                title=f"{instance.author.username} replied to your comment",
+                message=f"{instance.author.username} replied to your comment on post #{instance.post.id}",
+                type=Notification.Type.MESSAGE  # you can also create a REPLY type
+            )

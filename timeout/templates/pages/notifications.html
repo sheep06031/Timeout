@@ -1,36 +1,93 @@
 {% extends "base.html" %}
 {% load humanize %}
-{% block title %}Notifications — Timeout{% endblock %}
+{% load static %}
+
+{% block title %}Notifications – Timeout{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/notifications.css' %}">
+{% endblock %}
 
 {% block content %}
-<div class="container mt-4">
-    <h1>Notifications</h1>
-    <ul class="list-group">
-        {% for n in notifications %}
-        <li class="list-group-item {% if not n.is_read %}list-group-item-warning{% endif %}">
-            <strong>{{ n.title }}</strong>
-            <p>{{ n.message }}</p>
-            <small>{{ n.created_at|naturaltime }}</small>
-            {% if not n.is_read %}
-            <button class="btn btn-sm btn-outline-primary mark-read-btn" data-id="{{ n.id }}">Mark as read</button>
-            {% endif %}
-        </li>
-        {% empty %}
-        <li class="list-group-item">No notifications</li>
-        {% endfor %}
-    </ul>
+
+<div class="mb-4">
+    <h1 class="mb-1">Notifications</h1>
+    <p class="text-muted mb-0">Stay updated with messages and deadlines</p>
+</div>
+
+<div class="chart-card">
+
+{% if notifications %}
+
+<div class="notifications-list">
+
+{% for n in notifications %}
+
+<div class="notification-item {% if not n.is_read %}notification-unread{% endif %}">
+
+    <div class="notification-main">
+
+        <div class="notification-title">
+            {{ n.title }}
+        </div>
+
+        <div class="notification-message">
+            {{ n.message }}
+        </div>
+
+        <div class="notification-time">
+            {{ n.created_at|naturaltime }}
+        </div>
+
+    </div>
+
+    {% if not n.is_read %}
+    <button class="mark-read-btn btn btn-sm btn-outline-primary"
+        data-id="{{ n.id }}">
+        Mark read
+    </button>
+    {% endif %}
+
+</div>
+
+{% endfor %}
+
+</div>
+
+{% else %}
+
+<div class="text-center py-4">
+    <p class="text-muted mb-1">No notifications yet</p>
+</div>
+
+{% endif %}
+
 </div>
 
 <script>
 document.querySelectorAll('.mark-read-btn').forEach(btn => {
+
     btn.addEventListener('click', () => {
-        fetch('/notifications/read/' + btn.dataset.id + '/')
-            .then(res => res.json())
-            .then(data => {
-                if (data.success) btn.closest('li').classList.remove('list-group-item-warning');
-                btn.remove();
-            });
-    });
-});
+
+        fetch(`/notifications/read/${btn.dataset.id}/`)
+        .then(res => res.json())
+        .then(data => {
+
+            if (data.success) {
+
+                const notification = btn.closest('.notification-item')
+
+                notification.classList.remove('notification-unread')
+
+                btn.remove()
+
+            }
+
+        })
+
+    })
+
+})
 </script>
+
 {% endblock %}

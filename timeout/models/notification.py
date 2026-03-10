@@ -8,6 +8,11 @@ class Notification(models.Model):
     class Type(models.TextChoices):
         DEADLINE = "deadline", "Deadline"
         EVENT = "event", "Event"
+        MESSAGE = "message", "Message"
+        LIKE = "like", "Like"
+        COMMENT = "comment", "Comment"
+        BOOKMARK = "bookmark", "Bookmark"
+        FOLLOW = "follow", "Follow"
 
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,

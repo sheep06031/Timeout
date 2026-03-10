@@ -1,5 +1,7 @@
 from django.conf import settings
 from django.db import models
+from timeout.models.notification import Notification
+from django.dispatch import receiver
 
 
 class Bookmark(models.Model):
@@ -26,3 +28,13 @@ class Bookmark(models.Model):
 
     def __str__(self):
         return f'{self.user.username} bookmarked {self.post.id}'
+        
+@receiver(models.signals.post_save, sender=Bookmark)
+def create_bookmark_notification(sender, instance, created, **kwargs):
+    if created and instance.post.author != instance.user:
+        Notification.objects.create(
+            user=instance.post.author,
+            title="New Bookmark",
+            message=f"{instance.user.username} bookmarked your post",
+            type=Notification.Type.BOOKMARK,
+        )

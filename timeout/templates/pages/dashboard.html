@@ -3,50 +3,6 @@
 
 {% block title %}Dashboard - Timeout{% endblock %}
 
-{% block content %}
-<div class="container py-4">
-    <h1>Welcome back, {{ request.user.first_name|default:request.user.username }}!</h1>
-    <p class="text-muted">Here's your dashboard overview.</p>
-
-    <div class="row g-4 mt-2">
-        <div class="col-md-4">
-            <div class="card h-100">
-                <div class="card-body">
-                    <h5 class="card-title">Upcoming Events</h5>
-                    <p class="card-text text-muted">No upcoming events.</p>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-4">
-            <div class="card h-100">
-                <div class="card-body">
-                    <h5 class="card-title">Recent Activity</h5>
-                    <p class="card-text text-muted">Nothing new yet.</p>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-4">
-            <div class="card h-100">
-                <div class="card-body">
-                    <h5 class="card-title">Quick Links</h5>
-                    <ul class="list-unstyled mb-0">
-                        <li><a href="{% url 'calendar' %}">Calendar</a></li>
-                        <li><a href="{% url 'social_feed' %}">Social Feed</a></li>
-                        <li><a href="{% url 'profile' %}">Profile</a></li>
-                        <li><a href="{% url 'notifications' %}" class="position-relative text-decoration-none">
-                            🔔 Notifications
-                            {% if unread_count > 0 %}
-                                <span class="badge bg-danger position-absolute top-0 start-100 translate-middle">
-                                    {{ unread_count }}
-                                </span>
-                            {% endif %}
-                        </a></li>
-                    </ul>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
 {% endblock %}
@@ -61,208 +17,309 @@
         <h1>{{ greeting }}, {{ request.user.first_name|default:request.user.username }}!</h1>
         <p>Here's what's happening today.</p>
       </div>
+
       <div class="dash-quick-actions">
         <a href="{% url 'calendar' %}" class="dash-action-btn dash-action--event">
           <span class="dash-action-icon">+</span> New Event
         </a>
+
         <a href="{% url 'notes' %}" class="dash-action-btn dash-action--note">
           <span class="dash-action-icon">+</span> New Note
         </a>
+
         <a href="{% url 'social_feed' %}" class="dash-action-btn dash-action--post">
           <span class="dash-action-icon">+</span> New Post
         </a>
       </div>
     </div>
 
-    <!-- Focus Stats Bar -->
+    <!-- Focus Stats -->
     <div class="dash-focus-strip">
+
       <div class="dash-focus-stat">
         <span class="dash-focus-label">This Week</span>
         <span class="dash-focus-value">{{ focus_total }}</span>
       </div>
+
       <div class="dash-focus-divider"></div>
+
       <div class="dash-focus-stat">
         <span class="dash-focus-label">Daily Avg</span>
         <span class="dash-focus-value">{{ focus_avg }}</span>
       </div>
+
       <div class="dash-focus-divider"></div>
+
       <div class="dash-focus-stat">
         <span class="dash-focus-label">Sessions</span>
         <span class="dash-focus-value">{{ focus_sessions_count }}</span>
       </div>
+
       <div class="dash-focus-divider"></div>
+
       <div class="dash-focus-chart">
         {% for day in focus_daily %}
-          <div class="dash-focus-bar-wrap" title="{{ day.label }}: {{ day.duration }}">
-            <div class="dash-focus-bar {% if day.is_today %}dash-focus-bar--today{% endif %}"
-                 style="height: {% widthratio day.seconds focus_max_seconds 32 %}px; min-height: 3px;">
-            </div>
-            <span class="dash-focus-day">{{ day.label }}</span>
+        <div class="dash-focus-bar-wrap" title="{{ day.label }}: {{ day.duration }}">
+          <div class="dash-focus-bar {% if day.is_today %}dash-focus-bar--today{% endif %}"
+               style="height: {% widthratio day.seconds focus_max_seconds 32 %}px; min-height:3px;">
           </div>
+          <span class="dash-focus-day">{{ day.label }}</span>
+        </div>
         {% endfor %}
       </div>
-      <a href="{% url 'statistics' %}" class="dash-focus-link">View Stats &rarr;</a>
+
+      <a href="{% url 'statistics' %}" class="dash-focus-link">View Stats →</a>
+
     </div>
 
-    <!-- Main Grid -->
+
+    <!-- Dashboard Grid -->
     <div class="dash-grid">
 
       <!-- Upcoming Events -->
       <div class="dash-card dash-card--events">
+
         <div class="dash-card-header">
-          <span class="dash-card-icon">&#128197;</span>
+          <span class="dash-card-icon">📅</span>
           <h3 class="dash-card-title">Upcoming Events</h3>
           <a href="{% url 'calendar' %}" class="dash-card-more">View all</a>
         </div>
+
         <div class="dash-card-body">
+
           {% if upcoming_events %}
             {% for event in upcoming_events %}
-              <a href="{% url 'calendar' %}?open_event={{ event.id }}&year={{ event.start_datetime|date:'Y' }}&month={{ event.start_datetime|date:'n' }}"
-                 class="dash-event-item">
-                <div class="dash-event-type dash-event-type--{{ event.event_type }}"></div>
-                <div class="dash-event-info">
-                  <span class="dash-event-title">{{ event.title }}</span>
-                  <span class="dash-event-time">{{ event.start_datetime|date:"D, d M · H:i" }}</span>
-                </div>
-              </a>
+
+            <a href="{% url 'calendar' %}?open_event={{ event.id }}&year={{ event.start_datetime|date:'Y' }}&month={{ event.start_datetime|date:'n' }}"
+               class="dash-event-item">
+
+              <div class="dash-event-type dash-event-type--{{ event.event_type }}"></div>
+
+              <div class="dash-event-info">
+                <span class="dash-event-title">{{ event.title }}</span>
+                <span class="dash-event-time">
+                  {{ event.start_datetime|date:"D, d M · H:i" }}
+                </span>
+              </div>
+
+            </a>
+
             {% endfor %}
           {% else %}
+
             <p class="dash-empty">No upcoming events</p>
+
           {% endif %}
+
         </div>
       </div>
+
 
       <!-- Deadlines -->
       <div class="dash-card dash-card--deadlines">
+
         <div class="dash-card-header">
-          <span class="dash-card-icon">&#9200;</span>
+          <span class="dash-card-icon">⏰</span>
           <h3 class="dash-card-title">Deadlines</h3>
           <a href="{% url 'deadline_list' %}" class="dash-card-more">View all</a>
         </div>
+
         <div class="dash-card-body">
+
           {% if deadlines %}
+
             {% for dl in deadlines %}
-              <div class="dash-deadline-item dash-deadline--{{ dl.urgency_status }}">
-                <div class="dash-deadline-info">
-                  <span class="dash-deadline-title">{{ dl.event.title }}</span>
-                  <span class="dash-deadline-time">{{ dl.time_remaining_display }}</span>
-                </div>
-                <span class="dash-deadline-badge dash-deadline-badge--{{ dl.urgency_status }}">
-                  {% if dl.urgency_status == 'overdue' %}Overdue{% elif dl.urgency_status == 'urgent' %}Urgent{% else %}On Track{% endif %}
-                </span>
+
+            <div class="dash-deadline-item dash-deadline--{{ dl.urgency_status }}">
+
+              <div class="dash-deadline-info">
+                <span class="dash-deadline-title">{{ dl.event.title }}</span>
+                <span class="dash-deadline-time">{{ dl.time_remaining_display }}</span>
               </div>
+
+              <span class="dash-deadline-badge dash-deadline-badge--{{ dl.urgency_status }}">
+
+                {% if dl.urgency_status == 'overdue' %}
+                  Overdue
+                {% elif dl.urgency_status == 'urgent' %}
+                  Urgent
+                {% else %}
+                  On Track
+                {% endif %}
+
+              </span>
+
+            </div>
+
             {% endfor %}
+
           {% else %}
+
             <p class="dash-empty">No active deadlines</p>
+
           {% endif %}
+
         </div>
       </div>
 
-      <!-- Recent Notes -->
+
+      <!-- Notes -->
       <div class="dash-card dash-card--notes">
+
         <div class="dash-card-header">
-          <span class="dash-card-icon">&#128221;</span>
+          <span class="dash-card-icon">📝</span>
           <h3 class="dash-card-title">Recent Notes</h3>
           <a href="{% url 'notes' %}" class="dash-card-more">View all</a>
         </div>
+
         <div class="dash-card-body">
+
           {% if recent_notes %}
+
             {% for note in recent_notes %}
-              <a href="{% url 'note_edit' note.id %}" class="dash-note-item">
-                <span class="dash-note-accent dash-note-accent--{{ note.category }}"></span>
-                <div class="dash-note-info">
-                  <span class="dash-note-title">{{ note.title }}</span>
-                  <span class="dash-note-preview">{{ note.content|truncatewords:10 }}</span>
-                </div>
-                <span class="dash-note-cat">{{ note.get_category_display }}</span>
-              </a>
+
+            <a href="{% url 'note_edit' note.id %}" class="dash-note-item">
+
+              <span class="dash-note-accent dash-note-accent--{{ note.category }}"></span>
+
+              <div class="dash-note-info">
+                <span class="dash-note-title">{{ note.title }}</span>
+                <span class="dash-note-preview">{{ note.content|truncatewords:10 }}</span>
+              </div>
+
+              <span class="dash-note-cat">{{ note.get_category_display }}</span>
+
+            </a>
+
             {% endfor %}
+
           {% else %}
+
             <p class="dash-empty">No notes yet</p>
+
           {% endif %}
+
         </div>
       </div>
 
-      <!-- Social Feed -->
+
+      <!-- Social -->
       <div class="dash-card dash-card--social">
+
         <div class="dash-card-header">
-          <span class="dash-card-icon">&#128172;</span>
+          <span class="dash-card-icon">💬</span>
           <h3 class="dash-card-title">Social Feed</h3>
           <a href="{% url 'social_feed' %}" class="dash-card-more">View all</a>
         </div>
+
         <div class="dash-card-body">
+
           {% if social_posts %}
+
             {% for post in social_posts %}
-              <div class="dash-post-item">
-                <div class="dash-post-avatar">
-                  {{ post.author.username|make_list|first }}
-                </div>
-                <div class="dash-post-info">
-                  <span class="dash-post-author">{{ post.author.username }}</span>
-                  <span class="dash-post-text">{{ post.content|truncatewords:12 }}</span>
-                  <span class="dash-post-meta">{{ post.created_at|timesince }} ago</span>
-                </div>
+
+            <div class="dash-post-item">
+
+              <div class="dash-post-avatar">
+                {{ post.author.username|make_list|first }}
               </div>
+
+              <div class="dash-post-info">
+                <span class="dash-post-author">{{ post.author.username }}</span>
+                <span class="dash-post-text">{{ post.content|truncatewords:12 }}</span>
+                <span class="dash-post-meta">{{ post.created_at|timesince }} ago</span>
+              </div>
+
+            </div>
+
             {% endfor %}
+
           {% else %}
-            <p class="dash-empty">No recent posts from your network</p>
+
+            <p class="dash-empty">No recent posts</p>
+
           {% endif %}
+
         </div>
       </div>
+
 
       <!-- Messages -->
       <div class="dash-card dash-card--messages">
+
         <div class="dash-card-header">
-          <span class="dash-card-icon">&#9993;</span>
+          <span class="dash-card-icon">✉️</span>
           <h3 class="dash-card-title">Messages</h3>
+
           {% if unread_count %}
             <span class="dash-unread-badge">{{ unread_count }}</span>
           {% endif %}
+
           <a href="{% url 'inbox' %}" class="dash-card-more">Inbox</a>
         </div>
+
         <div class="dash-card-body dash-messages-body">
+
           {% if unread_count %}
-            <p class="dash-messages-text">You have <strong>{{ unread_count }}</strong> unread message{{ unread_count|pluralize }}.</p>
+            <p class="dash-messages-text">
+              You have <strong>{{ unread_count }}</strong> unread message{{ unread_count|pluralize }}.
+            </p>
           {% else %}
             <p class="dash-messages-text">All caught up!</p>
           {% endif %}
-          <a href="{% url 'inbox' %}" class="dash-messages-link">Open Inbox &rarr;</a>
+
+          <a href="{% url 'inbox' %}" class="dash-messages-link">
+            Open Inbox →
+          </a>
+
         </div>
       </div>
 
+
       <!-- Quick Links -->
       <div class="dash-card dash-card--links">
+
         <div class="dash-card-header">
-          <span class="dash-card-icon">&#128279;</span>
+          <span class="dash-card-icon">🔗</span>
           <h3 class="dash-card-title">Quick Links</h3>
         </div>
+
         <div class="dash-card-body">
+
           <div class="dash-links-grid">
+
             <a href="{% url 'calendar' %}" class="dash-link-tile">
-              <span class="dash-link-icon">&#128197;</span>
+              <span class="dash-link-icon">📅</span>
               <span>Calendar</span>
             </a>
+
             <a href="{% url 'notes' %}" class="dash-link-tile">
-              <span class="dash-link-icon">&#128221;</span>
+              <span class="dash-link-icon">📝</span>
               <span>Notes</span>
             </a>
+
             <a href="{% url 'social_feed' %}" class="dash-link-tile">
-              <span class="dash-link-icon">&#128172;</span>
+              <span class="dash-link-icon">💬</span>
               <span>Social</span>
             </a>
+
             <a href="{% url 'statistics' %}" class="dash-link-tile">
-              <span class="dash-link-icon">&#128200;</span>
+              <span class="dash-link-icon">📊</span>
               <span>Statistics</span>
             </a>
+
             <a href="{% url 'inbox' %}" class="dash-link-tile">
-              <span class="dash-link-icon">&#9993;</span>
+              <span class="dash-link-icon">✉️</span>
               <span>Messages</span>
             </a>
+
             <a href="{% url 'profile' %}" class="dash-link-tile">
-              <span class="dash-link-icon">&#128100;</span>
+              <span class="dash-link-icon">👤</span>
               <span>Profile</span>
             </a>
+
           </div>
+
         </div>
       </div>
 
