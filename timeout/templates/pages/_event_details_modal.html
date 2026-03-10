@@ -1,4 +1,5 @@
 {% load static %}
+<link rel="stylesheet" href="{% static 'css/information.css' %}"> 
 
 <!-- Event Details Modal -->
 <div class="modal fade" id="eventDetailsModal" tabindex="-1" aria-labelledby="eventDetailsModalLabel" aria-hidden="true">
@@ -6,12 +7,29 @@
     <div class="modal-content" style="border-radius: 16px; overflow: hidden; box-shadow: 0 6px 24px rgba(91,115,232,0.14);">
 
       <!-- Modal Header -->
-      <div class="modal-header" style="flex-direction: column; align-items: flex-start; gap: 8px; padding: 20px;">
-        <div style="display: flex; align-items: center; gap: 8px; width: 100%;">
-          <span class="badge" id="eventBadge" style="font-size:0.85rem; font-weight: 600;"></span>
-          <span class="badge" id="eventVisibilityBadge" style="font-size:0.85rem; font-weight: 600;"></span>
-          <h5 class="modal-title ms-2" id="eventDetailsModalLabel" style="margin: 0; font-weight: 700; font-size: 1.25rem;"></h5>
+      <div class="modal-header" style="flex-direction: column; align-items: stretch; gap: 8px; padding: 20px;">
+        
+        <!-- Top row: Title & badges (left) + Info button (right) -->
+        <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+          
+          <!-- Left side: badges + title -->
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span class="badge" id="eventBadge" style="font-size:0.85rem; font-weight: 600;"></span>
+            <span class="badge" id="eventVisibilityBadge" style="font-size:0.85rem; font-weight: 600;"></span>
+            <h5 class="modal-title ms-2 mb-0" id="eventDetailsModalLabel" style="font-weight: 700; font-size: 1.25rem;"></h5>
+          </div>
+
+          <!-- Right side: Info button -->
+          <div class="page-info-button" style="position: relative; cursor: pointer;">
+            <div class="page-info-tooltip" style="position: absolute; top: 100%; right: 0; background: #333; color: #fff; padding: 6px 8px; border-radius: 4px; font-size: 0.75rem; white-space: nowrap; z-index: 10;">
+              This shows the event details.<br>
+              Click on 'Edit' to modify an existing event. <br>
+              Click on 'Delete' to remove the event.
+            </div>
+          </div>
         </div>
+
+        <!-- Event time below -->
         <p class="text-muted mb-0" id="eventTime" style="font-size: 0.85rem;"></p>
       </div>
 
@@ -43,7 +61,7 @@
         <a href="#" id="editEventBtn"
           class="btn-auth text-center text-decoration-none"
           style="flex: 1;">
-          Edit Event
+          Edit
         </a>
 
         <!-- Delete Button -->
@@ -51,7 +69,7 @@
           onclick="return confirm('Are you sure you want to delete this event?');"
           class="btn-auth text-center text-decoration-none"
           style="flex: 1; background: #dc3545; border-color: #dc3545;">
-          Delete Event
+          Delete
         </a>
 
         <!-- Close Button -->
@@ -80,12 +98,67 @@
 
     const typeBadge = document.getElementById('eventBadge');
     typeBadge.textContent = button.getAttribute('data-event-type');
-    typeBadge.style.backgroundColor = button.getAttribute('data-event-color');
+    const bgColor = button.getAttribute('data-event-color') || '#5b73e8';
+    typeBadge.style.backgroundColor = bgColor;
 
+    // Set contrasting text color automatically
+    function getContrastColor(hex) {
+        hex = hex.replace('#', '');
+        const r = parseInt(hex.substring(0,2),16);
+        const g = parseInt(hex.substring(2,4),16);
+        const b = parseInt(hex.substring(4,6),16);
+        const yiq = ((r*299)+(g*587)+(b*114))/1000;
+        return (yiq >= 128) ? '#000' : '#fff';
+    }
+    typeBadge.style.color = getContrastColor(bgColor);
+
+    // Style adjustments
+    typeBadge.style.padding = '4px 12px';
+    typeBadge.style.borderRadius = '8px';
+    typeBadge.style.fontSize = '0.9rem';
+    typeBadge.style.fontWeight = '600';
+
+  
     const visibilityBadge = document.getElementById('eventVisibilityBadge');
     const visibility = button.getAttribute('data-event-visibility');
     visibilityBadge.textContent = visibility.charAt(0).toUpperCase() + visibility.slice(1);
-    visibilityBadge.className = 'badge ' + (visibility === 'public' ? 'bg-success' : 'bg-secondary');
+
+    // Match the style of the type badge
+    visibilityBadge.style.backgroundColor = visibility === 'public' ? '#198754' : '#6c757d'; // green / gray
+    visibilityBadge.style.color = '#fff';
+    visibilityBadge.style.padding = '4px 12px';
+    visibilityBadge.style.borderRadius = '8px';
+    visibilityBadge.style.fontSize = '0.9rem';
+    visibilityBadge.style.fontWeight = '600';
+
+    // Handle info button tooltips for modal
+    document.querySelectorAll('.page-info-button').forEach(btn => {
+      const tooltip = btn.querySelector('.page-info-tooltip');
+      document.body.appendChild(tooltip); // move tooltip out of modal
+
+      btn.addEventListener('mouseenter', () => {
+        const rect = btn.getBoundingClientRect();
+
+        // Position tooltip using CSS from your file
+        tooltip.style.position = 'fixed'; 
+        tooltip.style.top = rect.bottom + 6 + 'px';
+        tooltip.style.left = rect.left + rect.width / 2 + 'px';
+        tooltip.style.transform = 'translateX(-50%)';
+        tooltip.style.width = '250px';          // match CSS width
+        tooltip.style.padding = '8px 12px';     // match CSS padding
+        tooltip.style.fontSize = '12px';        // match CSS font-size
+        tooltip.style.borderRadius = '6px';     // match CSS border-radius
+        tooltip.style.backgroundColor = '#333'; // match CSS background
+        tooltip.style.opacity = '1';
+        tooltip.style.visibility = 'visible';
+        tooltip.style.zIndex = '2000';          // above modal
+      });
+
+      btn.addEventListener('mouseleave', () => {
+        tooltip.style.opacity = '0';
+        tooltip.style.visibility = 'hidden';
+      });
+    });
 
     // Details
     document.getElementById('eventTime').textContent = button.getAttribute('data-event-start') + ' – ' + button.getAttribute('data-event-end');
