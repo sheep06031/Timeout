@@ -7,14 +7,28 @@
 
 {% block extra_css %}
   <link rel="stylesheet" href="{% static 'css/statistics.css' %}" />
+  <link rel="stylesheet" href="{% static 'css/information.css' %}"> 
 {% endblock %}
 
 {% block content %}
   <!-- Page Header -->
-  <div class="mb-4">
+  <div class="mb-4 d-flex align-items-center justify-content-between">
+  <div>
     <h1 class="mb-1">Statistics Overview</h1>
     <p class="text-muted mb-0">Track your productivity and event management</p>
   </div>
+
+  <!-- Floating page info button -->
+  <div class="page-info-button">
+    <div class="page-info-tooltip">
+      Monitor your productivity and study habits.<br>
+      Track your focus sessions and see your progress over time. <br>
+      Visualise upcoming events using the chart.<br>
+      Compare your performance with friends using the leaderboard. <br>
+      Never miss an urgent event again!
+    </div>
+  </div>
+</div>
 
   <!-- Stats Cards -->
   <div class="row g-3 mb-4">

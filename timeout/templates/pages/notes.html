@@ -5,6 +5,7 @@
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'css/notes.css' %}">
+<link rel="stylesheet" href="{% static 'css/information.css' %}">  
 {% endblock %}
 
 {% block content %}
@@ -37,11 +38,21 @@
         <span class="nt-stat-label">pomodoros today</span>
       </div>
     </div>
+  
     <div class="nt-stat-actions">
       <button class="nt-focus-toggle" id="focusModeBtn" title="Enter Focus Mode">
         &#127919; Focus Mode
       </button>
     </div>
+    <!-- Floating page info button -->
+          <div class="page-info-button">
+            <div class="page-info-tooltip" >
+              Use the pomodoro timer to stay focused.<br>
+              Add new notes using the 'New Note' button.<br>
+              Pin important notes to keep them at the top for quick access. <br>
+              Keep a streak of daily note-taking to level up and earn XP.
+            </div>
+          </div>
   </div>
 
   <div class="nt-main-layout">
