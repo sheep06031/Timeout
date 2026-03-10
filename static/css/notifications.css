@@ -1,58 +1,171 @@
-/* container list */
-.notifications-list{
-    display:flex;
-    flex-direction:column;
-    gap:8px;
+/* ───────── Notifications Toolbar ───────── */
+
+.notifications-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1rem;
+  gap: 1rem;
 }
 
-/* single notification */
-.notification-item{
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-
-    padding:14px 16px;
-    border-radius:0.75rem;
-
-    background:#f8f9fa;
-    transition:background 0.2s ease;
+.notif-clear-btn {
+  padding: 7px 14px;
+  border: 1px solid #e5eaf2;
+  border-radius: 6px;
+  background: #ffffff;
+  color: #5a6a85;
+  font-size: 0.75rem;
+  font-weight: 600;
+  transition: 0.18s ease;
 }
 
-/* hover like urgent-event-item */
-.notification-item:hover{
-    background:#e9ecef;
+.notif-clear-btn:hover {
+  background: #f0f2f8;
+  color: #2a3547;
 }
 
-/* unread highlight */
-.notification-unread{
-    background:rgba(91,115,232,0.08);
-    border-left:4px solid #5B73E8;
+
+/* ───────── Notifications List ───────── */
+
+.notifications-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem; /* slightly smaller than 0.9rem for tighter mb-1 spacing */
 }
 
-/* content */
-.notification-main{
-    display:flex;
-    flex-direction:column;
+
+/* ───────── Notification Row ───────── */
+
+.notification-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  padding: 14px 16px;
+  border-radius: 10px;
+
+  border: 1px solid #eef1f6;
+  background: #ffffff;
+
+  transition: background 0.18s ease, border-left-color 0.18s ease;
+  margin-bottom: 0.25rem; /* extra spacing for mb-1 effect */
 }
 
-.notification-title{
-    font-weight:600;
-    font-size:0.95rem;
-    color:#212529;
+.notification-item:hover {
+  background: #f8f9fc;
 }
 
-.notification-message{
-    font-size:0.85rem;
-    color:#6c757d;
+
+/* ───────── Read vs Unread ───────── */
+
+.notification-unread {
+  background: #ffffff;
+  border-left-width: 4px;
+  border-left-style: solid;
 }
 
-.notification-time{
-    font-size:0.75rem;
-    color:#adb5bd;
-    margin-top:2px;
+.notification-read {
+  background: #f5f6f8;
+  border-left: 4px solid #dee2e6;
 }
 
-/* button tweak */
-.mark-read-btn{
-    white-space:nowrap;
+
+/* ───────── Notification Types ───────── */
+
+.notification-item[data-type="message"] {
+  border-left-color: #00acc1;
+}
+
+.notification-item[data-type="deadline"] {
+  border-left-color: #5b5ddf;
+}
+
+.notification-item[data-type="event"] {
+  border-left-color: #43a047;
+}
+
+
+/* ───────── Content ───────── */
+
+.notification-main {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.notification-title {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #2a3547;
+}
+
+.notification-message {
+  font-size: 0.8rem;
+  color: #5a6a85;
+}
+
+.notification-time {
+  font-size: 0.7rem;
+  color: #adb5bd;
+}
+
+
+/* ───────── Action Buttons ───────── */
+
+.notification-actions {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.notif-btn {
+  padding: 6px 10px;
+  font-size: 0.7rem;
+  font-weight: 600;
+
+  border-radius: 6px;
+  border: 1px solid #e5eaf2;
+
+  background: #ffffff;
+  color: #5a6a85;
+
+  transition: 0.18s ease;
+}
+
+.notif-btn:hover {
+  background: #f0f2f8;
+  color: #2a3547;
+}
+
+/* read button hover */
+.notif-btn-read:hover {
+  border-color: #5b5ddf;
+  color: #5b5ddf;
+}
+
+/* delete button hover */
+.notif-btn-delete:hover {
+  border-color: #e22f41;
+  color: #e22f41;
+}
+
+
+/* ───────── Extra small tweaks ───────── */
+
+/* make unread highlight slightly stronger */
+.notification-unread[data-type="message"] {
+  background: rgba(0, 172, 193, 0.08);
+}
+
+.notification-unread[data-type="deadline"] {
+  background: rgba(91, 93, 223, 0.08);
+}
+
+.notification-unread[data-type="event"] {
+  background: rgba(67, 160, 71, 0.08);
+}
+
+/* ensure spacing looks like mb-1 between items */
+.notifications-list .notification-item + .notification-item {
+  margin-top: 0.25rem;
 }

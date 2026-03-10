@@ -20,7 +20,6 @@ urlpatterns = [
     path("notifications/read/<int:notification_id>/",
          mark_notification_read,
          name="mark_notification_read"),
-    #path('deadlines/<int:event_id>/complete/', deadline_views.deadline_mark_complete, name='deadline_mark_complete',),
     path('notifications/poll/', poll_notifications, name='poll_notifications'),
     path('notifications/delete/<int:notification_id>/', delete_notification, name='delete_notification'),
     path('notifications/clear-read/', clear_read_notifications, name='clear_read_notifications'),

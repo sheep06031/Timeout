@@ -6,31 +6,21 @@
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'css/notifications.css' %}">
-<link rel="stylesheet" href="{% static 'css/information.css' %}"> 
+<link rel="stylesheet" href="{% static 'css/information.css' %}">
 {% endblock %}
 
 {% block content %}
 
-<div class="d-flex align-items-center justify-content-between mb-2">
-    <h1 class="mb-0">🔔 Notifications</h1>
-    <div class="page-info-button">
-        <div class="page-info-tooltip">
-            This shows your most recent notifications.<br>
-            Mark as read to clear.
-        </div>
+<div class="notifications-toolbar">
+    <div>
+        <h1 class="mb-0">🔔 Notifications</h1>
+        <p class="text-muted mb-1">Stay updated with messages and deadlines</p>
+        <p class="text-muted mb-0">
+            You have <span id="page-unread-count">{{ unread_count }}</span> unread notifications
+        </p>
     </div>
+    <button id="clear-read-btn" class="notif-clear-btn">Clear read</button>
 </div>
-
-<p class="text-muted mb-1">
-    Stay updated with messages and deadlines
-</p>
-
-<p class="text-muted mb-1">
-    You have <span id="page-unread-count">{{ unread_count }}</span> unread notifications!
-</p>
-<button id="clear-read-btn" class="btn btn-sm btn-outline-danger mb-3">
-Clear Read Notifications
-</button>
 
 <div class="chart-card">
 
@@ -40,45 +30,41 @@ Clear Read Notifications
 
     <div class="notifications-list">
         {% for n in notifications %}
-        <div id="notif-{{ n.id }}" class="notification-item {% if not n.is_read %}notification-unread{% endif %}">
+        <div id="notif-{{ n.id }}"
+             class="notification-item {% if not n.is_read %}notification-unread{% else %}notification-read{% endif %}"
+             data-type="{{ n.type }}">
+
             <div class="notification-main">
-                <div class="notification-title">{{ n.title }}</div>
+                <div class="notification-title">
+                    {% if n.type == "message" %}💬{% elif n.type == "deadline" %}⏰{% elif n.type == "event" %}📅{% else %}🔔{% endif %}
+                    {{ n.title }}
+                </div>
                 <div class="notification-message">{{ n.message }}</div>
                 <div class="notification-time">{{ n.created_at|naturaltime }}</div>
             </div>
-            {% if not n.is_read %}
-            <button class="mark-read-btn btn btn-sm btn-outline-primary" data-id="{{ n.id }}">Mark read</button>
-            {% endif %}
-            <button 
-    class="delete-notif-btn btn btn-sm btn-outline-danger"
-    data-id="{{ n.id }}">
-    Delete
-</button>
+
+            <div class="notification-actions">
+                {% if not n.is_read %}
+                <button class="mark-read-btn notif-btn notif-btn-read" data-id="{{ n.id }}">Read</button>
+                {% endif %}
+            </div>
+
         </div>
         {% endfor %}
     </div>
 
     <div class="pagination-container mt-4">
-
-    {% if notifications.has_previous %}
-        <a href="?page={{ notifications.previous_page_number }}" class="btn btn-sm btn-outline-secondary">
-            Previous
-        </a>
-    {% endif %}
-
-    <span class="mx-2 text-muted">
-        Page {{ notifications.number }} of {{ notifications.paginator.num_pages }}
-    </span>
-
-    {% if notifications.has_next %}
-        <a href="?page={{ notifications.next_page_number }}" class="btn btn-sm btn-outline-secondary">
-            Next
-        </a>
-    {% endif %}
+        {% if notifications.has_previous %}
+        <a href="?page={{ notifications.previous_page_number }}" class="btn btn-sm btn-outline-secondary">Previous</a>
+        {% endif %}
+        <span class="mx-2 text-muted">Page {{ notifications.number }} of {{ notifications.paginator.num_pages }}</span>
+        {% if notifications.has_next %}
+        <a href="?page={{ notifications.next_page_number }}" class="btn btn-sm btn-outline-secondary">Next</a>
+        {% endif %}
+    </div>
 
 </div>
 
-</div>
 <script>
 document.addEventListener("DOMContentLoaded", () => {
 
@@ -91,20 +77,16 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function getCookie(name) {
         let cookieValue = null;
-
         if (document.cookie && document.cookie !== '') {
             const cookies = document.cookie.split(';');
-
             for (let cookie of cookies) {
                 cookie = cookie.trim();
-
                 if (cookie.substring(0, name.length + 1) === (name + '=')) {
                     cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
                     break;
                 }
             }
         }
-
         return cookieValue;
     }
 
@@ -112,122 +94,65 @@ document.addEventListener("DOMContentLoaded", () => {
         if (pageUnread && parseInt(pageUnread.textContent) > 0) {
             pageUnread.textContent = parseInt(pageUnread.textContent) - 1;
         }
-
         if (badge && parseInt(badge.textContent) > 0) {
             let count = parseInt(badge.textContent) - 1;
-
-            if (count <= 0) {
-                badge.style.display = "none";
-            } else {
-                badge.textContent = count;
-            }
+            if (count <= 0) badge.style.display = "none";
+            else badge.textContent = count;
         }
     }
 
+    // MARK AS READ
     notifList.addEventListener("click", async (e) => {
-
         const readBtn = e.target.closest(".mark-read-btn");
-        const deleteBtn = e.target.closest(".delete-notif-btn");
+        if (!readBtn) return;
 
-        // MARK READ
-        if (readBtn) {
+        const id = readBtn.dataset.id;
 
-            const id = readBtn.dataset.id;
+        const res = await fetch(`/notifications/read/${id}/`);
+        const data = await res.json();
 
-            const res = await fetch(`/notifications/read/${id}/`);
-            const data = await res.json();
-
-            if (data.success) {
-
-                const notif = document.getElementById(`notif-${id}`);
-
-                if (notif) notif.classList.remove("notification-unread");
-
-                readBtn.remove();
-
-                decreaseUnread();
+        if (data.success) {
+            const notif = document.getElementById(`notif-${id}`);
+            if (notif) {
+                notif.classList.remove("notification-unread");
+                notif.classList.add("notification-read");
             }
+            readBtn.remove();
+            decreaseUnread();
         }
-
-        // DELETE NOTIFICATION
-        if (deleteBtn) {
-
-            const id = deleteBtn.dataset.id;
-
-            const res = await fetch(`/notifications/delete/${id}/`, {
-                method: "POST",
-                headers: {
-                    "X-CSRFToken": getCookie("csrftoken"),
-                }
-            });
-
-            const data = await res.json();
-
-            if (data.success) {
-
-                const notif = document.getElementById(`notif-${id}`);
-
-                if (notif) {
-
-                    if (notif.classList.contains("notification-unread")) {
-                        decreaseUnread();
-                    }
-
-                    notif.remove();
-                }
-
-                if (!document.querySelector(".notification-item")) {
-                    document.getElementById("no-notifications").style.display = "block";
-                }
-            }
-        }
-
     });
 
     // CLEAR READ NOTIFICATIONS
     if (clearBtn) {
-
         clearBtn.addEventListener("click", async () => {
-
             const res = await fetch("/notifications/clear-read/", {
                 method: "POST",
-                headers: {
-                    "X-CSRFToken": getCookie("csrftoken"),
-                }
+                headers: { "X-CSRFToken": getCookie("csrftoken") }
             });
-
             const data = await res.json();
 
             if (data.success) {
-
                 document.querySelectorAll(".notification-item").forEach(n => {
-                    if (!n.classList.contains("notification-unread")) {
-                        n.remove();
-                    }
+                    if (!n.classList.contains("notification-unread")) n.remove();
                 });
-
                 if (!document.querySelector(".notification-item")) {
-                    document.getElementById("no-notifications").style.display = "block";
+                    const noMsg = document.getElementById("no-notifications");
+                    if (noMsg) noMsg.style.display = "block";
                 }
             }
-
         });
-
     }
 
-    // Track newest notification ID
+    // Track last notification ID (only prepend newer notifications)
     let lastNotificationId = 0;
-
     document.querySelectorAll(".notification-item").forEach(el => {
         const id = parseInt(el.id.replace("notif-", ""), 10);
         if (!isNaN(id) && id > lastNotificationId) lastNotificationId = id;
     });
 
     async function pollNotifications() {
-
         const res = await fetch(`/notifications/poll/?last_id=${lastNotificationId}`);
         const data = await res.json();
-
         const newNotifs = data.notifications;
 
         if (!newNotifs || newNotifs.length === 0) return;
@@ -236,48 +161,46 @@ document.addEventListener("DOMContentLoaded", () => {
         if (noMsg) noMsg.style.display = "none";
 
         newNotifs.forEach(n => {
-
+            // Skip if already in DOM
             if (document.getElementById(`notif-${n.id}`)) return;
 
             const div = document.createElement("div");
-
             div.id = `notif-${n.id}`;
-            div.className = `notification-item ${n.is_read ? "" : "notification-unread"}`;
+            div.className = `notification-item ${n.is_read ? "notification-read" : "notification-unread"}`;
+            div.setAttribute("data-type", n.type);
 
             div.innerHTML = `
                 <div class="notification-main">
-                    <div class="notification-title">${n.title}</div>
+                    <div class="notification-title">
+                        ${n.type === "message" ? "💬" : n.type === "deadline" ? "⏰" : n.type === "event" ? "📅" : "🔔"}
+                        ${n.title}
+                    </div>
                     <div class="notification-message">${n.message}</div>
                     <div class="notification-time">${n.created_at}</div>
                 </div>
-                ${!n.is_read ? `<button class="mark-read-btn btn btn-sm btn-outline-primary" data-id="${n.id}">Mark read</button>` : ''}
-                <button class="delete-notif-btn btn btn-sm btn-outline-danger" data-id="${n.id}">Delete</button>
+
+                <div class="notification-actions">
+                    ${!n.is_read ? `<button class="mark-read-btn notif-btn notif-btn-read" data-id="${n.id}">Read</button>` : ""}
+                </div>
             `;
 
-            notifList.prepend(div);
+            // only prepend if on first page
+            if ({{ notifications.number }} === 1) notifList.prepend(div);
 
             if (!n.is_read && badge) {
-
-                let count = badge.style.display !== "none"
-                    ? parseInt(badge.textContent)
-                    : 0;
-
+                let count = badge.style.display !== "none" ? parseInt(badge.textContent) : 0;
                 badge.textContent = count + 1;
                 badge.style.display = "inline-block";
 
-                if (pageUnread) {
-                    pageUnread.textContent = parseInt(pageUnread.textContent) + 1;
-                }
+                if (pageUnread) pageUnread.textContent = parseInt(pageUnread.textContent) + 1;
             }
 
             if (n.id > lastNotificationId) lastNotificationId = n.id;
-
         });
-
     }
 
     pollNotifications();
-    setInterval(pollNotifications, 5000);
+    setInterval(pollNotifications, 2000);
 
 });
 </script>
