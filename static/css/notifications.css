@@ -1,5 +1,4 @@
 /* ───────── Notifications Toolbar ───────── */
-
 .notifications-toolbar {
   display: flex;
   justify-content: space-between;
@@ -24,54 +23,71 @@
   color: #2a3547;
 }
 
-
 /* ───────── Notifications List ───────── */
-
 .notifications-list {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem; /* slightly smaller than 0.9rem for tighter mb-1 spacing */
+  gap: 0.5rem;
 }
 
-
 /* ───────── Notification Row ───────── */
-
 .notification-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
-
   padding: 14px 16px;
   border-radius: 10px;
-
   border: 1px solid #eef1f6;
   background: #ffffff;
-
   transition: background 0.18s ease, border-left-color 0.18s ease;
-  margin-bottom: 0.25rem; /* extra spacing for mb-1 effect */
 }
 
 .notification-item:hover {
   background: #f8f9fc;
 }
 
-
 /* ───────── Read vs Unread ───────── */
-
 .notification-unread {
   background: #ffffff;
   border-left-width: 4px;
   border-left-style: solid;
+  transition: background 0.18s ease, border-left-color 0.18s ease;
 }
 
 .notification-read {
-  background: #f5f6f8;
-  border-left: 4px solid #dee2e6;
+  background: #e0e4eb;
+  border-left: 4px solid #b0b7c2; 
 }
 
+.notification-read .notification-title {
+  color: #777e8b; 
+}
 
-/* ───────── Notification Types ───────── */
+.notification-read .notification-message {
+  color: #8a929e; 
+}
 
+.notification-read .notification-time {
+  color: #a0a8b3;
+}
+
+/* ───────── Unread Highlights by Type ───────── */
+.notification-unread[data-type="message"] {
+  background: rgba(0, 172, 193, 0.15);
+  border-left-color: #00acc1;
+}
+
+.notification-unread[data-type="deadline"] {
+  background: rgba(91, 93, 223, 0.15);
+  border-left-color: #5b5ddf;
+}
+
+.notification-unread[data-type="event"] {
+  background: rgba(67, 160, 71, 0.15);
+  border-left-color: #43a047;
+}
+
+/* ───────── Notification Types Border ───────── */
 .notification-item[data-type="message"] {
   border-left-color: #00acc1;
 }
@@ -84,9 +100,7 @@
   border-left-color: #43a047;
 }
 
-
 /* ───────── Content ───────── */
-
 .notification-main {
   display: flex;
   flex-direction: column;
@@ -109,9 +123,7 @@
   color: #adb5bd;
 }
 
-
 /* ───────── Action Buttons ───────── */
-
 .notification-actions {
   display: flex;
   gap: 6px;
@@ -122,13 +134,10 @@
   padding: 6px 10px;
   font-size: 0.7rem;
   font-weight: 600;
-
   border-radius: 6px;
   border: 1px solid #e5eaf2;
-
   background: #ffffff;
   color: #5a6a85;
-
   transition: 0.18s ease;
 }
 
@@ -137,35 +146,25 @@
   color: #2a3547;
 }
 
-/* read button hover */
-.notif-btn-read:hover {
-  border-color: #5b5ddf;
-  color: #5b5ddf;
-}
-
-/* delete button hover */
-.notif-btn-delete:hover {
-  border-color: #e22f41;
-  color: #e22f41;
-}
-
-
-/* ───────── Extra small tweaks ───────── */
-
-/* make unread highlight slightly stronger */
-.notification-unread[data-type="message"] {
-  background: rgba(0, 172, 193, 0.08);
-}
-
-.notification-unread[data-type="deadline"] {
-  background: rgba(91, 93, 223, 0.08);
-}
-
-.notification-unread[data-type="event"] {
-  background: rgba(67, 160, 71, 0.08);
-}
-
-/* ensure spacing looks like mb-1 between items */
 .notifications-list .notification-item + .notification-item {
   margin-top: 0.25rem;
+}
+
+/* ───────── Toggle Unread Button ───────── */
+
+#toggle-unread-btn {
+  padding: 7px 14px;
+  border: 1px solid #5b5ddf;   
+  border-radius: 6px;
+  background: #ffffff;
+  color: #5b5ddf;              
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.18s ease;
+}
+
+#toggle-unread-btn:hover {
+  background: #e8e9ff;         
+  color: #2a3547;              
 }

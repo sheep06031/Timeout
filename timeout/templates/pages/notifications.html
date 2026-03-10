@@ -19,7 +19,7 @@
             You have <span id="page-unread-count">{{ unread_count }}</span> unread notifications
         </p>
     </div>
-    <button id="clear-read-btn" class="notif-clear-btn">Clear read</button>
+    <button id="toggle-unread-btn" class="notif-clear-btn">Show unread</button>
 </div>
 
 <div class="chart-card">
@@ -71,7 +71,8 @@ document.addEventListener("DOMContentLoaded", () => {
     const notifList = document.querySelector(".notifications-list");
     const badge = document.querySelector(".nav-link .badge");
     const pageUnread = document.getElementById("page-unread-count");
-    const clearBtn = document.getElementById("clear-read-btn");
+    const toggleUnreadBtn = document.getElementById("toggle-unread-btn");
+    let showingUnreadOnly = false;
 
     if (!notifList) return;
 
@@ -122,28 +123,28 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
-    // CLEAR READ NOTIFICATIONS
-    if (clearBtn) {
-        clearBtn.addEventListener("click", async () => {
-            const res = await fetch("/notifications/clear-read/", {
-                method: "POST",
-                headers: { "X-CSRFToken": getCookie("csrftoken") }
-            });
-            const data = await res.json();
+    // SHOW READ NOTIFICATIONS
+    if (toggleUnreadBtn) {
+    toggleUnreadBtn.addEventListener("click", () => {
+        showingUnreadOnly = !showingUnreadOnly;
 
-            if (data.success) {
-                document.querySelectorAll(".notification-item").forEach(n => {
-                    if (!n.classList.contains("notification-unread")) n.remove();
-                });
-                if (!document.querySelector(".notification-item")) {
-                    const noMsg = document.getElementById("no-notifications");
-                    if (noMsg) noMsg.style.display = "block";
-                }
+        const allNotifs = document.querySelectorAll(".notification-item");
+
+        allNotifs.forEach(n => {
+            const isUnread = n.classList.contains("notification-unread");
+            if (showingUnreadOnly) {
+                n.style.display = isUnread ? "flex" : "none";
+            } else {
+                n.style.display = "flex";
             }
         });
-    }
 
-    // Track last notification ID (only prepend newer notifications)
+        // Change button text accordingly
+        toggleUnreadBtn.textContent = showingUnreadOnly ? "Show all" : "Show unread";
+    });
+}
+
+    // Track last notification ID to only poll for newer ones
     let lastNotificationId = 0;
     document.querySelectorAll(".notification-item").forEach(el => {
         const id = parseInt(el.id.replace("notif-", ""), 10);
@@ -183,9 +184,6 @@ document.addEventListener("DOMContentLoaded", () => {
                     ${!n.is_read ? `<button class="mark-read-btn notif-btn notif-btn-read" data-id="${n.id}">Read</button>` : ""}
                 </div>
             `;
-
-            // only prepend if on first page
-            if ({{ notifications.number }} === 1) notifList.prepend(div);
 
             if (!n.is_read && badge) {
                 let count = badge.style.display !== "none" ? parseInt(badge.textContent) : 0;
