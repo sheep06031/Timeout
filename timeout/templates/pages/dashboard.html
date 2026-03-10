@@ -32,6 +32,14 @@
                         <li><a href="{% url 'calendar' %}">Calendar</a></li>
                         <li><a href="{% url 'social_feed' %}">Social Feed</a></li>
                         <li><a href="{% url 'profile' %}">Profile</a></li>
+                        <li><a href="{% url 'notifications' %}" class="position-relative text-decoration-none">
+                            🔔 Notifications
+                            {% if unread_count > 0 %}
+                                <span class="badge bg-danger position-absolute top-0 start-100 translate-middle">
+                                    {{ unread_count }}
+                                </span>
+                            {% endif %}
+                        </a></li>
                     </ul>
                 </div>
             </div>

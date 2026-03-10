@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% block title %}Notifications — Timeout{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1>Notifications</h1>
+    <ul class="list-group">
+        {% for n in notifications %}
+        <li class="list-group-item {% if not n.is_read %}list-group-item-warning{% endif %}">
+            <strong>{{ n.title }}</strong>
+            <p>{{ n.message }}</p>
+            <small>{{ n.created_at|naturaltime }}</small>
+            {% if not n.is_read %}
+            <button class="btn btn-sm btn-outline-primary mark-read-btn" data-id="{{ n.id }}">Mark as read</button>
+            {% endif %}
+        </li>
+        {% empty %}
+        <li class="list-group-item">No notifications</li>
+        {% endfor %}
+    </ul>
+</div>
+
+<script>
+document.querySelectorAll('.mark-read-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+        fetch('/notifications/read/' + btn.dataset.id + '/')
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) btn.closest('li').classList.remove('list-group-item-warning');
+                btn.remove();
+            });
+    });
+});
+</script>
+{% endblock %}
