@@ -6,14 +6,22 @@
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'css/notifications.css' %}">
+<link rel="stylesheet" href="{% static 'css/information.css' %}"> 
 {% endblock %}
 
 {% block content %}
 
-<div class="mb-4">
-    <h1 class="mb-1">🔔 Notifications</h1>
-    <p class="text-muted mb-0">Stay updated with messages and deadlines</p>
+<div class="d-flex align-items-center justify-content-between mb-2">
+    <h1 class="mb-0">🔔 Notifications</h1>
+    <div class="page-info-button">
+        <div class="page-info-tooltip">
+            This shows your most recent notifications.<br>
+            Mark as read to clear.
+        </div>
+    </div>
 </div>
+
+<p class="text-muted mb-3">Stay updated with messages and deadlines</p>
 
 <div class="chart-card">
 
