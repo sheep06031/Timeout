@@ -256,3 +256,33 @@ td.cal-today .cal-day-num {
   background: #5b5ddf;
   color: #ffffff;
 }
+
+
+.cal-plan-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  background: linear-gradient(135deg, #5b5ddf 0%, #7c7eff 100%);
+  color: #ffffff;
+  border: none;
+  border-radius: 6px;
+  font-family: inherit;
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  transition: 0.18s ease;
+  box-shadow: 0 2px 8px rgba(91,93,223,0.25);
+}
+.cal-plan-btn:hover {
+  background: linear-gradient(135deg, #3f54ba 0%, #5b5ddf 100%);
+  color: #ffffff;
+  box-shadow: 0 4px 16px rgba(91,93,223,0.35);
+  transform: translateY(-1px);
+}
+
+@media (max-width: 768px) {
+  .cal-plan-btn span { display: none; }
+  .cal-plan-btn { padding: 8px 12px; }
+}

@@ -21,27 +21,45 @@
         <h1 class="cal-month">{{ month_name }} {{ year }}</h1>
       </div>
       <div class="cal-toolbar__right">
-        <div class="cal-view-switcher">
-          <a href="{% url 'calendar' %}" class="cal-view-btn cal-view-btn--active">
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <rect x="1" y="2" width="14" height="12" rx="2" stroke="currentColor" stroke-width="1.5"/>
-              <path d="M1 6h14" stroke="currentColor" stroke-width="1.5"/>
-              <path d="M5 1v3M11 1v3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-            </svg>
-            Calendar
-          </a>
-          <a href="{% url 'deadline_list' %}" class="cal-view-btn">
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M2 4h12M2 8h12M2 12h8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-            </svg>
-            List
-          </a>
-        </div>
-        <a href="{% url 'calendar' %}" class="cal-today-btn">Today</a>
-        <a href="#" class="cal-add-btn" data-bs-toggle="modal" data-bs-target="#addEventModal">
-          + <span class="cal-add-label">Add Event</span>
-        </a>
-      </div>
+  <div class="cal-view-switcher">
+    <a href="{% url 'calendar' %}" class="cal-view-btn cal-view-btn--active">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="1" y="2" width="14" height="12" rx="2" stroke="currentColor" stroke-width="1.5"/>
+        <path d="M1 6h14" stroke="currentColor" stroke-width="1.5"/>
+        <path d="M5 1v3M11 1v3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+      </svg>
+      Calendar
+    </a>
+    <a href="{% url 'deadline_list' %}" class="cal-view-btn">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M2 4h12M2 8h12M2 12h8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+      </svg>
+      List
+    </a>
+    <a href="{% url 'timetable' %}" class="cal-view-btn">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+        <rect x="1" y="1" width="14" height="14" rx="2" stroke="currentColor" stroke-width="1.5"/>
+        <path d="M1 5h14M1 9h14M1 13h14M5 1v14M9 1v14" stroke="currentColor" stroke-width="1" opacity="0.5"/>
+      </svg>
+      Timetable
+    </a>
+  </div>
+
+  <!-- ★ NEW: Plan My Week button ★ -->
+  <a href="{% url 'timetable' %}" class="cal-plan-btn">
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+      <path d="M2 3h12M2 7h8M2 11h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+      <circle cx="13" cy="11" r="2.5" stroke="currentColor" stroke-width="1.3"/>
+      <path d="M13 9.8v1.2l.8.5" stroke="currentColor" stroke-width="1" stroke-linecap="round"/>
+    </svg>
+    Plan My Week
+  </a>
+
+  <a href="{% url 'calendar' %}" class="cal-today-btn">Today</a>
+  <a href="#" class="cal-add-btn" data-bs-toggle="modal" data-bs-target="#addEventModal">
+    + <span class="cal-add-label">Add Event</span>
+  </a>
+</div>
     </div>
 
     <!-- Calendar table -->

@@ -1,0 +1,183 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Plan My Week — Timeout{% endblock %}
+
+{% block extra_css %}
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{% static 'css/timetable.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="tt-page">
+  <div class="tt-card">
+
+    <!-- Toolbar -->
+    <div class="tt-toolbar">
+      <div class="tt-toolbar__left">
+        <div class="tt-nav">
+          <a href="?week={{ prev_week }}&hours={{ target_hours }}" class="tt-nav__btn" aria-label="Previous week">&#8249;</a>
+          <a href="?week={{ next_week }}&hours={{ target_hours }}" class="tt-nav__btn" aria-label="Next week">&#8250;</a>
+        </div>
+        <div>
+          <h1 class="tt-title">{{ week_start|date:"d M" }} – {{ week_end|date:"d M Y" }}</h1>
+          <p class="tt-subtitle">Plan My Week — Smart Scheduler</p>
+        </div>
+      </div>
+      <div class="tt-toolbar__right">
+        <div class="tt-view-switcher">
+          <a href="{% url 'calendar' %}" class="tt-view-btn">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+              <rect x="1" y="2" width="14" height="12" rx="2" stroke="currentColor" stroke-width="1.5"/>
+              <path d="M1 6h14" stroke="currentColor" stroke-width="1.5"/>
+              <path d="M5 1v3M11 1v3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+            </svg>
+            Calendar
+          </a>
+          <a href="{% url 'deadline_list' %}" class="tt-view-btn">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+              <path d="M2 4h12M2 8h12M2 12h8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+            </svg>
+            List
+          </a>
+          <a href="{% url 'timetable' %}" class="tt-view-btn tt-view-btn--active">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+              <rect x="1" y="1" width="14" height="14" rx="2" stroke="currentColor" stroke-width="1.5"/>
+              <path d="M1 5h14M1 9h14M1 13h14M5 1v14M9 1v14" stroke="currentColor" stroke-width="1" opacity="0.5"/>
+            </svg>
+            Timetable
+          </a>
+        </div>
+        <a href="{% url 'calendar' %}" class="tt-back-btn">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <path d="M9 2L4 7l5 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          Back to Calendar
+        </a>
+      </div>
+    </div>
+
+    <!-- Controls -->
+    <div class="tt-controls">
+      <div class="tt-controls__left">
+        <form method="get" action="{% url 'timetable' %}" class="tt-hours-group">
+          <input type="hidden" name="week" value="{{ week_offset }}">
+          <label for="targetHours" class="tt-hours-label">Target study hours:</label>
+          <input type="number"
+                 class="tt-hours-input"
+                 id="targetHours"
+                 name="hours"
+                 value="{{ target_hours }}"
+                 min="1"
+                 max="40">
+          <button type="submit" class="tt-action-btn tt-action-btn--commit" style="padding: 6px 12px;">
+            Update
+          </button>
+        </form>
+      </div>
+      <div class="tt-controls__right">
+        <form method="post" action="{% url 'timetable_clear' %}" style="display:inline;">
+          {% csrf_token %}
+          <input type="hidden" name="week" value="{{ week_offset }}">
+          <input type="hidden" name="hours" value="{{ target_hours }}">
+          <button type="submit" class="tt-action-btn tt-action-btn--clear">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+              <path d="M3 3l8 8M11 3l-8 8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+            </svg>
+            Clear Plan
+          </button>
+        </form>
+        <form method="post" action="{% url 'timetable_commit' %}" style="display:inline;">
+          {% csrf_token %}
+          <input type="hidden" name="week" value="{{ week_offset }}">
+          <input type="hidden" name="hours" value="{{ target_hours }}">
+          <button type="submit" class="tt-action-btn tt-action-btn--commit">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+              <path d="M2 7l4 4 6-7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            Commit Plan
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="tt-stats">
+      <div class="tt-stat">
+        <span class="tt-stat__dot tt-stat__dot--busy"></span>
+        Fixed: <span class="tt-stat__num">{{ busy_hours }}h</span>
+      </div>
+      <div class="tt-stat">
+        <span class="tt-stat__dot tt-stat__dot--suggested"></span>
+        Suggested: <span class="tt-stat__num">{{ suggested_hours }}h</span>
+      </div>
+      <div class="tt-stat">
+        <span class="tt-stat__dot tt-stat__dot--free"></span>
+        Free: <span class="tt-stat__num">{{ free_hours }}h</span>
+      </div>
+    </div>
+
+    <!-- Timetable Grid -->
+    <div class="tt-grid-wrapper">
+      <div class="tt-grid">
+        <!-- Header row -->
+        <div class="tt-grid__header">
+          <div class="tt-grid__corner"></div>
+          {% for day in days %}
+          <div class="tt-grid__day-header {% if day.is_today %}tt-grid__day-header--today{% endif %}">
+            <span class="tt-day-name">{{ day.name }}</span>
+            <span class="tt-day-num">{{ day.day_num }}</span>
+          </div>
+          {% endfor %}
+        </div>
+
+        <!-- Hour rows -->
+        {% for row in rows %}
+        <div class="tt-grid__row">
+          <div class="tt-grid__time">
+            <span class="tt-time-label">{{ row.label_12h }}</span>
+          </div>
+          {% for cell in row.cells %}
+          <div class="tt-grid__cell">
+            {% if cell.status == 'busy' and cell.event %}
+            <div class="tt-block tt-block--fixed tt-block--{{ cell.event.event_type }}"
+                 title="{{ cell.event.title }}&#10;{{ cell.event.start_datetime|date:'H:i' }} – {{ cell.event.end_datetime|date:'H:i' }}">
+              <span class="tt-block__title">{{ cell.event.title }}</span>
+              <span class="tt-block__time">{{ cell.event.start_datetime|date:"H:i" }}–{{ cell.event.end_datetime|date:"H:i" }}</span>
+            </div>
+            {% elif cell.status == 'suggested' and cell.suggestion %}
+            <div class="tt-block tt-block--suggested"
+                 title="Suggested: {{ cell.suggestion.title }}">
+              <span class="tt-block__title">{{ cell.suggestion.title }}</span>
+              <span class="tt-block__time">{{ row.label_12h }}</span>
+            </div>
+            {% endif %}
+          </div>
+          {% endfor %}
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    {% if suggested_hours == 0 and busy_hours == 0 %}
+    <div class="tt-empty-note">
+      <p>No events this week. Adjust your target hours above and the scheduler will suggest study blocks.</p>
+    </div>
+    {% endif %}
+
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Update URL when target hours input changes (on Enter)
+document.getElementById('targetHours')?.addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') {
+    this.closest('form').submit();
+  }
+});
+</script>
+{% endblock %}
