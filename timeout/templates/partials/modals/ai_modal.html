@@ -1,0 +1,29 @@
+<!-- AI Event Modal -->
+<div class="modal fade" id="aiEventModal" tabindex="-1" aria-labelledby="aiEventLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="aiEventLabel">✨ Add Event with AI</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <p class="text-muted small mb-3">Describe your event in natural language. e.g. "ML study session tomorrow 2pm for 2 hours"</p>
+        <div class="mb-3">
+          <textarea class="form-control" id="aiUserInput" rows="3"
+            placeholder="Team meeting next Monday 10am for 1 hour&#10;Exam on Friday at 9am, 2 hours"></textarea>
+        </div>
+        <div id="aiResult" class="d-none">
+          <div id="aiSuccess" class="alert alert-success d-none"></div>
+          <div id="aiError" class="alert alert-danger d-none"></div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-nep text-white" id="aiSubmitBtn" onclick="submitAiEvent()">
+          <span id="aiSpinner" class="spinner-border spinner-border-sm d-none me-1" role="status"></span>
+          Add with AI
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

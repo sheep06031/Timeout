@@ -9,4 +9,6 @@ urlpatterns = [
     path('<int:note_id>/delete/', notes.note_delete, name='note_delete'),
     path('<int:note_id>/pin/', notes.note_toggle_pin, name='note_toggle_pin'),
     path('<int:note_id>/share/', notes.note_share, name='note_share'),
+    path('pomodoro/complete/', notes.pomodoro_complete, name='pomodoro_complete'),
+    path('stats/', notes.notes_stats, name='notes_stats'),
 ]

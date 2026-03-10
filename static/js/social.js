@@ -18,13 +18,11 @@ function getCookie(name) {
 
 const csrftoken = getCookie('csrftoken');
 
-// User search
 document.addEventListener('DOMContentLoaded', function() {
     const input = document.getElementById('userSearchInput');
     const results = document.getElementById('userSearchResults');
     if (!input) return;
 
-    // Move results to <body> so it's never clipped by parent overflow/stacking contexts
     document.body.appendChild(results);
 
     function positionDropdown() {
@@ -78,7 +76,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }, 300);
     });
 
-    // Hide results when clicking outside
     document.addEventListener('click', function(e) {
         if (!input.contains(e.target) && !results.contains(e.target)) {
             results.hidden = true;
@@ -92,15 +89,13 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // Reposition if window scrolls or resizes
     window.addEventListener('scroll', positionDropdown, { passive: true });
     window.addEventListener('resize', positionDropdown, { passive: true });
 });
 
-// Messaging — send & poll (only runs on conversation pages)
 document.addEventListener('DOMContentLoaded', function () {
     const config = window.CONVO_CONFIG;
-    if (!config) return;   // not a conversation page, skip
+    if (!config) return;
 
     const input     = document.getElementById('message-input');
     const sendBtn   = document.getElementById('send-btn');
@@ -108,7 +103,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
     let lastMessageId = 0;
 
-    // Seed lastMessageId from whatever messages are already on the page
     document.querySelectorAll('[data-message-id]').forEach(el => {
         const id = parseInt(el.dataset.messageId, 10);
         if (id > lastMessageId) lastMessageId = id;
@@ -119,7 +113,6 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function appendMessage(msg) {
-        // Remove the "say hello" empty state if present
         const empty = container.querySelector('.convo-empty');
         if (empty) empty.remove();
 
@@ -169,7 +162,6 @@ document.addEventListener('DOMContentLoaded', function () {
             .catch(err => console.error('Poll error:', err));
     }
 
-    // Wire up send button and Enter key
     sendBtn.addEventListener('click', sendMessage);
     input.addEventListener('keydown', function (e) {
         if (e.key === 'Enter' && !e.shiftKey) {
@@ -178,16 +170,12 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 
-    // Poll every 3 seconds
     setInterval(pollMessages, 3000);
-
-    // Scroll to bottom on load
     scrollToBottom();
 });
 
-// Like button functionality
 document.addEventListener('DOMContentLoaded', function() {
-    // Like buttons
+
     document.querySelectorAll('.like-btn').forEach(button => {
         button.addEventListener('click', function() {
             const postId = this.dataset.postId;
@@ -204,7 +192,6 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(data => {
                 const icon = this.querySelector('.like-icon');
                 const count = this.querySelector('.like-count');
-
                 icon.textContent = data.liked ? '❤️' : '🤍';
                 count.textContent = data.like_count;
                 this.dataset.liked = data.liked;
@@ -213,8 +200,12 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // Bookmark buttons
     document.querySelectorAll('.bookmark-btn').forEach(button => {
+        const icon = button.querySelector('.bookmark-icon');
+        if (button.dataset.bookmarked === 'true') {
+            icon.textContent = '🔖';
+        }
+
         button.addEventListener('click', function() {
             const postId = this.dataset.postId;
             const url = `/social/post/${postId}/bookmark/`;
@@ -236,7 +227,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // Follow buttons
     document.querySelectorAll('.follow-btn').forEach(button => {
         button.addEventListener('click', function() {
             const username = this.dataset.username;
@@ -264,5 +254,32 @@ document.addEventListener('DOMContentLoaded', function() {
             })
             .catch(error => console.error('Error:', error));
         });
+    });
+
+});
+
+document.addEventListener('DOMContentLoaded', function () {
+    function setStatus(status) {
+        fetch('/social/status/update/', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': csrftoken,
+                'Content-Type': 'application/x-www-form-urlencoded'
+            },
+            body: `status=${status}`
+        }).then(r => r.json()).then(data => {
+            document.body.dataset.userStatus = data.status;
+        });
+    }
+
+    document.addEventListener('visibilitychange', function () {
+        const currentStatus = document.body.dataset.userStatus;
+        if (currentStatus === 'focus') return;
+
+        if (document.hidden) {
+            setStatus('inactive');
+        } else {
+            setStatus('social');
+        }
     });
 });

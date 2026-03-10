@@ -1,10 +1,11 @@
 from django.contrib.auth.decorators import login_required
+from django.db.models import Q
 from django.shortcuts import redirect, render
 from django.utils import timezone
-from timeout.models import User
+from timeout.models import User, Note, Message, Conversation
 from timeout.models.event import Event
-from timeout.services import FeedService
-from timeout.views.statistics import build_context
+from timeout.services import FeedService, DeadlineService
+from timeout.views.statistics import get_focus_stats, build_context
 from timeout.views.profile import get_profile_event
 
 
@@ -18,14 +19,52 @@ def landing(request):
 @login_required
 def dashboard(request):
     """Dashboard page view."""
+    user = request.user
+    now = timezone.now()
+
+    # Time-aware greeting
+    local_hour = timezone.localtime(now).hour
+    if local_hour < 12:
+        greeting = 'Good morning'
+    elif local_hour < 18:
+        greeting = 'Good afternoon'
+    else:
+        greeting = 'Good evening'
+
+    # Upcoming events
     upcoming_events = Event.objects.filter(
-        creator=request.user,
-        start_datetime__gte=timezone.now(),
+        creator=user,
+        start_datetime__gte=now,
         status__in=['upcoming', 'ongoing'],
     ).order_by('start_datetime')[:5]
 
+    # Recent notes
+    recent_notes = Note.objects.filter(owner=user).order_by('-updated_at')[:4]
+
+    # Deadlines
+    deadlines = DeadlineService.get_active_deadlines(user)[:5]
+
+    # Social feed (recent posts from followed users)
+    social_posts = FeedService.get_following_feed(user, limit=4)
+
+    # Focus stats (last 7 days)
+    focus_stats = get_focus_stats(user)
+
+    # Unread messages count
+    user_conversations = Conversation.objects.filter(participants=user)
+    unread_count = Message.objects.filter(
+        conversation__in=user_conversations,
+        is_read=False,
+    ).exclude(sender=user).count()
+
     context = {
+        'greeting': greeting,
         'upcoming_events': upcoming_events,
+        'recent_notes': recent_notes,
+        'deadlines': deadlines,
+        'social_posts': social_posts,
+        'unread_count': unread_count,
+        **focus_stats,
     }
     return render(request, 'pages/dashboard.html', context)
 

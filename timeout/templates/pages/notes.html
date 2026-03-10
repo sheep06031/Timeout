@@ -1,364 +1,280 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Notes - Timeout</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --neptune-blue: #525AFF;
-            --neptune-steel: #6D8BC0;
-            --neptune-dark: #1a1a2e;
-            --neptune-muted: #8a8fa8;
-            --neptune-border: #ebebef;
-            --hover-bg: #f5f5ff;
-        }
+{% extends "base.html" %}
+{% load static %}
 
-        body {
-            font-family: 'DM Sans', sans-serif;
-            background: #fff;
-            color: var(--neptune-dark);
-        }
+{% block title %}Notes — Timeout{% endblock %}
 
-        /* Fake navbar */
-        .fake-navbar {
-            background: linear-gradient(135deg, #6D8BC0 0%, #525AFF 100%);
-            padding: 0.85rem 2rem;
-            color: white;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-        .fake-navbar .brand { font-weight: 700; font-size: 1rem; letter-spacing: 0.04em; }
-        .fake-navbar .nav-links { display: flex; gap: 1.5rem; font-size: 0.88rem; opacity: 0.9; }
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/notes.css' %}">
+{% endblock %}
 
-        /* Page */
-        .page-container {
-            max-width: 720px;
-            margin: 0 auto;
-            padding: 3rem 1.5rem;
-        }
+{% block content %}
+<div class="nt-page" id="notesPage">
 
-        /* Header */
-        .page-header {
-            margin-bottom: 2rem;
-        }
-        .page-header h1 {
-            font-size: 2rem;
-            font-weight: 700;
-            color: var(--neptune-dark);
-            margin-bottom: 0.25rem;
-        }
-        .page-header p {
-            color: var(--neptune-muted);
-            font-size: 0.9rem;
-        }
-
-        /* Create note */
-        .create-box {
-            border: 1.5px solid var(--neptune-border);
-            border-radius: 12px;
-            padding: 1.25rem 1.5rem;
-            margin-bottom: 1.5rem;
-            background: #fafafa;
-        }
-        .create-box .section-label {
-            font-size: 0.75rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.08em;
-            color: var(--neptune-muted);
-            margin-bottom: 1rem;
-        }
-        .create-box .form-control,
-        .create-box .form-select {
-            border: 1.5px solid var(--neptune-border);
-            border-radius: 8px;
-            font-family: inherit;
-            font-size: 0.9rem;
-            color: var(--neptune-dark);
-            background: white;
-        }
-        .create-box .form-control:focus,
-        .create-box .form-select:focus {
-            border-color: var(--neptune-blue);
-            box-shadow: 0 0 0 3px rgba(82,90,255,0.08);
-        }
-        .create-box textarea { min-height: 80px; resize: vertical; }
-
-        /* Search/filter */
-        .filter-row {
-            display: flex;
-            gap: 0.75rem;
-            margin-bottom: 1.5rem;
-            align-items: center;
-        }
-        .search-input {
-            flex: 1;
-            border: 1.5px solid var(--neptune-border);
-            border-radius: 8px;
-            padding: 0.55rem 1rem;
-            font-size: 0.88rem;
-            font-family: inherit;
-            color: var(--neptune-dark);
-            outline: none;
-            transition: border-color 0.2s;
-        }
-        .search-input:focus { border-color: var(--neptune-blue); }
-        .search-input::placeholder { color: var(--neptune-muted); }
-        .filter-select {
-            border: 1.5px solid var(--neptune-border);
-            border-radius: 8px;
-            padding: 0.55rem 1rem;
-            font-size: 0.88rem;
-            font-family: inherit;
-            color: var(--neptune-dark);
-            outline: none;
-            background: white;
-            cursor: pointer;
-        }
-
-        /* Buttons */
-        .btn-neptune {
-            background: linear-gradient(135deg, var(--neptune-steel), var(--neptune-blue));
-            border: none;
-            border-radius: 8px;
-            color: white;
-            font-weight: 600;
-            font-family: inherit;
-            padding: 0.55rem 1.2rem;
-            font-size: 0.88rem;
-            cursor: pointer;
-            transition: opacity 0.2s, transform 0.15s;
-        }
-        .btn-neptune:hover { opacity: 0.9; transform: translateY(-1px); }
-
-        /* Note items */
-        .notes-list { display: flex; flex-direction: column; gap: 0; }
-
-        .note-item {
-            display: flex;
-            align-items: flex-start;
-            justify-content: space-between;
-            padding: 1rem 0;
-            border-bottom: 1px solid var(--neptune-border);
-            gap: 1rem;
-            transition: background 0.15s;
-            border-radius: 0;
-        }
-        .note-item:first-child { border-top: 1px solid var(--neptune-border); }
-        .note-item:hover { background: var(--hover-bg); padding-left: 0.75rem; padding-right: 0.75rem; margin: 0 -0.75rem; border-radius: 8px; border-color: transparent; }
-
-        .note-item.pinned .note-title::before {
-            content: '📌 ';
-            font-size: 0.85em;
-        }
-
-        .note-left { flex: 1; min-width: 0; }
-        .note-title {
-            font-size: 0.95rem;
-            font-weight: 600;
-            color: var(--neptune-dark);
-            margin-bottom: 0.2rem;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-        .note-preview {
-            font-size: 0.82rem;
-            color: var(--neptune-muted);
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            margin-bottom: 0.4rem;
-        }
-        .note-meta {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-        .note-tag {
-            font-size: 0.68rem;
-            font-weight: 700;
-            padding: 0.15rem 0.55rem;
-            border-radius: 20px;
-            letter-spacing: 0.02em;
-        }
-        .tag-assignment { background: #fff3e0; color: #e65100; }
-        .tag-lecture { background: #e3f2fd; color: #1565c0; }
-        .tag-personal { background: #e8f5e9; color: #2e7d32; }
-        .tag-general { background: #f3e5f5; color: #6a1b9a; }
-        .note-time { font-size: 0.72rem; color: var(--neptune-muted); }
-
-        .note-actions {
-            display: flex;
-            gap: 0.3rem;
-            flex-shrink: 0;
-            opacity: 0;
-            transition: opacity 0.15s;
-        }
-        .note-item:hover .note-actions { opacity: 1; }
-
-        .action-btn {
-            font-size: 0.75rem;
-            font-weight: 600;
-            padding: 0.25rem 0.6rem;
-            border-radius: 6px;
-            border: 1.5px solid var(--neptune-border);
-            background: white;
-            color: #4a4a6a;
-            cursor: pointer;
-            font-family: inherit;
-            transition: all 0.15s;
-        }
-        .action-btn:hover { border-color: var(--neptune-blue); color: var(--neptune-blue); }
-        .action-btn.danger:hover { border-color: #e53e3e; color: #e53e3e; }
-
-        /* Empty state */
-        .empty-state {
-            text-align: center;
-            padding: 3rem 0;
-            color: var(--neptune-muted);
-            font-size: 0.9rem;
-        }
-    </style>
-</head>
-<body>
-
-    <div class="fake-navbar">
-        <div class="brand">Timeout</div>
-        <div class="nav-links">
-            <span>Dashboard</span>
-            <span>Notes</span>
-            <span>Calendar</span>
-            <span>Social</span>
+  <!-- ══ Study Stats Bar ══ -->
+  <div class="nt-stats-bar">
+    <div class="nt-stat-item nt-stat-streak">
+      <span class="nt-stat-icon" id="streakIcon">&#128293;</span>
+      <div class="nt-stat-text">
+        <span class="nt-stat-value" id="streakValue">{{ note_streak }}</span>
+        <span class="nt-stat-label">day streak</span>
+      </div>
+    </div>
+    <div class="nt-stat-divider"></div>
+    <div class="nt-stat-item nt-stat-level">
+      <span class="nt-stat-badge" id="levelBadge">Lv {{ level }}</span>
+      <div class="nt-stat-xp-wrap">
+        <div class="nt-stat-xp-bar">
+          <div class="nt-stat-xp-fill" id="xpFill" style="width: {{ xp_progress_pct }}%"></div>
         </div>
+        <span class="nt-stat-xp-text" id="xpText">{{ xp }} / {{ xp_for_next_level }} XP</span>
+      </div>
+    </div>
+    <div class="nt-stat-divider"></div>
+    <div class="nt-stat-item nt-stat-pomodoro">
+      <span class="nt-stat-icon">&#127813;</span>
+      <div class="nt-stat-text">
+        <span class="nt-stat-value" id="pomodoroCount">0</span>
+        <span class="nt-stat-label">pomodoros today</span>
+      </div>
+    </div>
+    <div class="nt-stat-actions">
+      <button class="nt-focus-toggle" id="focusModeBtn" title="Enter Focus Mode">
+        &#127919; Focus Mode
+      </button>
+    </div>
+  </div>
+
+  <div class="nt-main-layout">
+
+    <!-- ══ Left: Notes List ══ -->
+    <div class="nt-content-area">
+      <div class="nt-card">
+
+        <!-- Toolbar -->
+        <div class="nt-toolbar">
+          <div class="nt-toolbar__left">
+            <h1 class="nt-title">Notes</h1>
+            {% if notes %}
+              <span class="nt-count">{{ notes|length }}</span>
+            {% endif %}
+          </div>
+          <div>
+            <button class="nt-add-btn" data-bs-toggle="modal" data-bs-target="#newNoteModal">
+              + <span class="nt-add-label">New Note</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Search & Filter -->
+        <form method="get" action="{% url 'notes' %}" class="nt-filter">
+          <input
+            type="text"
+            name="q"
+            class="nt-search"
+            placeholder="Search notes..."
+            value="{{ search_query }}"
+          >
+          <select name="category" class="nt-select" onchange="this.form.submit()">
+            <option value="">All categories</option>
+            {% for value, label in categories %}
+              <option value="{{ value }}" {% if active_category == value %}selected{% endif %}>
+                {{ label }}
+              </option>
+            {% endfor %}
+          </select>
+          {% if search_query %}
+            <button type="submit" class="nt-search-btn">Search</button>
+          {% endif %}
+        </form>
+
+        <!-- Notes List -->
+        <div class="nt-list">
+          {% if notes %}
+            {% for note in notes %}
+              <div class="nt-item nt-item--{{ note.category }}" id="note-{{ note.id }}">
+
+                <div class="nt-item__body">
+                  <div class="nt-item__header">
+                    {% if note.is_pinned %}
+                      <span class="nt-pin-icon" title="Pinned">&#128204;</span>
+                    {% endif %}
+                    <span class="nt-item__title">{{ note.title }}</span>
+                    <span class="nt-cat-tag nt-cat-tag--{{ note.category }}">
+                      {{ note.get_category_display }}
+                    </span>
+                  </div>
+
+                  <p class="nt-item__preview">{{ note.content|truncatewords:20 }}</p>
+
+                  <div class="nt-item__meta">
+                    <span class="nt-meta">{{ note.updated_at|timesince }} ago</span>
+                    {% if note.event %}
+                      <span class="nt-meta nt-meta--event">&#128197; {{ note.event.title }}</span>
+                    {% endif %}
+                  </div>
+                </div>
+
+                <div class="nt-item__actions">
+                  <button
+                    class="nt-action-btn"
+                    onclick="togglePin({{ note.id }}, this)"
+                    data-pinned="{{ note.is_pinned|yesno:'true,false' }}"
+                  >
+                    {{ note.is_pinned|yesno:"Unpin,Pin" }}
+                  </button>
+                  <a href="{% url 'note_edit' note.id %}" class="nt-action-btn">Edit</a>
+                  <form method="post" action="{% url 'note_delete' note.id %}" class="nt-delete-form">
+                    {% csrf_token %}
+                    <button
+                      type="submit"
+                      class="nt-action-btn nt-action-btn--danger"
+                      onclick="return confirm('Delete this note?')"
+                    >Delete</button>
+                  </form>
+                </div>
+
+              </div>
+            {% endfor %}
+          {% else %}
+            <div class="nt-empty">
+              <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
+                <rect x="8" y="4" width="32" height="40" rx="4" stroke="#c8cfe0" stroke-width="2"/>
+                <path d="M16 16h16M16 22h16M16 28h10" stroke="#c8cfe0" stroke-width="2" stroke-linecap="round"/>
+              </svg>
+              <p class="nt-empty__text">No notes yet &mdash; create your first one!</p>
+              <button class="nt-add-btn" data-bs-toggle="modal" data-bs-target="#newNoteModal">
+                + New Note
+              </button>
+            </div>
+          {% endif %}
+        </div>
+
+      </div>
     </div>
 
-    <div class="page-container">
+    <!-- ══ Right: Pomodoro Timer Panel ══ -->
+    <div class="nt-pomo-panel" id="pomoPanel">
+      <div class="nt-pomo-header">
+        <span class="nt-pomo-tomato">&#127813;</span>
+        <h3 class="nt-pomo-title">Pomodoro</h3>
+      </div>
 
-        <!-- Header -->
-        <div class="page-header">
-            <h1>My Notes</h1>
-            <p>Keep track of your thoughts, lectures, and tasks.</p>
-        </div>
+      <!-- Timer Ring -->
+      <div class="nt-pomo-ring-wrap">
+        <svg class="nt-pomo-ring" viewBox="0 0 120 120">
+          <circle class="nt-pomo-ring-bg" cx="60" cy="60" r="54" />
+          <circle class="nt-pomo-ring-progress" id="pomoRing" cx="60" cy="60" r="54"
+                  stroke-dasharray="339.292" stroke-dashoffset="0" />
+        </svg>
+        <div class="nt-pomo-time" id="pomoTime">25:00</div>
+      </div>
 
-        <!-- Create note -->
-        <div class="create-box">
-            <div class="section-label">New Note</div>
-            <div class="mb-2">
-                <input type="text" class="form-control mb-2" placeholder="Title">
-                <textarea class="form-control mb-2" placeholder="Write something..."></textarea>
-                <div class="row g-2">
-                    <div class="col-md-5">
-                        <select class="form-select">
-                            <option>General</option>
-                            <option>Lecture</option>
-                            <option>Assignment</option>
-                            <option>Personal</option>
-                        </select>
-                    </div>
-                    <div class="col-md-5">
-                        <select class="form-select">
-                            <option>Link to event...</option>
-                            <option>INS Lecture - Mar 1</option>
-                            <option>Team Meeting - Feb 28</option>
-                        </select>
-                    </div>
-                    <div class="col-md-2">
-                        <button class="btn-neptune w-100">Add</button>
-                    </div>
-                </div>
-            </div>
-        </div>
+      <div class="nt-pomo-phase" id="pomoPhase">Work Session</div>
+      <div class="nt-pomo-session-dots" id="pomoDots">
+        <span class="nt-pomo-dot"></span>
+        <span class="nt-pomo-dot"></span>
+        <span class="nt-pomo-dot"></span>
+        <span class="nt-pomo-dot"></span>
+      </div>
 
-        <!-- Search & filter -->
-        <div class="filter-row">
-            <input type="text" class="search-input" placeholder="🔍  Search notes...">
-            <select class="filter-select">
-                <option>All categories</option>
-                <option>Lecture</option>
-                <option>Assignment</option>
-                <option>Personal</option>
-                <option>General</option>
-            </select>
-        </div>
+      <div class="nt-pomo-controls">
+        <button class="nt-pomo-btn nt-pomo-btn--start" id="pomoStartBtn">Start</button>
+        <button class="nt-pomo-btn nt-pomo-btn--pause" id="pomoPauseBtn" style="display:none">Pause</button>
+        <button class="nt-pomo-btn nt-pomo-btn--skip" id="pomoSkipBtn" title="Skip to next phase">Skip</button>
+        <button class="nt-pomo-btn nt-pomo-btn--reset" id="pomoResetBtn" title="Reset timer">Reset</button>
+      </div>
 
-        <!-- Notes list -->
-        <div class="notes-list">
-
-            <div class="note-item pinned">
-                <div class="note-left">
-                    <div class="note-title">Internet Systems Coursework</div>
-                    <div class="note-preview">Need to review TCP/IP protocols and finish the HTTP mechanics section...</div>
-                    <div class="note-meta">
-                        <span class="note-tag tag-assignment">Assignment</span>
-                        <span class="note-time">2 hours ago</span>
-                    </div>
-                </div>
-                <div class="note-actions">
-                    <button class="action-btn">Unpin</button>
-                    <button class="action-btn">Edit</button>
-                    <button class="action-btn">Share</button>
-                    <button class="action-btn danger">Delete</button>
-                </div>
-            </div>
-
-            <div class="note-item">
-                <div class="note-left">
-                    <div class="note-title">FC2 - Turing Machines</div>
-                    <div class="note-preview">A Turing machine consists of an infinite tape, a read/write head...</div>
-                    <div class="note-meta">
-                        <span class="note-tag tag-lecture">Lecture</span>
-                        <span class="note-time">1 day ago</span>
-                    </div>
-                </div>
-                <div class="note-actions">
-                    <button class="action-btn">Pin</button>
-                    <button class="action-btn">Edit</button>
-                    <button class="action-btn">Share</button>
-                    <button class="action-btn danger">Delete</button>
-                </div>
-            </div>
-
-            <div class="note-item">
-                <div class="note-left">
-                    <div class="note-title">Timeout project ideas</div>
-                    <div class="note-preview">Add dark mode toggle, improve the notes page styling, fix merge conflicts...</div>
-                    <div class="note-meta">
-                        <span class="note-tag tag-personal">Personal</span>
-                        <span class="note-time">3 days ago</span>
-                    </div>
-                </div>
-                <div class="note-actions">
-                    <button class="action-btn">Pin</button>
-                    <button class="action-btn">Edit</button>
-                    <button class="action-btn">Share</button>
-                    <button class="action-btn danger">Delete</button>
-                </div>
-            </div>
-
-            <div class="note-item">
-                <div class="note-left">
-                    <div class="note-title">PEP - Haskell Notes</div>
-                    <div class="note-preview">Functional programming concepts, type classes, monads...</div>
-                    <div class="note-meta">
-                        <span class="note-tag tag-lecture">Lecture</span>
-                        <span class="note-time">5 days ago</span>
-                    </div>
-                </div>
-                <div class="note-actions">
-                    <button class="action-btn">Pin</button>
-                    <button class="action-btn">Edit</button>
-                    <button class="action-btn">Share</button>
-                    <button class="action-btn danger">Delete</button>
-                </div>
-            </div>
-
-        </div>
+      <div class="nt-pomo-info">
+        <p>{{ request.user.pomo_work_minutes }} min work &middot; {{ request.user.pomo_short_break }} min break</p>
+        <p>Long break ({{ request.user.pomo_long_break }} min) after 4 sessions</p>
+      </div>
     </div>
 
-</body>
-</html>
+  </div>
+</div>
+
+<!-- ══ Focus Mode Overlay ══ -->
+<div class="nt-focus-overlay" id="focusOverlay" style="display:none">
+  <div class="nt-focus-bar">
+    <span class="nt-focus-bar-label">&#127919; Focus Mode Active</span>
+    <span class="nt-focus-bar-timer" id="focusElapsed">00:00</span>
+    <button class="nt-focus-exit-btn" id="focusExitBtn">Exit Focus Mode</button>
+  </div>
+</div>
+
+<!-- ══ Inactivity Warning Overlay ══ -->
+<div class="nt-warn-overlay" id="warnOverlay" style="display:none">
+  <div class="nt-warn-card">
+    <div class="nt-warn-icon">&#9888;&#65039;</div>
+    <h2 class="nt-warn-title">You've been inactive!</h2>
+    <p class="nt-warn-text">It's been 2 minutes since your last activity.<br>Get back to your notes!</p>
+    <button class="nt-warn-dismiss" id="warnDismissBtn">I'm Back!</button>
+  </div>
+</div>
+
+<!-- ══ XP Gain Toast ══ -->
+<div class="nt-xp-toast" id="xpToast" style="display:none">
+  <span class="nt-xp-toast-text" id="xpToastText">+25 XP</span>
+</div>
+
+<!-- New Note Modal -->
+<div class="modal fade" id="newNoteModal" tabindex="-1" aria-labelledby="newNoteLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="newNoteLabel">New Note</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <form method="post" action="{% url 'note_create' %}">
+        {% csrf_token %}
+        <div class="modal-body">
+          <div class="mb-3">
+            <label for="noteTitle" class="form-label">Title</label>
+            <input type="text" class="form-control" id="noteTitle" name="title" placeholder="Note title" required maxlength="200">
+          </div>
+          <div class="mb-3">
+            <label for="noteContent" class="form-label">Content</label>
+            <textarea class="form-control" id="noteContent" name="content" rows="5" placeholder="Write your note here..." maxlength="5000" required></textarea>
+          </div>
+          <div class="row g-3">
+            <div class="col-6">
+              <label for="noteCategory" class="form-label">Category</label>
+              <select class="form-select" id="noteCategory" name="category">
+                {% for value, label in categories %}
+                  <option value="{{ value }}">{{ label }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-6">
+              <label for="id_event" class="form-label">Link to Event</label>
+              {{ form.event }}
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn submit-btn">Create Note</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<button class="fab" data-bs-toggle="modal" data-bs-target="#newNoteModal" aria-label="New note">+</button>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  window.NOTES_CONFIG = {
+    csrfToken: '{{ csrf_token }}',
+    pomodoroCompleteUrl: '{% url "pomodoro_complete" %}',
+    statsUrl: '{% url "notes_stats" %}',
+    pomoWork: {{ request.user.pomo_work_minutes }},
+    pomoShort: {{ request.user.pomo_short_break }},
+    pomoLong: {{ request.user.pomo_long_break }},
+    sounds: {{ request.user.notification_sounds|yesno:"true,false" }},
+  };
+</script>
+<script src="{% static 'js/notes.js' %}"></script>
+{% endblock %}

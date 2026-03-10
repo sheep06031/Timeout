@@ -2,6 +2,13 @@ const PALETTE = ['#6c63ff', '#00d4aa', '#ff6b9d', '#ffa94d', '#4dabf7', '#a855f7
 const ACCENT = '#6c63ff';
 const ACCENT_SOFT = 'rgba(108, 99, 255, 0.15)';
 
+function isDark() {
+  return document.documentElement.getAttribute('data-theme') === 'dark';
+}
+
+function tickColor() { return isDark() ? '#6b7394' : '#6c757d'; }
+function gridColor() { return isDark() ? '#2a2d45' : '#f3f4f6'; }
+
 function parseList(el, attr) {
   return el.dataset[attr].split(',').map(s => s.trim()).filter(Boolean);
 }
@@ -44,8 +51,8 @@ function makeBarChart(id, labels, data) {
       maintainAspectRatio: false,
       plugins: { legend: { display: false } },
       scales: {
-        x: { grid: { display: false }, ticks: { color: '#6c757d', font: { size: 12 } } },
-        y: { beginAtZero: true, ticks: { stepSize: 1, color: '#6c757d', font: { size: 12 } }, grid: { color: '#f3f4f6' } }
+        x: { grid: { display: false }, ticks: { color: tickColor(), font: { size: 12 } } },
+        y: { beginAtZero: true, ticks: { stepSize: 1, color: tickColor(), font: { size: 12 } }, grid: { color: gridColor() } }
       }
     }
   });
@@ -73,8 +80,8 @@ function makeLineChart(id, labels, data) {
       maintainAspectRatio: false,
       plugins: { legend: { display: false } },
       scales: {
-        x: { grid: { display: false }, ticks: { color: '#6c757d', font: { size: 12 } } },
-        y: { beginAtZero: true, ticks: { stepSize: 1, color: '#6c757d', font: { size: 12 } }, grid: { color: '#f3f4f6' } }
+        x: { grid: { display: false }, ticks: { color: tickColor(), font: { size: 12 } } },
+        y: { beginAtZero: true, ticks: { stepSize: 1, color: tickColor(), font: { size: 12 } }, grid: { color: gridColor() } }
       }
     }
   });

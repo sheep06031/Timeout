@@ -1,14 +1,56 @@
 {% load static %}
 <nav class="navbar navbar-expand-lg sticky-top timeout-nav">
   <div class="container">
-    <a class="navbar-brand" href="{% url 'landing' %}">Timeout</a>
+    <a class="navbar-brand" href="{% if user.is_authenticated %}{% url 'dashboard' %}{% else %}{% url 'landing' %}{% endif %}">Timeout</a>
+
+    {% if user.is_authenticated %}
+      <!-- Always-visible: status pill + user dropdown -->
+      <div class="nav-topbar-user d-flex align-items-center gap-2">
+        <a class="nav-status-pill" href="{% url 'profile' %}">
+          <span id="nav-status-dot" class="status-dot-nav status-{{ user.status }}"></span>
+          <span id="nav-status-text">{{ user.get_status_display }}</span>
+          <span id="nav-focus-timer"
+                {% if user.status == 'focus' and user.focus_started_at %}
+                  data-focus-started-at="{{ user.focus_started_at|date:'U' }}"
+                {% else %}
+                  style="display:none"
+                {% endif %}>
+            · ⏱ <span class="focus-timer-display">00:00</span>
+          </span>
+        </a>
+
+        <!-- User dropdown -->
+        <div class="dropdown">
+          <button class="nav-user-dropdown-btn dropdown-toggle" type="button" id="navUserDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+            <span class="nav-user-avatar">{{ user.username|first|upper }}</span>
+            <span class="nav-user-name d-none d-lg-inline">{{ user.username }}</span>
+          </button>
+          <ul class="dropdown-menu dropdown-menu-end nav-dropdown-menu" aria-labelledby="navUserDropdown">
+            <li class="nav-dropdown-header">
+              <span class="nav-dropdown-username">{{ user.username }}</span>
+              <span class="nav-dropdown-level">Lv {{ user.level }}</span>
+            </li>
+            <li><hr class="dropdown-divider"></li>
+            <li><a class="dropdown-item nav-dropdown-item" href="{% url 'profile' %}">
+              <span class="nav-dropdown-icon">&#128100;</span> Profile
+            </a></li>
+            <li><a class="dropdown-item nav-dropdown-item" href="{% url 'settings' %}">
+              <span class="nav-dropdown-icon">&#9881;&#65039;</span> Settings
+            </a></li>
+            <li><hr class="dropdown-divider"></li>
+            <li><a class="dropdown-item nav-dropdown-item nav-dropdown-item--danger" href="{% url 'logout' %}">
+              <span class="nav-dropdown-icon">&#128682;</span> Logout
+            </a></li>
+          </ul>
+        </div>
+      </div>
+    {% endif %}
+
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"><span class="navbar-toggler-icon"></span></button>
+
     <div class="collapse navbar-collapse" id="navbarNav">
       <ul class="navbar-nav me-auto gap-1">
         {% if user.is_authenticated %}
-          <li class="nav-item">
-            <a class="nav-link" href="{% url 'dashboard' %}">Dashboard</a>
-          </li>
           <li class="nav-item">
             <a class="nav-link" href="{% url 'calendar' %}">Calendar</a>
           </li>
@@ -24,30 +66,7 @@
         {% endif %}
       </ul>
       <ul class="navbar-nav align-items-center gap-2">
-        {% if user.is_authenticated %}
-          <!-- Status indicator — click goes to profile to change -->
-          <li class="nav-item">
-            <a class="nav-status-pill" href="{% url 'profile' %}">
-              <span id="nav-status-dot" class="status-dot-nav status-{{ user.status }}"></span>
-              <span id="nav-status-text">{{ user.get_status_display }}</span>
-              <span id="nav-focus-timer"
-                    {% if user.status == 'focus' and user.focus_started_at %}
-                      data-focus-started-at="{{ user.focus_started_at|date:'U' }}"
-                    {% else %}
-                      style="display:none"
-                    {% endif %}>
-                · ⏱ <span class="focus-timer-display">00:00</span>
-              </span>
-            </a>
-          </li>
-
-          <li class="nav-item">
-            <a class="nav-link nav-user-btn" href="{% url 'profile' %}">{{ user.username }}</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link nav-logout-btn" href="{% url 'logout' %}">Logout</a>
-          </li>
-        {% else %}
+        {% if not user.is_authenticated %}
           <li class="nav-item">
             <a class="nav-link nav-user-btn" href="{% url 'login' %}">Login</a>
           </li>

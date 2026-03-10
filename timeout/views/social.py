@@ -9,6 +9,7 @@ from django.views.decorators.http import require_POST
 from timeout.forms import PostForm, CommentForm
 from timeout.models import Post, Comment, Like, Bookmark, User, Conversation, FocusSession
 from timeout.services import FeedService
+from timeout.views.profile import get_profile_event
 
 
 
@@ -18,7 +19,10 @@ def feed(request):
 
     if tab == 'discover':
         posts = FeedService.get_discover_feed(request.user)
+    elif tab == 'bookmarks':
+        posts = FeedService.get_bookmarked_posts(request.user)
     else:
+        tab = 'following'
         posts = FeedService.get_following_feed(request.user)
 
     conversations = Conversation.objects.filter(
@@ -32,12 +36,16 @@ def feed(request):
             'other': conv.get_other_participant(request.user),
             'last': conv.get_last_message(),
         })
+    bookmarked_ids = set(
+        Bookmark.objects.filter(user=request.user).values_list('post_id', flat=True)
+    )
 
     context = {
         'posts': posts,
         'active_tab': tab,
         'post_form': PostForm(user=request.user),
         'conversation_data': conversation_data,
+        'bookmarked_ids' : bookmarked_ids,
     }
     return render(request, 'social/feed.html', context)
 
@@ -179,11 +187,15 @@ def user_profile(request, username):
         is_following
     )
 
+    event, event_status = get_profile_event(profile_user) if can_view else (None, None)
+
     context = {
         'profile_user': profile_user,
         'posts': posts,
         'is_following': is_following,
         'can_view': can_view,
+        'event': event,
+        'event_status': event_status,
     }
     return render(request, 'social/user_profile.html', context)
 

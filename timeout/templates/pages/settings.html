@@ -1,0 +1,301 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Settings — Timeout{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/settings.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="stg-page">
+  <div class="stg-header">
+    <h1 class="stg-page-title">Settings</h1>
+    <p class="stg-page-desc">Customize your Timeout experience.</p>
+  </div>
+
+  <form class="stg-form" id="settingsForm">
+    {% csrf_token %}
+
+    <!-- ═══ Appearance ═══ -->
+    <div class="stg-section">
+      <div class="stg-section-header">
+        <span class="stg-section-icon">&#127912;</span>
+        <div>
+          <h2 class="stg-section-title">Appearance</h2>
+          <p class="stg-section-desc">Theme, colors, and display preferences.</p>
+        </div>
+      </div>
+
+      <!-- Theme -->
+      <div class="stg-field">
+        <label class="stg-label">Theme</label>
+        <div class="stg-theme-options">
+          {% for value, label in appearance_form.fields.theme.choices %}
+            <label class="stg-theme-card {% if appearance_form.instance.theme == value %}stg-theme-card--active{% endif %}">
+              <input type="radio" name="theme" value="{{ value }}"
+                     {% if appearance_form.instance.theme == value %}checked{% endif %}
+                     class="stg-theme-radio">
+              <div class="stg-theme-preview stg-theme-preview--{{ value }}">
+                <div class="stg-theme-bar"></div>
+                <div class="stg-theme-content">
+                  <div class="stg-theme-line"></div>
+                  <div class="stg-theme-line stg-theme-line--short"></div>
+                </div>
+              </div>
+              <span class="stg-theme-label">{{ label }}</span>
+            </label>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- Color Blindness -->
+      <div class="stg-field">
+        <label class="stg-label">Color Blindness Mode</label>
+        <p class="stg-field-hint">Adjusts colors across the app for better visibility.</p>
+        <div class="stg-radio-group">
+          {% for value, label in appearance_form.fields.colorblind_mode.choices %}
+            <label class="stg-radio-option {% if appearance_form.instance.colorblind_mode == value %}stg-radio-option--active{% endif %}">
+              <input type="radio" name="colorblind_mode" value="{{ value }}"
+                     {% if appearance_form.instance.colorblind_mode == value %}checked{% endif %}>
+              <span class="stg-radio-dot"></span>
+              <span>{{ label }}</span>
+            </label>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- Font Size -->
+      <div class="stg-field">
+        <label class="stg-label">Font Size</label>
+        <div class="stg-slider-wrap">
+          <span class="stg-slider-label">A</span>
+          <input type="range" name="font_size" id="fontSizeSlider"
+                 min="80" max="150" step="5"
+                 value="{{ appearance_form.instance.font_size }}"
+                 class="stg-slider">
+          <span class="stg-slider-label stg-slider-label--large">A</span>
+          <span class="stg-slider-value" id="fontSizeValue">{{ appearance_form.instance.font_size }}%</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ Pomodoro ═══ -->
+    <div class="stg-section">
+      <div class="stg-section-header">
+        <span class="stg-section-icon">&#127813;</span>
+        <div>
+          <h2 class="stg-section-title">Pomodoro Timer</h2>
+          <p class="stg-section-desc">Customize your study session durations.</p>
+        </div>
+      </div>
+
+      <div class="stg-field-row">
+        <div class="stg-field stg-field--third">
+          <label class="stg-label" for="id_pomo_work_minutes">Work (min)</label>
+          <input type="number" name="pomo_work_minutes" id="id_pomo_work_minutes"
+                 class="stg-input" min="10" max="60"
+                 value="{{ appearance_form.instance.pomo_work_minutes }}">
+        </div>
+        <div class="stg-field stg-field--third">
+          <label class="stg-label" for="id_pomo_short_break">Short Break (min)</label>
+          <input type="number" name="pomo_short_break" id="id_pomo_short_break"
+                 class="stg-input" min="1" max="30"
+                 value="{{ appearance_form.instance.pomo_short_break }}">
+        </div>
+        <div class="stg-field stg-field--third">
+          <label class="stg-label" for="id_pomo_long_break">Long Break (min)</label>
+          <input type="number" name="pomo_long_break" id="id_pomo_long_break"
+                 class="stg-input" min="5" max="60"
+                 value="{{ appearance_form.instance.pomo_long_break }}">
+        </div>
+      </div>
+
+      <div class="stg-field">
+        <label class="stg-toggle-row">
+          <input type="checkbox" name="notification_sounds" class="stg-toggle-input"
+                 {% if appearance_form.instance.notification_sounds %}checked{% endif %}>
+          <span class="stg-toggle-switch"></span>
+          <span class="stg-toggle-text">
+            <span class="stg-label">Notification Sounds</span>
+            <span class="stg-field-hint">Play sounds for Pomodoro transitions and focus warnings.</span>
+          </span>
+        </label>
+      </div>
+    </div>
+
+    <!-- ═══ Notes Preferences ═══ -->
+    <div class="stg-section">
+      <div class="stg-section-header">
+        <span class="stg-section-icon">&#128221;</span>
+        <div>
+          <h2 class="stg-section-title">Notes</h2>
+          <p class="stg-section-desc">Default settings for new notes.</p>
+        </div>
+      </div>
+
+      <div class="stg-field-row">
+        <div class="stg-field stg-field--half">
+          <label class="stg-label" for="id_default_note_category">Default Category</label>
+          {{ appearance_form.default_note_category }}
+        </div>
+        <div class="stg-field stg-field--half">
+          <label class="stg-label" for="id_daily_study_reminder">Daily Study Reminder</label>
+          <input type="time" name="daily_study_reminder" id="id_daily_study_reminder"
+                 class="stg-input"
+                 value="{% if appearance_form.instance.daily_study_reminder %}{{ appearance_form.instance.daily_study_reminder|time:'H:i' }}{% endif %}">
+          <span class="stg-field-hint">Get a reminder to study at this time daily.</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Auto-save status -->
+    <div class="stg-autosave" id="autosaveStatus" style="display:none">
+      <span class="stg-autosave-text" id="autosaveText">Saved</span>
+    </div>
+  </form>
+
+  <!-- ═══ Account / Security ═══ -->
+  <div class="stg-section stg-section--account">
+    <div class="stg-section-header">
+      <span class="stg-section-icon">&#128274;</span>
+      <div>
+        <h2 class="stg-section-title">Account</h2>
+        <p class="stg-section-desc">Password and account management.</p>
+      </div>
+    </div>
+
+    <!-- Change Password -->
+    <form method="post" class="stg-form">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="password">
+      <div class="stg-field">
+        <label class="stg-label" for="id_old_password">Current Password</label>
+        <input type="password" name="old_password" id="id_old_password" class="stg-input" required>
+      </div>
+      <div class="stg-field-row">
+        <div class="stg-field stg-field--half">
+          <label class="stg-label" for="id_new_password1">New Password</label>
+          <input type="password" name="new_password1" id="id_new_password1" class="stg-input" required>
+        </div>
+        <div class="stg-field stg-field--half">
+          <label class="stg-label" for="id_new_password2">Confirm New Password</label>
+          <input type="password" name="new_password2" id="id_new_password2" class="stg-input" required>
+        </div>
+      </div>
+      <button type="submit" class="stg-btn stg-btn--secondary">Change Password</button>
+    </form>
+
+    <!-- Delete Account -->
+    <div class="stg-danger-zone">
+      <h3 class="stg-danger-title">Danger Zone</h3>
+      <p class="stg-danger-text">Permanently delete your account and all data. This cannot be undone.</p>
+      <form method="post" onsubmit="return confirm('Are you absolutely sure? This will permanently delete your account, all notes, events, and posts. This action cannot be undone.')">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="delete_account">
+        <button type="submit" class="stg-btn stg-btn--danger">Delete My Account</button>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function() {
+  var form = document.getElementById('settingsForm');
+  var statusEl = document.getElementById('autosaveStatus');
+  var statusText = document.getElementById('autosaveText');
+  var saveUrl = '{% url "settings_save" %}';
+  var csrfToken = '{{ csrf_token }}';
+  var saveTimer = null;
+
+  function showStatus(text, cls) {
+    statusText.textContent = text;
+    statusEl.className = 'stg-autosave stg-autosave--' + cls;
+    statusEl.style.display = '';
+    clearTimeout(statusEl._hideTimer);
+    if (cls === 'saved') {
+      statusEl._hideTimer = setTimeout(function() { statusEl.style.display = 'none'; }, 2000);
+    }
+  }
+
+  function autoSave() {
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(doSave, 400);
+  }
+
+  function doSave() {
+    showStatus('Saving...', 'saving');
+    var data = new FormData(form);
+    // Checkbox: if unchecked, FormData won't include it — add explicit "off"
+    if (!form.querySelector('[name="notification_sounds"]').checked) {
+      data.delete('notification_sounds');
+    }
+    fetch(saveUrl, {
+      method: 'POST',
+      headers: { 'X-CSRFToken': csrfToken },
+      body: data,
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+      if (d.ok) showStatus('Saved', 'saved');
+      else showStatus('Error', 'error');
+    })
+    .catch(function() { showStatus('Error', 'error'); });
+  }
+
+  // Listen to all form inputs
+  form.querySelectorAll('input, select').forEach(function(el) {
+    el.addEventListener('change', autoSave);
+    if (el.type === 'range' || el.type === 'number') {
+      el.addEventListener('input', autoSave);
+    }
+  });
+
+  // Font size slider live preview
+  var slider = document.getElementById('fontSizeSlider');
+  var display = document.getElementById('fontSizeValue');
+  if (slider) {
+    slider.addEventListener('input', function() {
+      display.textContent = this.value + '%';
+      document.documentElement.style.fontSize = this.value + '%';
+    });
+  }
+
+  // Theme card active state + live preview
+  document.querySelectorAll('.stg-theme-radio').forEach(function(radio) {
+    radio.addEventListener('change', function() {
+      document.querySelectorAll('.stg-theme-card').forEach(function(c) {
+        c.classList.remove('stg-theme-card--active');
+      });
+      this.closest('.stg-theme-card').classList.add('stg-theme-card--active');
+
+      var val = this.value;
+      if (val === 'dark') {
+        document.documentElement.setAttribute('data-theme', 'dark');
+        document.documentElement.dataset.themeSource = 'explicit';
+      } else if (val === 'system') {
+        var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        document.documentElement.setAttribute('data-theme', prefersDark ? 'dark' : 'light');
+        document.documentElement.dataset.themeSource = 'system';
+      } else {
+        document.documentElement.setAttribute('data-theme', 'light');
+        document.documentElement.dataset.themeSource = 'explicit';
+      }
+    });
+  });
+
+  // Colorblind mode active state + live preview
+  document.querySelectorAll('.stg-radio-option input').forEach(function(radio) {
+    radio.addEventListener('change', function() {
+      this.closest('.stg-radio-group').querySelectorAll('.stg-radio-option').forEach(function(o) {
+        o.classList.remove('stg-radio-option--active');
+      });
+      this.closest('.stg-radio-option').classList.add('stg-radio-option--active');
+      document.documentElement.setAttribute('data-colorblind', this.value);
+    });
+  });
+})();
+</script>
+{% endblock %}

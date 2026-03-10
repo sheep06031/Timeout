@@ -11,6 +11,7 @@ from .social import (
 )
 from .notes import NoteForm
 from .profileEditForm import ProfileEditForm
+from .settings import AppearanceForm
 
 
 __all__ = [
@@ -23,5 +24,5 @@ __all__ = [
     'CommentForm',
     'NoteForm',
     'ProfileEditForm',
-
+    'AppearanceForm',
 ]

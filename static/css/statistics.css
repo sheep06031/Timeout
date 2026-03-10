@@ -276,6 +276,11 @@ canvas {
 
 
 /* responsive */
+@media (max-width: 991.98px) {
+  .lb-col  { position: static; }
+  .lb-card { position: static; inset: auto; max-height: 320px; overflow-y: auto; }
+}
+
 @media (max-width: 768px) {
   .stats-card-value { font-size: 1.5rem; }
   .chart-card       { padding: 1rem; }

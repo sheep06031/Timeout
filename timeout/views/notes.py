@@ -22,12 +22,20 @@ def note_list(request):
     else:
         notes = NoteService.get_user_notes(request.user)
 
+    user = request.user
     context = {
         'notes': notes,
-        'form': NoteForm(user=request.user),
+        'form': NoteForm(user=user),
         'categories': Note.Category.choices,
         'active_category': category,
         'search_query': query,
+        # Gamification
+        'xp': user.xp,
+        'level': user.level,
+        'xp_progress_pct': user.xp_progress_pct,
+        'xp_for_next_level': user.xp_for_next_level,
+        'note_streak': user.note_streak,
+        'longest_streak': user.longest_note_streak,
     }
     return render(request, 'pages/notes.html', context)
 
@@ -41,6 +49,9 @@ def note_create(request):
             note = form.save(commit=False)
             note.owner = request.user
             note.save()
+            NoteService.update_streak_and_xp(
+                request.user, NoteService.XP_NOTE_CREATE,
+            )
             messages.success(request, 'Note created successfully!')
             return redirect('notes')
         else:
@@ -60,13 +71,27 @@ def note_edit(request, note_id):
         form = NoteForm(request.POST, instance=note, user=request.user)
         if form.is_valid():
             form.save()
+            NoteService.update_streak_and_xp(
+                request.user, NoteService.XP_NOTE_EDIT,
+            )
             messages.success(request, 'Note updated successfully!')
             return redirect('notes')
         messages.error(request, 'Error updating note.')
         return redirect('notes')
 
-    form = NoteForm(instance=note, user=request.user)
-    context = {'form': form, 'note': note}
+    user = request.user
+    form = NoteForm(instance=note, user=user)
+    context = {
+        'form': form,
+        'note': note,
+        # Gamification (for focus mode / stats bar on edit page)
+        'xp': user.xp,
+        'level': user.level,
+        'xp_progress_pct': user.xp_progress_pct,
+        'xp_for_next_level': user.xp_for_next_level,
+        'note_streak': user.note_streak,
+        'longest_streak': user.longest_note_streak,
+    }
     return render(request, 'pages/note_edit.html', context)
 
 
@@ -108,3 +133,32 @@ def note_share(request, note_id):
     )
     messages.success(request, 'Note shared as a post!')
     return redirect('social_feed')
+
+
+@login_required
+@require_POST
+def pomodoro_complete(request):
+    """Award XP when a Pomodoro work session is completed."""
+    NoteService.award_pomodoro_xp(request.user)
+    user = request.user
+    user.refresh_from_db()
+    return JsonResponse({
+        'xp': user.xp,
+        'level': user.level,
+        'xp_progress_pct': user.xp_progress_pct,
+        'xp_for_next_level': user.xp_for_next_level,
+    })
+
+
+@login_required
+def notes_stats(request):
+    """Return gamification stats as JSON."""
+    user = request.user
+    return JsonResponse({
+        'xp': user.xp,
+        'level': user.level,
+        'xp_progress_pct': user.xp_progress_pct,
+        'xp_for_next_level': user.xp_for_next_level,
+        'note_streak': user.note_streak,
+        'longest_streak': user.longest_note_streak,
+    })

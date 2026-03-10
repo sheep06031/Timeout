@@ -2,7 +2,7 @@
 {% load static %}
 
 {% block title %}
-  Welcome - Timeout
+  Timeout — Your Study Productivity Hub
 {% endblock %}
 
 {% block extra_css %}
@@ -15,27 +15,31 @@
   <section class="hero-section position-relative overflow-hidden">
     <div class="container position-relative">
       <div class="row justify-content-center text-center">
-        <div class="col-lg-12 col-xl-12">
-          <h1 class="display-4 fw-bold text-white mb-4">Smart Schedule Management</h1>
-          <p class="lead text-white fs-3 mb-5">Plan smarter with AI and share your schedule with friends</p>
+        <div class="col-lg-10 col-xl-9">
+          <h1 class="display-4 fw-bold text-white mb-4">Study Smarter, Not Harder</h1>
+          <p class="lead text-white fs-4 mb-5">The all-in-one productivity hub for university students. Focus sessions, smart notes, event tracking, and a social community all in one place.</p>
           <div class="d-flex flex-column flex-sm-row gap-3 justify-content-center mb-5">
-            <button class="btn btn-light btn-lg px-5 py-2" onclick="location.href='{% url 'login' %}'">Sign In</button>
-            <button class="btn btn-outline-light btn-lg px-5 py-2" onclick="location.href='{% url 'signup' %}'">Sign Up</button>
+            <button class="btn btn-light btn-lg px-5 py-2" onclick="location.href='{% url 'signup' %}'">Get Started Free</button>
+            <button class="btn btn-outline-light btn-lg px-5 py-2" onclick="location.href='{% url 'login' %}'">Sign In</button>
           </div>
 
           <!-- Feature badges -->
-          <div class="d-flex flex-wrap justify-content-center gap-3 mt-5">
+          <div class="d-flex flex-wrap justify-content-center gap-3 mt-4">
             <div class="feature-badge">
-              <i class="bi bi-calendar3 me-2"></i>
-              <span>Smart Calendar</span>
+              <i class="bi bi-clock-history me-2"></i>
+              <span>Pomodoro Timer</span>
             </div>
             <div class="feature-badge">
-              <i class="bi bi-stars me-2"></i>
-              <span>AI Recommendations</span>
+              <i class="bi bi-journal-text me-2"></i>
+              <span>Smart Notes</span>
+            </div>
+            <div class="feature-badge">
+              <i class="bi bi-trophy me-2"></i>
+              <span>XP &amp; Levels</span>
             </div>
             <div class="feature-badge">
               <i class="bi bi-people me-2"></i>
-              <span>Share with Friends</span>
+              <span>Study Community</span>
             </div>
           </div>
         </div>
@@ -48,75 +52,75 @@
     <div class="container py-5">
       <div class="row justify-content-center text-center mb-5">
         <div class="col-lg-8">
-          <h2 class="display-4 fw-bold mb-3">Why Timeout is Special</h2>
-          <p class="lead text-muted">Powerful features designed for successful student life</p>
+          <h2 class="display-5 fw-bold mb-3">Everything You Need to Succeed</h2>
+          <p class="lead text-muted">Powerful tools built specifically for students who want to stay on track.</p>
         </div>
       </div>
 
       <div class="row g-4">
-        <!-- Feature 1 -->
+        <!-- Feature 1: Pomodoro -->
         <div class="col-md-6 col-lg-4">
           <div class="feature-card h-100 p-4 rounded-4 shadow-sm hover-lift">
-            <div class="feature-icon mb-4" style="background-color: rgba(82, 90, 255, 0.1);">
-              <i class="bi bi-calendar3 fs-3" style="color: #525AFF;"></i>
+            <div class="feature-icon mb-4" style="background-color: rgba(229, 62, 62, 0.1);">
+              <i class="bi bi-clock-history fs-3" style="color: #e53e3e;"></i>
             </div>
-            <h3 class="h4 fw-bold mb-3">Intuitive Calendar</h3>
-            <p class="text-muted">Easily manage your classes, assignments, and exam schedules with a clean, intuitive calendar.</p>
+            <h3 class="h4 fw-bold mb-3">Pomodoro Timer</h3>
+            <p class="text-muted">Stay focused with customizable work and break intervals. Track your completed sessions and build consistency over time.</p>
           </div>
         </div>
 
-        <!-- Feature 2 -->
+        <!-- Feature 2: Notes -->
         <div class="col-md-6 col-lg-4">
           <div class="feature-card h-100 p-4 rounded-4 shadow-sm hover-lift">
-            <div class="feature-icon mb-4" style="background-color: rgba(109, 139, 192, 0.1);">
-              <i class="bi bi-stars fs-3" style="color: #6D8BC0;"></i>
+            <div class="feature-icon mb-4" style="background-color: rgba(91, 115, 232, 0.1);">
+              <i class="bi bi-journal-richtext fs-3" style="color: #5B73E8;"></i>
             </div>
-            <h3 class="h4 fw-bold mb-3">AI Schedule Recommendations</h3>
-            <p class="text-muted">AI analyzes your learning patterns to recommend optimal study and break times.</p>
+            <h3 class="h4 fw-bold mb-3">Smart Notes</h3>
+            <p class="text-muted">Organize your lecture notes, study materials, and ideas with categories, rich editing, and quick search across all your content.</p>
           </div>
         </div>
 
-        <!-- Feature 3 -->
+        <!-- Feature 3: Calendar & Deadlines -->
         <div class="col-md-6 col-lg-4">
           <div class="feature-card h-100 p-4 rounded-4 shadow-sm hover-lift">
             <div class="feature-icon mb-4" style="background-color: rgba(74, 181, 181, 0.1);">
-              <i class="bi bi-people fs-3" style="color: #4AB5B5;"></i>
+              <i class="bi bi-calendar-event fs-3" style="color: #4AB5B5;"></i>
             </div>
-            <h3 class="h4 fw-bold mb-3">Share Schedules with Friends</h3>
-            <p class="text-muted">Check your friends' schedules and find time to study together.</p>
+            <h3 class="h4 fw-bold mb-3">Calendar &amp; Deadlines</h3>
+            <p class="text-muted">Never miss an exam or assignment. Manage classes, deadlines, and events on an intuitive calendar with list and month views.</p>
           </div>
         </div>
 
-        <!-- Feature 4 -->
+        <!-- Feature 4: XP & Gamification -->
         <div class="col-md-6 col-lg-4">
           <div class="feature-card h-100 p-4 rounded-4 shadow-sm hover-lift">
-            <div class="feature-icon mb-4" style="background-color: rgba(143, 217, 251, 0.1);">
-              <i class="bi bi-unlock fs-3" style="color: #8FD9FB;"></i>
+            <div class="feature-icon mb-4" style="background-color: rgba(245, 158, 11, 0.1);">
+              <i class="bi bi-trophy fs-3" style="color: #f59e0b;"></i>
             </div>
-            <h3 class="h4 fw-bold mb-3">Public/Private Settings</h3>
-            <p class="text-muted">Selectively share only the schedules you want and keep your personal information safe.</p>
+            <h3 class="h4 fw-bold mb-3">XP, Levels &amp; Streaks</h3>
+            <p class="text-muted">Earn experience points for taking notes and completing focus sessions. Level up, maintain streaks, and stay motivated.</p>
           </div>
         </div>
 
-        <!-- Feature 5 -->
+        <!-- Feature 5: Social -->
         <div class="col-md-6 col-lg-4">
           <div class="feature-card h-100 p-4 rounded-4 shadow-sm hover-lift">
-            <div class="feature-icon mb-4" style="background-color: rgba(82, 90, 255, 0.1);">
-              <i class="bi bi-bell fs-3" style="color: #525AFF;"></i>
+            <div class="feature-icon mb-4" style="background-color: rgba(34, 197, 94, 0.1);">
+              <i class="bi bi-people fs-3" style="color: #22c55e;"></i>
             </div>
-            <h3 class="h4 fw-bold mb-3">Smart Notifications</h3>
-            <p class="text-muted">Receive personalized reminders so you never miss important events.</p>
+            <h3 class="h4 fw-bold mb-3">Study Community</h3>
+            <p class="text-muted">Share updates, follow classmates, message friends, and compete on the weekly focus leaderboard. Studying is better together.</p>
           </div>
         </div>
 
-        <!-- Feature 6 -->
+        <!-- Feature 6: Statistics -->
         <div class="col-md-6 col-lg-4">
           <div class="feature-card h-100 p-4 rounded-4 shadow-sm hover-lift">
             <div class="feature-icon mb-4" style="background-color: rgba(109, 139, 192, 0.1);">
-              <i class="bi bi-trophy fs-3" style="color: #6D8BC0;"></i>
+              <i class="bi bi-bar-chart-line fs-3" style="color: #6D8BC0;"></i>
             </div>
-            <h3 class="h4 fw-bold mb-3">Goal Achievement Tracking</h3>
-            <p class="text-muted">Set learning goals, visualize your progress, and stay motivated.</p>
+            <h3 class="h4 fw-bold mb-3">Statistics &amp; Insights</h3>
+            <p class="text-muted">Visualize your study habits with weekly and monthly charts. See focus time trends, event breakdowns, and upcoming deadlines.</p>
           </div>
         </div>
       </div>
@@ -128,56 +132,55 @@
     <div class="container py-5">
       <div class="row justify-content-center text-center mb-5">
         <div class="col-lg-8">
-          <h2 class="display-4 fw-bold mb-3">Get Started in 3 Simple Steps</h2>
+          <h2 class="display-5 fw-bold mb-3">Get Started in 3 Simple Steps</h2>
         </div>
       </div>
-      <div></div>
 
       <div class="row g-5 align-items-center">
         <!-- Step 1 -->
         <div class="col-lg-4 text-center">
           <div class="step-icon-box mb-4 position-relative">
-            <div class="step-icon shadow-lg" style="background-color: #525AFF;">
-              <i class="bi bi-calendar-plus fs-3 text-white"></i>
+            <div class="step-icon shadow-lg" style="background-color: #5B73E8;">
+              <i class="bi bi-person-plus fs-3 text-white"></i>
             </div>
             <div class="step-line d-none d-lg-block"></div>
           </div>
-          <h3 class="h3 fw-bold mb-3">1. Add Your Schedule</h3>
-          <p class="text-muted fs-6">Add all your classes, assignments, and exams to your calendar.</p>
+          <h3 class="h3 fw-bold mb-3">1. Create Your Account</h3>
+          <p class="text-muted fs-6">Sign up in seconds. Set your university, interests, and customize your theme and Pomodoro durations.</p>
         </div>
 
         <!-- Step 2 -->
         <div class="col-lg-4 text-center">
           <div class="step-icon-box mb-4 position-relative">
-            <div class="step-icon shadow-lg" style="background-color: #6D8BC0;">
-              <i class="bi bi-stars fs-3 text-white"></i>
+            <div class="step-icon shadow-lg" style="background-color: #e53e3e;">
+              <i class="bi bi-journal-plus fs-3 text-white"></i>
             </div>
             <div class="step-line d-none d-lg-block"></div>
           </div>
-          <h3 class="h3 fw-bold mb-3">2. Get AI Recommendations</h3>
-          <p class="text-muted fs-6">AI analyzes your patterns and suggests optimal learning plans.</p>
+          <h3 class="h3 fw-bold mb-3">2. Add Notes &amp; Events</h3>
+          <p class="text-muted fs-6">Create notes for your courses, add exams and deadlines to your calendar, and start Pomodoro sessions to stay focused.</p>
         </div>
 
         <!-- Step 3 -->
         <div class="col-lg-4 text-center">
           <div class="step-icon-box mb-4">
-            <div class="step-icon shadow-lg" style="background-color: #4AB5B5;">
-              <i class="bi bi-share fs-3 text-white"></i>
+            <div class="step-icon shadow-lg" style="background-color: #22c55e;">
+              <i class="bi bi-graph-up-arrow fs-3 text-white"></i>
             </div>
           </div>
-          <h3 class="h3 fw-bold mb-3">3. Share with Friends</h3>
-          <p class="text-muted fs-6">Share your schedule with friends and find time to study together.</p>
+          <h3 class="h3 fw-bold mb-3">3. Track &amp; Grow</h3>
+          <p class="text-muted fs-6">Watch your XP climb, maintain your study streaks, and see your productivity stats improve week after week.</p>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- Qa section -->
+  <!-- FAQ Section -->
   <section id="qa" class="py-5 faq-section">
     <div class="container py-5">
       <div class="row align-items-center mb-4">
         <div class="col-lg-8">
-          <h2 class="display-4 fw-bold mb-3">FAQ</h2>
+          <h2 class="display-5 fw-bold mb-3">Frequently Asked Questions</h2>
         </div>
       </div>
 
@@ -185,25 +188,41 @@
       <div class="accordion faq-accordion" id="faqAccordion">
         <!-- FAQ Item 1 -->
         <div class="accordion-item faq-item">
-          <h2 class="accordion-header"><button class="accordion-button collapsed faq-btn" type="button" data-bs-toggle="collapse" data-bs-target="#faq1">Q1?</button></h2>
+          <h2 class="accordion-header"><button class="accordion-button collapsed faq-btn" type="button" data-bs-toggle="collapse" data-bs-target="#faq1">What is Timeout and who is it for?</button></h2>
           <div id="faq1" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
-            <div class="accordion-body faq-body">Q1 answer</div>
+            <div class="accordion-body faq-body">Timeout is a study productivity platform built for university students. It combines a Pomodoro focus timer, note-taking, event and deadline management, statistics dashboards, and a social feed into one app so you can stay organized, focused, and connected with classmates all in one place.</div>
           </div>
         </div>
 
         <!-- FAQ Item 2 -->
         <div class="accordion-item faq-item">
-          <h2 class="accordion-header"><button class="accordion-button collapsed faq-btn" type="button" data-bs-toggle="collapse" data-bs-target="#faq2">Q2?</button></h2>
+          <h2 class="accordion-header"><button class="accordion-button collapsed faq-btn" type="button" data-bs-toggle="collapse" data-bs-target="#faq2">How does the XP and leveling system work?</button></h2>
           <div id="faq2" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
-            <div class="accordion-body faq-body">Q2 answer</div>
+            <div class="accordion-body faq-body">You earn XP by creating and editing notes, completing Pomodoro focus sessions, and maintaining daily study streaks. The longer your streak, the bigger your bonus. Your level is calculated from your total XP, and you can track your progress on the notes page and compete with friends on the weekly focus leaderboard.</div>
           </div>
         </div>
 
         <!-- FAQ Item 3 -->
         <div class="accordion-item faq-item">
-          <h2 class="accordion-header"><button class="accordion-button collapsed faq-btn" type="button" data-bs-toggle="collapse" data-bs-target="#faq3">Q3?</button></h2>
+          <h2 class="accordion-header"><button class="accordion-button collapsed faq-btn" type="button" data-bs-toggle="collapse" data-bs-target="#faq3">Can I customize my Pomodoro timer durations?</button></h2>
           <div id="faq3" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
-            <div class="accordion-body faq-body">Q3 answer</div>
+            <div class="accordion-body faq-body">Yes! Head to the Settings page to set your preferred work duration, short break, and long break lengths. Your custom durations apply everywhere, on the notes page Pomodoro panel and the focus mode timer. You can also toggle notification sounds on or off.</div>
+          </div>
+        </div>
+
+        <!-- FAQ Item 4 -->
+        <div class="accordion-item faq-item">
+          <h2 class="accordion-header"><button class="accordion-button collapsed faq-btn" type="button" data-bs-toggle="collapse" data-bs-target="#faq4">Is my account private by default?</button></h2>
+          <div id="faq4" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+            <div class="accordion-body faq-body">No, accounts are public by default so classmates can find and follow you. You can switch to a private account at any time from your profile settings. Private accounts hide your posts from non-followers. You can also choose dark mode, adjust font sizes, and set colorblind-friendly themes in Settings.</div>
+          </div>
+        </div>
+
+        <!-- FAQ Item 5 -->
+        <div class="accordion-item faq-item">
+          <h2 class="accordion-header"><button class="accordion-button collapsed faq-btn" type="button" data-bs-toggle="collapse" data-bs-target="#faq5">Is Timeout free to use?</button></h2>
+          <div id="faq5" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+            <div class="accordion-body faq-body">Yes, Timeout is completely free. All features: notes, calendar, Pomodoro, social feed, statistics, focus mode, and the full gamification system, are available to every user at no cost.</div>
           </div>
         </div>
       </div>

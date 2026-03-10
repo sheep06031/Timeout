@@ -1,52 +1,113 @@
 {% extends "base.html" %}
 {% load static %}
-{% block title %}Edit Note - Timeout{% endblock %}
+
+{% block title %}Edit Note — Timeout{% endblock %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="{% static 'css/notes-styles.css' %}">
+<link rel="stylesheet" href="{% static 'css/notes.css' %}">
 {% endblock %}
 
 {% block content %}
-<div class="container mt-4 notes-page">
-    <div class="row">
-        <div class="col-lg-8 mx-auto">
+<div class="nt-page" id="notesPage">
 
-            <div class="notes-header">
-                <h2>Edit Note</h2>
-                <a href="{% url 'notes' %}" class="btn btn-neptune-outline">← Back to Notes</a>
-            </div>
-
-            <div class="notes-create-card">
-                <div class="card-body">
-                    <form method="post" action="{% url 'note_edit' note.id %}">
-                        {% csrf_token %}
-                        <div class="mb-3">
-                            <label class="form-label">Title</label>
-                            {{ form.title }}
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Content</label>
-                            {{ form.content }}
-                        </div>
-                        <div class="row mb-3">
-                            <div class="col-md-6">
-                                <label class="form-label">Category</label>
-                                {{ form.category }}
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label">Link to Event</label>
-                                {{ form.event }}
-                            </div>
-                        </div>
-                        <div class="d-flex gap-2">
-                            <button type="submit" class="btn btn-neptune">Save Changes</button>
-                            <a href="{% url 'notes' %}" class="btn btn-neptune-outline">Cancel</a>
-                        </div>
-                    </form>
-                </div>
-            </div>
-
-        </div>
+  <!-- ══ Study Stats Bar ══ -->
+  <div class="nt-stats-bar">
+    <div class="nt-stat-item nt-stat-streak">
+      <span class="nt-stat-icon">&#128293;</span>
+      <div class="nt-stat-text">
+        <span class="nt-stat-value" id="streakValue">{{ note_streak }}</span>
+        <span class="nt-stat-label">day streak</span>
+      </div>
     </div>
+    <div class="nt-stat-divider"></div>
+    <div class="nt-stat-item nt-stat-level">
+      <span class="nt-stat-badge" id="levelBadge">Lv {{ level }}</span>
+      <div class="nt-stat-xp-wrap">
+        <div class="nt-stat-xp-bar">
+          <div class="nt-stat-xp-fill" id="xpFill" style="width: {{ xp_progress_pct }}%"></div>
+        </div>
+        <span class="nt-stat-xp-text" id="xpText">{{ xp }} / {{ xp_for_next_level }} XP</span>
+      </div>
+    </div>
+    <div class="nt-stat-actions">
+      <button class="nt-focus-toggle" id="focusModeBtn" title="Enter Focus Mode">
+        &#127919; Focus Mode
+      </button>
+    </div>
+  </div>
+
+  <div class="nt-card">
+
+    <div class="notes-toolbar">
+      <h1 class="notes-title">Edit Note</h1>
+      <a href="{% url 'notes' %}" class="note-btn">&#8592; Back</a>
+    </div>
+
+    <div class="p-4">
+      <form method="post" action="{% url 'note_edit' note.id %}">
+        {% csrf_token %}
+        <div class="mb-3">
+          <label for="id_title" class="form-label">Title</label>
+          {{ form.title }}
+        </div>
+        <div class="mb-3">
+          <label for="id_content" class="form-label">Content</label>
+          {{ form.content }}
+          <div class="nt-word-count" id="wordCount">0 words</div>
+        </div>
+        <div class="row g-3 mb-4">
+          <div class="col-md-6">
+            <label for="id_category" class="form-label">Category</label>
+            {{ form.category }}
+          </div>
+          <div class="col-md-6">
+            <label for="id_event" class="form-label">Link to Event</label>
+            {{ form.event }}
+          </div>
+        </div>
+        <div class="d-flex gap-2">
+          <button type="submit" class="btn submit-btn">Save Changes</button>
+          <a href="{% url 'notes' %}" class="btn btn-light">Cancel</a>
+        </div>
+      </form>
+    </div>
+
+  </div>
 </div>
+
+<!-- ══ Focus Mode Overlay ══ -->
+<div class="nt-focus-overlay" id="focusOverlay" style="display:none">
+  <div class="nt-focus-bar">
+    <span class="nt-focus-bar-label">&#127919; Focus Mode Active</span>
+    <span class="nt-focus-bar-timer" id="focusElapsed">00:00</span>
+    <button class="nt-focus-exit-btn" id="focusExitBtn">Exit Focus Mode</button>
+  </div>
+</div>
+
+<!-- ══ Inactivity Warning Overlay ══ -->
+<div class="nt-warn-overlay" id="warnOverlay" style="display:none">
+  <div class="nt-warn-card">
+    <div class="nt-warn-icon">&#9888;&#65039;</div>
+    <h2 class="nt-warn-title">You've been inactive!</h2>
+    <p class="nt-warn-text">It's been 2 minutes since your last activity.<br>Get back to your notes!</p>
+    <button class="nt-warn-dismiss" id="warnDismissBtn">I'm Back!</button>
+  </div>
+</div>
+
+<!-- ══ XP Gain Toast ══ -->
+<div class="nt-xp-toast" id="xpToast" style="display:none">
+  <span class="nt-xp-toast-text" id="xpToastText">+25 XP</span>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  window.NOTES_CONFIG = {
+    csrfToken: '{{ csrf_token }}',
+    pomodoroCompleteUrl: '{% url "pomodoro_complete" %}',
+    statsUrl: '{% url "notes_stats" %}',
+  };
+</script>
+<script src="{% static 'js/notes.js' %}"></script>
 {% endblock %}

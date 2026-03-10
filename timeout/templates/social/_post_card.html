@@ -55,7 +55,7 @@
 
       <button class="action-btn action-btn-bookmark bookmark-btn"
               data-post-id="{{ post.id }}"
-              data-bookmarked="false">
+              data-bookmarked="{% if post.id in bookmarked_ids %}true{% else %}false{% endif %}">
         <span class="bookmark-icon">🏷️</span>
         Bookmark
       </button>

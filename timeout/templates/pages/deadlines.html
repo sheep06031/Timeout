@@ -188,8 +188,7 @@
     <div class="dl-list">
       {% if deadlines %}
         {% for item in deadlines %}
-        <div class="dl-item dl-item--{{ item.urgency_status }}" data-id="{{ item.event.id }}">
-          <div class="dl-item__check">
+<div class="dl-item dl-item--{{ item.urgency_status }}" data-id="{{ item.event.id }}" data-type="{{ item.event.event_type }}">          <div class="dl-item__check">
             {% if item.urgency_status != 'completed' %}
             <input
               type="checkbox"
