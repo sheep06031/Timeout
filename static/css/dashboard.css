@@ -533,6 +533,77 @@
 .dash-link-icon {
     font-size: 20px;
 }
+/*lines 536-606 added for weekly briefing card*/
+/* ============================================
+   AI Weekly Insight — Hero Card
+   ============================================ */
+.dash-ai-briefing {
+    background: linear-gradient(135deg, rgba(91, 115, 232, 0.10) 0%, rgba(91, 93, 223, 0.04) 100%);
+    border: 1px solid rgba(91, 115, 232, 0.18);
+    border-radius: 14px;
+    padding: 20px 24px;
+    margin-bottom: 24px;
+    position: relative;
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    box-shadow: 0 1px 6px rgba(91, 115, 232, 0.06);
+}
+
+.dash-ai-briefing__icon {
+    flex-shrink: 0;
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    background: rgba(91, 115, 232, 0.12);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+}
+
+.dash-ai-briefing__body {
+    flex: 1;
+    min-width: 0;
+}
+
+.dash-ai-briefing__label {
+    display: inline-block;
+    font-size: 10.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: #5B73E8;
+    margin-bottom: 6px;
+}
+
+.dash-ai-briefing__text {
+    font-size: 13.5px;
+    font-weight: 500;
+    color: #1A1F36;
+    line-height: 1.55;
+    margin: 0;
+}
+
+.dash-ai-briefing__dismiss {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    background: none;
+    border: none;
+    color: #8892B0;
+    font-size: 16px;
+    cursor: pointer;
+    padding: 4px;
+    line-height: 1;
+    border-radius: 4px;
+    transition: all 0.18s ease;
+}
+
+.dash-ai-briefing__dismiss:hover {
+    background: rgba(91, 115, 232, 0.08);
+    color: #5B73E8;
+}
 
 /* --- Responsive --- */
 
@@ -596,5 +667,21 @@
 
     .dash-links-grid {
         grid-template-columns: repeat(3, 1fr);
+    }
+/*lines 671-686 added for weekly briefing card*/
+    /* AI briefing mobile adjustments */
+    .dash-ai-briefing {
+        padding: 16px 18px;
+        gap: 12px;
+    }
+
+    .dash-ai-briefing__icon {
+        width: 32px;
+        height: 32px;
+        font-size: 14px;
+    }
+
+    .dash-ai-briefing__text {
+        font-size: 13px;
     }
 }

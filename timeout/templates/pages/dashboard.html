@@ -10,6 +10,23 @@
 {% block content %}
 <div class="dashboard-bg">
   <div class="dashboard-wrapper">
+<!-- lines 13-29 for ai weekly brief-->
+     <!-- ═══ AI Weekly Insight (hero card) ═══ -->
+    {% if ai_briefing %}
+    <div class="dash-ai-briefing" id="aiBriefingCard">
+      <div class="dash-ai-briefing__icon">&#10024;</div>
+      <div class="dash-ai-briefing__body">
+        <span class="dash-ai-briefing__label">Weekly Insight</span>
+        <p class="dash-ai-briefing__text">{{ ai_briefing }}</p>
+      </div>
+      <button type="button"
+              class="dash-ai-briefing__dismiss"
+              aria-label="Dismiss"
+              onclick="document.getElementById('aiBriefingCard').remove();">
+        &times;
+      </button>
+    </div>
+    {% endif %}
 
     <!-- Greeting + Quick Actions -->
     <div class="dashboard-header">

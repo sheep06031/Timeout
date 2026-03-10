@@ -43,6 +43,7 @@
         <a href="#" class="cal-add-btn" data-bs-toggle="modal" data-bs-target="#aiEventModal">
           <span class="cal-add-label">AI Add</span>
         </a>
+        <!-- onclick="openAddEvent(new Date().toISOString().slice(0,10))" used to be: data-bs-toggle="modal" data-bs-target="#addEventModal"-->
         <a href="#" class="cal-add-btn" onclick="openAddEvent(new Date().toISOString().slice(0,10))">
           + <span class="cal-add-label">Add Event</span>
         </a>
@@ -206,6 +207,7 @@
 </div>
 
 <!-- Mobile FAB -->
+ <!--onclick="openAddEvent(new Date().toISOString().slice(0,10))" used to be: data-bs-toggle="modal" data-bs-target="#addEventModal" -->
 <a href="#" class="cal-fab" onclick="openAddEvent(new Date().toISOString().slice(0,10))" aria-label="Add event">+</a>
 {% include "partials/modals/ai_modal.html" %}
 {% endblock %}
