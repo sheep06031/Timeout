@@ -12,7 +12,7 @@
   function setNavDot(status) {
     if (!navDot) return;
     [...navDot.classList].forEach((cls) => {
-      if (cls.startsWith('status-') && cls !== 'status-dot-nav') {
+      if (cls.startsWith('status-')) {
         navDot.classList.remove(cls);
       }
     });

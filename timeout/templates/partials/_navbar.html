@@ -38,7 +38,7 @@
       <!-- Always-visible: status pill + user dropdown -->
       <div class="nav-topbar-user d-flex align-items-center gap-2">
         <a class="nav-status-pill" href="{% url 'profile' %}">
-          <span id="nav-status-dot" class="status-dot-nav status-{{ user.status }}"></span>
+          <span id="nav-status-dot" class="nav-status-dot status-{{ user.status }}"></span>
           <span id="nav-status-text">{{ user.get_status_display }}</span>
           <span id="nav-focus-timer"
                 {% if user.status == 'focus' and user.focus_started_at %}
@@ -46,7 +46,7 @@
                 {% else %}
                   style="display:none"
                 {% endif %}>
-            · ⏱ <span class="focus-timer-display">00:00</span>
+            · <span class="focus-timer-display">00:00</span>
           </span>
         </a>
 
