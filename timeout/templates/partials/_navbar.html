@@ -26,7 +26,7 @@
             <a class="nav-link position-relative" href="{% url 'notifications' %}">
               Notifications
               {% if unread_count > 0 %}
-                <span class="badge bg-danger position-absolute top-0 start-100 translate-middle">{{ unread_count }}</span>
+                <span id="page-unread-count">({{ unread_count }})</span>
               {% endif %}
             </a>
           </li>

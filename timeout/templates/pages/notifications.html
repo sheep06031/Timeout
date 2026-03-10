@@ -21,7 +21,16 @@
     </div>
 </div>
 
-<p class="text-muted mb-3">Stay updated with messages and deadlines</p>
+<p class="text-muted mb-1">
+    Stay updated with messages and deadlines
+</p>
+
+<p class="text-muted mb-1">
+    You have <span id="page-unread-count">{{ unread_count }}</span> unread notifications!
+</p>
+<button id="clear-read-btn" class="btn btn-sm btn-outline-danger mb-3">
+Clear Read Notifications
+</button>
 
 <div class="chart-card">
 
@@ -40,101 +49,236 @@
             {% if not n.is_read %}
             <button class="mark-read-btn btn btn-sm btn-outline-primary" data-id="{{ n.id }}">Mark read</button>
             {% endif %}
+            <button 
+    class="delete-notif-btn btn btn-sm btn-outline-danger"
+    data-id="{{ n.id }}">
+    Delete
+</button>
         </div>
         {% endfor %}
     </div>
 
+    <div class="pagination-container mt-4">
+
+    {% if notifications.has_previous %}
+        <a href="?page={{ notifications.previous_page_number }}" class="btn btn-sm btn-outline-secondary">
+            Previous
+        </a>
+    {% endif %}
+
+    <span class="mx-2 text-muted">
+        Page {{ notifications.number }} of {{ notifications.paginator.num_pages }}
+    </span>
+
+    {% if notifications.has_next %}
+        <a href="?page={{ notifications.next_page_number }}" class="btn btn-sm btn-outline-secondary">
+            Next
+        </a>
+    {% endif %}
+
 </div>
 
+</div>
 <script>
 document.addEventListener("DOMContentLoaded", () => {
 
     const notifList = document.querySelector(".notifications-list");
     const badge = document.querySelector(".nav-link .badge");
+    const pageUnread = document.getElementById("page-unread-count");
+    const clearBtn = document.getElementById("clear-read-btn");
 
     if (!notifList) return;
 
-    // Mark as read handler
-    notifList.addEventListener("click", async (e) => {
-        const btn = e.target.closest(".mark-read-btn");
-        if (!btn) return;
+    function getCookie(name) {
+        let cookieValue = null;
 
-        const id = btn.dataset.id;
-        try {
-            const res = await fetch(`/notifications/read/${id}/`);
-            const data = await res.json();
-            if (data.success) {
-                const notif = document.getElementById(`notif-${id}`);
-                if (notif) notif.classList.remove("notification-unread");
-                btn.remove();
-                // Update badge count
-                if (badge && parseInt(badge.textContent) > 0) {
-                    let count = parseInt(badge.textContent) - 1;
-                    if (count <= 0) {
-                        badge.style.display = "none";
-                    } else {
-                        badge.textContent = count;
-                    }
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+
+            for (let cookie of cookies) {
+                cookie = cookie.trim();
+
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
                 }
             }
-        } catch (err) {
-            console.error(err);
         }
+
+        return cookieValue;
+    }
+
+    function decreaseUnread() {
+        if (pageUnread && parseInt(pageUnread.textContent) > 0) {
+            pageUnread.textContent = parseInt(pageUnread.textContent) - 1;
+        }
+
+        if (badge && parseInt(badge.textContent) > 0) {
+            let count = parseInt(badge.textContent) - 1;
+
+            if (count <= 0) {
+                badge.style.display = "none";
+            } else {
+                badge.textContent = count;
+            }
+        }
+    }
+
+    notifList.addEventListener("click", async (e) => {
+
+        const readBtn = e.target.closest(".mark-read-btn");
+        const deleteBtn = e.target.closest(".delete-notif-btn");
+
+        // MARK READ
+        if (readBtn) {
+
+            const id = readBtn.dataset.id;
+
+            const res = await fetch(`/notifications/read/${id}/`);
+            const data = await res.json();
+
+            if (data.success) {
+
+                const notif = document.getElementById(`notif-${id}`);
+
+                if (notif) notif.classList.remove("notification-unread");
+
+                readBtn.remove();
+
+                decreaseUnread();
+            }
+        }
+
+        // DELETE NOTIFICATION
+        if (deleteBtn) {
+
+            const id = deleteBtn.dataset.id;
+
+            const res = await fetch(`/notifications/delete/${id}/`, {
+                method: "POST",
+                headers: {
+                    "X-CSRFToken": getCookie("csrftoken"),
+                }
+            });
+
+            const data = await res.json();
+
+            if (data.success) {
+
+                const notif = document.getElementById(`notif-${id}`);
+
+                if (notif) {
+
+                    if (notif.classList.contains("notification-unread")) {
+                        decreaseUnread();
+                    }
+
+                    notif.remove();
+                }
+
+                if (!document.querySelector(".notification-item")) {
+                    document.getElementById("no-notifications").style.display = "block";
+                }
+            }
+        }
+
     });
 
-    // Get last notification ID
+    // CLEAR READ NOTIFICATIONS
+    if (clearBtn) {
+
+        clearBtn.addEventListener("click", async () => {
+
+            const res = await fetch("/notifications/clear-read/", {
+                method: "POST",
+                headers: {
+                    "X-CSRFToken": getCookie("csrftoken"),
+                }
+            });
+
+            const data = await res.json();
+
+            if (data.success) {
+
+                document.querySelectorAll(".notification-item").forEach(n => {
+                    if (!n.classList.contains("notification-unread")) {
+                        n.remove();
+                    }
+                });
+
+                if (!document.querySelector(".notification-item")) {
+                    document.getElementById("no-notifications").style.display = "block";
+                }
+            }
+
+        });
+
+    }
+
+    // Track newest notification ID
     let lastNotificationId = 0;
+
     document.querySelectorAll(".notification-item").forEach(el => {
         const id = parseInt(el.id.replace("notif-", ""), 10);
         if (!isNaN(id) && id > lastNotificationId) lastNotificationId = id;
     });
 
-    // Polling function
     async function pollNotifications() {
-        try {
-            const res = await fetch(`/notifications/poll/?last_id=${lastNotificationId}`);
-            const data = await res.json();
-            const newNotifs = data.notifications;
-            if (!newNotifs || newNotifs.length === 0) return;
 
-            const noMsg = document.getElementById("no-notifications");
-            if (noMsg) noMsg.style.display = "none";
+        const res = await fetch(`/notifications/poll/?last_id=${lastNotificationId}`);
+        const data = await res.json();
 
-            newNotifs.forEach(n => {
-                if (document.getElementById(`notif-${n.id}`)) return; // skip duplicates
+        const newNotifs = data.notifications;
 
-                // Add to page
-                const div = document.createElement("div");
-                div.id = `notif-${n.id}`;
-                div.className = `notification-item ${n.is_read ? "" : "notification-unread"}`;
-                div.innerHTML = `
-                    <div class="notification-main">
-                        <div class="notification-title">${n.title}</div>
-                        <div class="notification-message">${n.message}</div>
-                        <div class="notification-time">${n.created_at}</div>
-                    </div>
-                    ${!n.is_read ? `<button class="mark-read-btn btn btn-sm btn-outline-primary" data-id="${n.id}">Mark read</button>` : ''}
-                `;
-                notifList.prepend(div);
+        if (!newNotifs || newNotifs.length === 0) return;
 
-                if (!n.is_read && badge) {
-                    let count = badge.style.display !== "none" ? parseInt(badge.textContent) : 0;
-                    badge.textContent = count + 1;
-                    badge.style.display = "inline-block";
+        const noMsg = document.getElementById("no-notifications");
+        if (noMsg) noMsg.style.display = "none";
+
+        newNotifs.forEach(n => {
+
+            if (document.getElementById(`notif-${n.id}`)) return;
+
+            const div = document.createElement("div");
+
+            div.id = `notif-${n.id}`;
+            div.className = `notification-item ${n.is_read ? "" : "notification-unread"}`;
+
+            div.innerHTML = `
+                <div class="notification-main">
+                    <div class="notification-title">${n.title}</div>
+                    <div class="notification-message">${n.message}</div>
+                    <div class="notification-time">${n.created_at}</div>
+                </div>
+                ${!n.is_read ? `<button class="mark-read-btn btn btn-sm btn-outline-primary" data-id="${n.id}">Mark read</button>` : ''}
+                <button class="delete-notif-btn btn btn-sm btn-outline-danger" data-id="${n.id}">Delete</button>
+            `;
+
+            notifList.prepend(div);
+
+            if (!n.is_read && badge) {
+
+                let count = badge.style.display !== "none"
+                    ? parseInt(badge.textContent)
+                    : 0;
+
+                badge.textContent = count + 1;
+                badge.style.display = "inline-block";
+
+                if (pageUnread) {
+                    pageUnread.textContent = parseInt(pageUnread.textContent) + 1;
                 }
+            }
 
-                if (n.id > lastNotificationId) lastNotificationId = n.id;
-            });
+            if (n.id > lastNotificationId) lastNotificationId = n.id;
 
-        } catch (err) {
-            console.error("Polling error:", err);
-        }
+        });
+
     }
 
-    // Initial poll + repeat every 5s
     pollNotifications();
     setInterval(pollNotifications, 5000);
+
 });
 </script>
-
 {% endblock %}
