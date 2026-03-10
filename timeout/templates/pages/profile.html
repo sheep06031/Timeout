@@ -38,7 +38,7 @@
                       <span class="badge bg-light text-dark">{% if user.management_style == 'early_bird' %}🌅{% else %}🦉{% endif %} {{ user.get_management_style_display }}</span>
                     {% endif %}
                   </div>
-                  <a href="{% url 'profile_edit' %}" class="btn btn-sm flex-shrink-0">⚙️ Edit Profile</a>
+                  <a href="{% url 'profile_edit' %}" class="btn btn-sm btn-outline-secondary flex-shrink-0">⚙️ Edit Profile</a>
                 </div>
 
                 <div class="d-flex flex-column flex-md-row align-items-start align-items-md-center gap-2 gap-md-3">
