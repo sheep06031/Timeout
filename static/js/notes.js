@@ -1,8 +1,6 @@
-/* ============================================
-   Notes Page — Pomodoro, Focus Mode, Streaks
-   ============================================ */
+/* Notes Page — Pomodoro, Focus Mode, Streaks*/
 
-/* ---------- Helpers ---------- */
+/*Helpers*/
 
 function getCsrfToken() {
   for (const cookie of document.cookie.split(';')) {
@@ -42,7 +40,7 @@ function togglePin(noteId, btn) {
 }
 
 
-/* ---------- Audio Utility ---------- */
+/*Audio Utility */
 
 function playBeep(freq, duration, volume) {
   try {
@@ -79,7 +77,7 @@ function playWarning() {
 }
 
 
-/* ---------- XP Toast ---------- */
+/*XP Toast*/
 
 function showXpToast(amount) {
   var toast = document.getElementById('xpToast');
@@ -108,9 +106,7 @@ function updateStatsUI(data) {
 }
 
 
-/* ============================================
-   Pomodoro Timer
-   ============================================ */
+/*Pomodoro Timer*/
 
 var Pomodoro = (function() {
   var cfg = window.NOTES_CONFIG || {};
@@ -240,7 +236,7 @@ var Pomodoro = (function() {
         state.phase = 'short_break';
       }
     } else {
-      // Break ended — back to work
+      // back to work
       state.phase = 'work';
     }
 
@@ -298,9 +294,7 @@ var Pomodoro = (function() {
 })();
 
 
-/* ============================================
-   Focus Mode
-   ============================================ */
+/*Focus Mode*/
 
 var FocusMode = (function() {
   var active = false;
@@ -427,7 +421,7 @@ var FocusMode = (function() {
 })();
 
 
-/* ---------- Word Count (for note_edit) ---------- */
+/*Word Count (for note_edit)*/
 
 function initWordCount() {
   var textarea = document.getElementById('id_content');
@@ -445,7 +439,7 @@ function initWordCount() {
 }
 
 
-/* ---------- Init ---------- */
+/*Init*/
 
 document.addEventListener('DOMContentLoaded', function() {
   if (document.getElementById('pomoPanel')) Pomodoro.init();

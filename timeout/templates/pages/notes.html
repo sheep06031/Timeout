@@ -260,11 +260,22 @@
   </div>
 </div>
 
-<button class="fab" data-bs-toggle="modal" data-bs-target="#newNoteModal" aria-label="New note">+</button>
+<button class="nt-fab" data-bs-toggle="modal" data-bs-target="#newNoteModal" aria-label="New note">+</button>
 
 {% endblock %}
 
 {% block extra_js %}
+<script>
+  window.NOTES_CONFIG = {
+    csrfToken: '{{ csrf_token }}',
+    pomodoroCompleteUrl: '{% url "pomodoro_complete" %}',
+    statsUrl: '{% url "notes_stats" %}',
+    pomoWork: {{ request.user.pomo_work_minutes }},
+    pomoShort: {{ request.user.pomo_short_break }},
+    pomoLong: {{ request.user.pomo_long_break }},
+    sounds: {{ request.user.notification_sounds|yesno:"true,false" }},
+  };
+</script>
 <script>
   window.NOTES_CONFIG = {
     csrfToken: '{{ csrf_token }}',

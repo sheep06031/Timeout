@@ -113,21 +113,22 @@
 }
 
 .status-btn {
-    cursor: pointer;
-    border: none;
-    background: none;
-    font-family: inherit;
-}
-
-.status-btn-idle {
     display: inline-block;
     padding: 0.25rem 0.75rem;
     border-radius: 999px;
     font-size: 0.8rem;
     font-weight: 500;
+    cursor: pointer;
+    border: 1px solid transparent;
+    background: none;
+    font-family: inherit;
+    transition: all 0.18s;
+}
+
+.status-btn-idle {
     background-color: #f0f2f5;
     color: #a0aec0;
-    border: 1px solid #e2e8f0;
+    border-color: #e2e8f0;
 }
 
 /* Active state: solid fill for better visibility */
