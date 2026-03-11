@@ -159,6 +159,12 @@ def calendar_view(request):
         "July", "August", "September", "October", "November", "December",
     ]
 
+    upcoming_deadlines = Event.objects.filter(
+        creator=request.user,
+        event_type__in=[Event.EventType.DEADLINE, Event.EventType.EXAM],
+        start_datetime__gte=timezone.now(),
+    ).order_by('start_datetime')[:20]
+
     context = {
         "weeks": weeks,
         "year": year,
@@ -169,6 +175,7 @@ def calendar_view(request):
         "next_year": next_year,
         "next_month": next_month,
         "weekdays": ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+        "upcoming_deadlines": upcoming_deadlines,
     }
     return render(request, "pages/calendar.html", context)
 

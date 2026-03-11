@@ -7,4 +7,5 @@ urlpatterns = [
     path('', include('timeout.urls.calendar')),
     path('messaging/', include('timeout.urls.messaging')),
     path('notes/', include('timeout.urls.notes')),
+    path('study-planner/', include('timeout.urls.study_planner')),
 ]
