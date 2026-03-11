@@ -342,10 +342,12 @@ class Command(BaseCommand):
         from django.utils import timezone
 
         global_events = [
-            {"title": "Christmas", "month": 12, "day": 25},
+            {"title": "Christmas Day", "month": 12, "day": 25},
             {"title": "Valentine's Day", "month": 2, "day": 14},
             {"title": "New Year's Day", "month": 1, "day": 1},
             {"title": "Halloween", "month": 10, "day": 31},
+            {"title": "New Year's Eve", "month": 12, "day": 31},
+            {"title": "Christmas Eve", "month": 12, "day": 24},
         ]
 
         created = 0

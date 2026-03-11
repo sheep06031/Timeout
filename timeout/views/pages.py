@@ -7,6 +7,7 @@ from timeout.models.event import Event
 from timeout.services import FeedService, DeadlineService
 from timeout.views.statistics import get_focus_stats, build_context
 from timeout.views.profile import get_profile_event
+from timeout.models.notification import Notification
 
 
 def landing(request):
@@ -19,6 +20,15 @@ def landing(request):
 @login_required
 def dashboard(request):
     """Dashboard page view."""
+    unread_count = Notification.objects.filter(
+        user=request.user,
+        is_read=False
+    ).count()
+
+    context = {
+        "unread_count": unread_count,
+    }
+    #return render(request, 'pages/dashboard.html')
     user = request.user
     now = timezone.now()
 

@@ -5,6 +5,7 @@ from django.views.decorators.http import require_POST
 from django.db.models import Q
 
 from timeout.models import User, Conversation, Message
+from timeout.models.notification import Notification
 
 
 @login_required
@@ -94,6 +95,16 @@ def send_message(request, conversation_id):
 
     # Update conversation timestamp
     conv.save()
+
+    receiver = conv.get_other_participant(request.user)
+
+    if receiver:
+        Notification.objects.create(
+            user=receiver,
+            title="New Message",
+            message=f"{request.user.username} sent you a message",
+            type=Notification.Type.EVENT,
+        )       
 
     return JsonResponse({
         'id': message.id,

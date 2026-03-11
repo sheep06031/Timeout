@@ -19,6 +19,7 @@ def signup_view(request):
                 request, user,
                 backend='django.contrib.auth.backends.ModelBackend'
             )
+            request.session['needs_profile_completion'] = True
             messages.success(request, 'Account created! Please complete your profile.')
             return redirect('complete_profile')
     else:
@@ -59,23 +60,26 @@ def logout_view(request):
 @login_required
 def complete_profile(request):
     """
-    Let all users (local and social) fill in missing profile fields.
-    Social users arrive here with email/name pre-populated; they still
-    need to choose a username and supply university/year details.
+    Let new users (local and social) fill in missing profile fields.
+    Only accessible when the session flag 'needs_profile_completion' is set
+    (i.e. right after signup). Existing users logging in are never shown this.
     """
+    if not request.session.get('needs_profile_completion'):
+        return redirect('dashboard')
+
     user = request.user
 
     if request.method == 'POST':
         form = CompleteProfileForm(request.POST, instance=user)
         if form.is_valid():
             form.save()
+            # Clear the flag so the user isn't shown this page again
+            request.session.pop('needs_profile_completion', None)
             messages.success(request, 'Profile completed successfully!')
             return redirect('dashboard')
     else:
         form = CompleteProfileForm(instance=user)
 
-    # Tell the template whether the user has a temporary auto-generated username
-    # so it can show the username field as empty / hint text.
     has_temp_username = user.username.startswith('user_')
 
     context = {
@@ -83,4 +87,3 @@ def complete_profile(request):
         'has_temp_username': has_temp_username,
     }
     return render(request, 'auth/complete_profile.html', context)
-

@@ -46,6 +46,7 @@
           setActiveStatusButton(data.status);
           if (navText) navText.textContent = data.status_display;
           setNavDot(data.status);
+          document.body.dataset.userStatus = data.status;
 
           const navTimer = document.getElementById('nav-focus-timer');
           const profileTimer = document.getElementById('profile-focus-timer');

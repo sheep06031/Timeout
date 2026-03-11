@@ -1,5 +1,8 @@
 from django.conf import settings
 from django.db import models
+from timeout.models.notification import Notification
+from django.dispatch import receiver
+
 
 
 class Like(models.Model):
@@ -26,3 +29,13 @@ class Like(models.Model):
 
     def __str__(self):
         return f'{self.user.username} likes {self.post.id}'
+
+@receiver(models.signals.post_save, sender=Like)
+def create_like_notification(sender, instance, created, **kwargs):
+    if created and instance.post.author != instance.user:
+        Notification.objects.create(
+            user=instance.post.author,
+            title="New Like",
+            message=f"{instance.user.username} liked your post",
+            type=Notification.Type.LIKE,
+        )

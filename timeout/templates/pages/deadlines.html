@@ -1,32 +1,49 @@
 {% extends "base.html" %}
 {% load static %}
-{% block title %}Deadlines — Timeout{% endblock %}
+{% block title %}My Schedule — Timeout{% endblock %}
 
 {% block extra_css %}
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="{% static 'css/deadlines.css' %}">
+<link rel="stylesheet" href="{% static 'css/information.css' %}"> 
+
 {% endblock %}
 
 {% block content %}
+
 <div class="dl-page">
   <div class="dl-card">
 
     <!-- Toolbar -->
     <div class="dl-toolbar">
       <div class="dl-toolbar__left">
-        <h1 class="dl-title">Deadlines</h1>
+        <h1 class="dl-title">My Schedule</h1>
         {% if overdue_count > 0 %}
         <span class="dl-badge dl-badge--overdue">{{ overdue_count }} overdue</span>
         {% endif %}
         {% if urgent_count > 0 %}
         <span class="dl-badge dl-badge--urgent">{{ urgent_count }} urgent</span>
         {% endif %}
+        {% if missed_count > 0 %}
+        <span class="dl-badge dl-badge--missed">{{ missed_count }} missed</span>
+        {% endif %}
       </div>
+
+      
       <div class="dl-toolbar__right">
+         <!-- Floating page info button -->
+          <div class="page-info-button">
+            <div class="page-info-tooltip">
+              This shows your upcoming deadlines for the week.<br>
+              You can mark them complete by checking the box.
+            </div>
+          </div>
         <!-- View Switcher -->
         <div class="dl-view-switcher">
+
+          
           <a href="{% url 'calendar' %}" class="dl-view-btn">
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
               <rect x="1" y="2" width="14" height="12" rx="2" stroke="currentColor" stroke-width="1.5"/>
@@ -42,89 +59,125 @@
             List
           </a>
         </div>
+
+        
+
         <a href="#" class="dl-add-btn" data-bs-toggle="modal" data-bs-target="#addEventModal">
-          + <span class="dl-add-label">Add Deadline</span>
+          + <span class="dl-add-label">Add Event</span>
         </a>
+
+        
       </div>
     </div>
 
-    <!-- Deadline List -->
-    <div class="dl-list">
-      {% if deadlines %}
-        {% for item in deadlines %}
-        <div class="dl-item dl-item--{{ item.urgency_status }}" data-id="{{ item.event.id }}">
-          <div class="dl-item__check">
-            <input
-              type="checkbox"
-              class="dl-checkbox"
-              id="dl-check-{{ item.event.id }}"
-              data-event-id="{{ item.event.id }}"
-              aria-label="Mark '{{ item.event.title }}' as complete"
-            >
-          </div>
-          <div class="dl-item__body">
-            <div class="dl-item__header">
-              <span class="dl-item__title">{{ item.event.title }}</span>
-              <span class="dl-urgency-tag dl-urgency-tag--{{ item.urgency_status }}">
-                {% if item.urgency_status == 'overdue' %}Overdue
-                {% elif item.urgency_status == 'urgent' %}Urgent
-                {% else %}On Track
-                {% endif %}
-              </span>
-            </div>
-            {% if item.event.description %}
-            <p class="dl-item__desc">{{ item.event.description|truncatewords:20 }}</p>
-            {% endif %}
-            <div class="dl-item__meta">
-              <span class="dl-meta dl-meta--time">
-                <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                  <circle cx="7" cy="7" r="6" stroke="currentColor" stroke-width="1.2"/>
-                  <path d="M7 4v3l2 1.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
-                </svg>
-                {{ item.time_remaining_display }}
-              </span>
-              <span class="dl-meta dl-meta--added">{{ item.time_elapsed_display }}</span>
-              {% if item.event.location %}
-              <span class="dl-meta dl-meta--location">
-                <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                  <path d="M7 1C4.79 1 3 2.79 3 5c0 3.5 4 7.5 4 7.5s4-4 4-7.5c0-2.21-1.79-4-4-4z" stroke="currentColor" stroke-width="1.2"/>
-                  <circle cx="7" cy="5" r="1.5" stroke="currentColor" stroke-width="1.2"/>
-                </svg>
-                {{ item.event.location }}
-              </span>
-              {% endif %}
-              <span class="dl-meta dl-meta--due">Due {{ item.event.end_datetime|date:"D, d M Y \a\t H:i" }}</span>
-            </div>
-          </div>
-        </div>
-        {% endfor %}
-      {% else %}
-        <div class="dl-empty">
-          <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <circle cx="24" cy="24" r="20" stroke="#c8cfe0" stroke-width="2"/>
-            <path d="M16 24l5 5 11-11" stroke="#c8cfe0" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-          <p class="dl-empty__text">No active deadlines — you're all caught up!</p>
-          <a href="#" class="dl-add-btn" data-bs-toggle="modal" data-bs-target="#addEventModal">+ Add Deadline</a>
-        </div>
-      {% endif %}
+    {% if sections %}
+    <!-- Tab bar -->
+    <div class="dl-tabs" role="tablist">
+      {% for section in sections %}
+      <button
+        class="dl-tab-btn {% if forloop.first %}dl-tab-btn--active{% endif %}"
+        data-tab="{{ section.type_key }}"
+        role="tab"
+        aria-selected="{% if forloop.first %}true{% else %}false{% endif %}"
+      >
+        {{ section.label }}
+        <span class="dl-tab-count">{{ section.items|length }}</span>
+      </button>
+      {% endfor %}
     </div>
+
+    <!-- Tab panels -->
+    {% for section in sections %}
+    <div
+      class="dl-tab-panel {% if forloop.first %}dl-tab-panel--active{% endif %} dl-list"
+      data-panel="{{ section.type_key }}"
+      role="tabpanel"
+    >
+      {% for item in section.items %}
+      <div class="dl-item dl-item--{{ item.urgency_status }}" data-id="{{ item.event.id }}">
+        <div class="dl-item__check">
+          <input
+            type="checkbox"
+            class="dl-checkbox"
+            id="dl-check-{{ item.event.id }}"
+            data-event-id="{{ item.event.id }}"
+            aria-label="Mark '{{ item.event.title }}' as complete"
+          >
+        </div>
+        <div class="dl-item__body">
+          <div class="dl-item__header">
+            <span class="dl-item__title">{{ item.event.title }}</span>
+            <span class="dl-urgency-tag dl-urgency-tag--{{ item.urgency_status }}">
+              {% if item.urgency_status == 'overdue' %}Overdue
+              {% elif item.urgency_status == 'urgent' %}Urgent
+              {% elif item.urgency_status == 'missed' %}Missed
+              {% elif item.urgency_status == 'upcoming' %}Upcoming
+              {% else %}On Track
+              {% endif %}
+            </span>
+          </div>
+          {% if item.event.description %}
+          <p class="dl-item__desc">{{ item.event.description|truncatewords:20 }}</p>
+          {% endif %}
+          <div class="dl-item__meta">
+            <span class="dl-meta dl-meta--time">
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                <circle cx="7" cy="7" r="6" stroke="currentColor" stroke-width="1.2"/>
+                <path d="M7 4v3l2 1.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+              </svg>
+              {{ item.time_remaining_display }}
+            </span>
+            <span class="dl-meta dl-meta--added">{{ item.time_elapsed_display }}</span>
+            {% if item.event.location %}
+            <span class="dl-meta dl-meta--location">
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                <path d="M7 1C4.79 1 3 2.79 3 5c0 3.5 4 7.5 4 7.5s4-4 4-7.5c0-2.21-1.79-4-4-4z" stroke="currentColor" stroke-width="1.2"/>
+                <circle cx="7" cy="5" r="1.5" stroke="currentColor" stroke-width="1.2"/>
+              </svg>
+              {{ item.event.location }}
+            </span>
+            {% endif %}
+            {% if section.type_key == 'deadline' %}
+            <span class="dl-meta dl-meta--due">Due {{ item.event.end_datetime|date:"D, d M Y \a\t H:i" }}</span>
+            {% else %}
+            <span class="dl-meta dl-meta--due">{{ item.event.start_datetime|date:"D, d M Y \a\t H:i" }}</span>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% endfor %}
+
+    {% else %}
+    <div class="dl-list">
+      <div class="dl-empty">
+        <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="24" cy="24" r="20" stroke="#c8cfe0" stroke-width="2"/>
+          <path d="M16 24l5 5 11-11" stroke="#c8cfe0" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <p class="dl-empty__text">Nothing on your schedule — you're all caught up!</p>
+        <a href="#" class="dl-add-btn" data-bs-toggle="modal" data-bs-target="#addEventModal">+ Add Event</a>
+      </div>
+    </div>
+    {% endif %}
 
   </div>
 </div>
 
-<!-- Add Event Modal (reused from calendar, preset to deadline) -->
+<!-- Add Event Modal -->
 <div class="modal fade" id="addEventModal" tabindex="-1" aria-labelledby="addEventLabel" aria-hidden="true">
   <div class="modal-dialog">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title" id="addEventLabel">Add Deadline</h5>
+        <h5 class="modal-title" id="addEventLabel">Add Event</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <form method="post" action="{% url 'event_create' %}">
         {% csrf_token %}
         <input type="hidden" name="next" value="{% url 'deadline_list' %}">
         <div class="modal-body">
+          <!-- Form fields (title, type, datetime, location, description) -->
           <div class="mb-3">
             <label for="eventTitle" class="form-label">Title</label>
             <input type="text" class="form-control" id="eventTitle" name="title" placeholder="e.g. Algorithms Problem Set 3" required>
@@ -142,7 +195,7 @@
           </div>
           <div class="row">
             <div class="col-md-6 mb-3">
-              <label for="eventStart" class="form-label">Due Date</label>
+              <label for="eventStart" class="form-label">Start</label>
               <input type="datetime-local" class="form-control" id="eventStart" name="start_datetime" required>
             </div>
             <div class="col-md-6 mb-3">
@@ -161,24 +214,49 @@
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
-          <button type="submit" class="btn btn-nep text-white">Add Deadline</button>
+          <button type="submit" class="btn btn-nep text-white">Add Event</button>
         </div>
       </form>
     </div>
   </div>
 </div>
 
+
 <!-- Mobile FAB -->
+<<<<<<< HEAD
 <a href="#" class="dl-fab" data-bs-toggle="modal" data-bs-target="#addEventModal" aria-label="Add deadline">+</a>
+
+=======
+<a href="#" class="dl-fab" data-bs-toggle="modal" data-bs-target="#addEventModal" aria-label="Add event">+</a>
+>>>>>>> origin
 {% endblock %}
 
 {% block extra_js %}
 <script>
+// ── Tab switching ──────────────────────────────────────────────────
+document.querySelectorAll('.dl-tab-btn').forEach(function(btn) {
+  btn.addEventListener('click', function() {
+    var target = this.dataset.tab;
+
+    document.querySelectorAll('.dl-tab-btn').forEach(function(b) {
+      b.classList.remove('dl-tab-btn--active');
+      b.setAttribute('aria-selected', 'false');
+    });
+    document.querySelectorAll('.dl-tab-panel').forEach(function(p) {
+      p.classList.remove('dl-tab-panel--active');
+    });
+
+    this.classList.add('dl-tab-btn--active');
+    this.setAttribute('aria-selected', 'true');
+    document.querySelector('[data-panel="' + target + '"]').classList.add('dl-tab-panel--active');
+  });
+});
+
+// ── Mark complete ──────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', function() {
   document.querySelectorAll('.dl-checkbox').forEach(function(checkbox) {
     checkbox.addEventListener('change', function() {
-      var eventId = this.dataset.eventId;
-      completeDeadline(eventId, this);
+      completeDeadline(this.dataset.eventId, this);
     });
   });
 });
@@ -204,8 +282,13 @@ function completeDeadline(eventId, checkbox) {
       item.classList.add('dl-item--completing');
       setTimeout(function() {
         item.remove();
-        if (document.querySelectorAll('.dl-item').length === 0) {
-          location.reload();
+        // Update tab count badge
+        var panel = document.querySelector('.dl-tab-panel--active');
+        if (panel) {
+          var remaining = panel.querySelectorAll('.dl-item').length;
+          var activeBtn = document.querySelector('.dl-tab-btn--active .dl-tab-count');
+          if (activeBtn) activeBtn.textContent = remaining;
+          if (remaining === 0) location.reload();
         }
       }, 400);
     }
@@ -219,14 +302,12 @@ function completeDeadline(eventId, checkbox) {
 function getCookie(name) {
   var cookieValue = null;
   if (document.cookie && document.cookie !== '') {
-    var cookies = document.cookie.split(';');
-    for (var i = 0; i < cookies.length; i++) {
-      var cookie = cookies[i].trim();
+    document.cookie.split(';').forEach(function(cookie) {
+      cookie = cookie.trim();
       if (cookie.startsWith(name + '=')) {
         cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-        break;
       }
-    }
+    });
   }
   return cookieValue;
 }

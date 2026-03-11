@@ -8,8 +8,6 @@ from timeout.views import profile as profile_views
 from timeout.views import event_delete
 from timeout.views import settings as settings_views
 
-
-
 urlpatterns = [
     path('', pages.landing, name='landing'),
     path('dashboard/', pages.dashboard, name='dashboard'),
@@ -17,15 +15,9 @@ urlpatterns = [
     path('profile/edit/', profile_views.profile_edit, name='profile_edit'),
     path('settings/', settings_views.settings_view, name='settings'),
     path('settings/save/', settings_views.settings_save_ajax, name='settings_save'),
-
-    #path('calendar/', pages.calendar, name='calendar'),
     path('statistics/', pages.statistics, name='statistics'),
     path('social/', pages.social, name='social'),
     path('event/<int:event_id>/', event_details, name='event_details'),
     path("event/<int:pk>/edit/", event_edit, name="event_edit"), 
     path('event/<int:pk>/delete/', event_delete.event_delete, name='event_delete'),
-    
-    
-    #path('calendar/', cal_views.calendar_view, name='calendar'),
-    #path('calendar/add/', cal_views.event_create, name='event_create'),
 ]

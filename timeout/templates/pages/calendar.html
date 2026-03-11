@@ -5,11 +5,11 @@
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'css/calendar.css' %}">
+<link rel="stylesheet" href="{% static 'css/information.css' %}">  
 {% endblock %}
 
 {% block content %}
 <div class="cal-page">
-  <div class="cal-card">
 
     {% if workload_warning %}
     <div class="alert alert-warning mb-3">
@@ -17,17 +17,35 @@
     </div>
     {% endif %}
 
+  {% include "partials/reschedule_banners.html" %}
+
+  <div class="cal-card">
+    
     <!-- Toolbar -->
     <div class="cal-toolbar">
       <div class="cal-toolbar__left">
+        
         <div class="cal-nav">
+          
           <a href="?year={{ prev_year }}&month={{ prev_month }}" class="cal-nav__btn" aria-label="Previous month">&#8249;</a>
           <a href="?year={{ next_year }}&month={{ next_month }}" class="cal-nav__btn" aria-label="Next month">&#8250;</a>
         </div>
+        
         <h1 class="cal-month">{{ month_name }} {{ year }}</h1>
+        
       </div>
+      
       <div class="cal-toolbar__right">
+        <!-- Floating page info button -->
+          <div class="page-info-button">
+            <div class="page-info-tooltip">
+              This shows your upcoming events for the month.<br>
+              Click on a day or the 'Add Event' button to add a new event. <br>
+              Click on an event to view details and edit your event.
+            </div>
+          </div>
         <div class="cal-view-switcher">
+          
           <a href="{% url 'calendar' %}" class="cal-view-btn cal-view-btn--active">
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
               <rect x="1" y="2" width="14" height="12" rx="2" stroke="currentColor" stroke-width="1.5"/>
@@ -220,6 +238,10 @@ function openAddEvent(dateStr) {
 
 window.AI_ADD_URL = '{% url "ai_event_create" %}';
 window.AI_CSRF_TOKEN = '{{ csrf_token }}';
+window.RESCHEDULE_URL = '{% url "ai_reschedule" %}';
+window.RESCHEDULE_CANCEL_URL_TPL = '/calendar/{id}/cancel/';
+window.EVENT_CREATE_URL = '{% url "event_create" %}';
 </script>
+<script src="{% static 'js/reschedule.js' %}"></script>
 <script src="{% static 'js/ai_calendar.js' %}"></script>
 {% endblock %}

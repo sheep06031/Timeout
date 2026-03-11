@@ -3,7 +3,9 @@
   <div class="container">
     <a class="navbar-brand" href="{% if user.is_authenticated %}{% url 'dashboard' %}{% else %}{% url 'landing' %}{% endif %}">Timeout</a>
 
-    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"><span class="navbar-toggler-icon"></span></button>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+      <span class="navbar-toggler-icon"></span>
+    </button>
 
     <div class="collapse navbar-collapse" id="navbarNav">
       <ul class="navbar-nav me-auto gap-1">
@@ -20,8 +22,17 @@
           <li class="nav-item">
             <a class="nav-link" href="{% url 'social_feed' %}">Social</a>
           </li>
+          <li class="nav-item">
+            <a class="nav-link position-relative" href="{% url 'notifications' %}">
+              Notifications
+              {% if unread_count > 0 %}
+                <span id="page-unread-count">({{ unread_count }})</span>
+              {% endif %}
+            </a>
+          </li>
         {% endif %}
       </ul>
+
       <ul class="navbar-nav align-items-center gap-2">
         {% if not user.is_authenticated %}
           <li class="nav-item">
@@ -62,16 +73,22 @@
               <span class="nav-dropdown-level">Lv {{ user.level }}</span>
             </li>
             <li><hr class="dropdown-divider"></li>
-            <li><a class="dropdown-item nav-dropdown-item" href="{% url 'profile' %}">
-              <span class="nav-dropdown-icon">&#128100;</span> Profile
-            </a></li>
-            <li><a class="dropdown-item nav-dropdown-item" href="{% url 'settings' %}">
-              <span class="nav-dropdown-icon">&#9881;&#65039;</span> Settings
-            </a></li>
+            <li>
+              <a class="dropdown-item nav-dropdown-item" href="{% url 'profile' %}">
+                <span class="nav-dropdown-icon">&#128100;</span> Profile
+              </a>
+            </li>
+            <li>
+              <a class="dropdown-item nav-dropdown-item" href="{% url 'settings' %}">
+                <span class="nav-dropdown-icon">&#9881;&#65039;</span> Settings
+              </a>
+            </li>
             <li><hr class="dropdown-divider"></li>
-            <li><a class="dropdown-item nav-dropdown-item nav-dropdown-item--danger" href="{% url 'logout' %}">
-              <span class="nav-dropdown-icon">&#128682;</span> Logout
-            </a></li>
+            <li>
+              <a class="dropdown-item nav-dropdown-item nav-dropdown-item--danger" href="{% url 'logout' %}">
+                <span class="nav-dropdown-icon">&#128682;</span> Logout
+              </a>
+            </li>
           </ul>
         </div>
       </div>

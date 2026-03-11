@@ -165,6 +165,26 @@ def calendar_view(request):
     # Get today's events for AI workload warning
     today_events = events_by_date.get(timezone.now().date(), [])
     workload_warning = get_ai_workload_warning(today_events)
+    # Missed study sessions: past events still in UPCOMING status
+    now = timezone.now()
+    missed_sessions = Event.objects.filter(
+        creator=request.user,
+        event_type=Event.EventType.STUDY_SESSION,
+        status=Event.EventStatus.UPCOMING,
+        end_datetime__lt=now,
+    )
+    reschedule_prompts = [
+        {
+            'id': e.pk,
+            'title': e.title,
+            'duration_minutes': int((e.end_datetime - e.start_datetime).total_seconds() / 60),
+            'reason': 'missed',
+        }
+        for e in missed_sessions
+    ]
+
+    # Recently cancelled study sessions (stored in session after event_cancel view)
+    reschedule_prompts += request.session.pop('reschedule_prompts', [])
 
     context = {
         "weeks": weeks,
@@ -176,7 +196,11 @@ def calendar_view(request):
         "next_year": next_year,
         "next_month": next_month,
         "weekdays": ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+<<<<<<< HEAD
         "workload_warning": workload_warning,
+=======
+        "reschedule_prompts": reschedule_prompts,
+>>>>>>> origin
     }
 
     return render(request, "pages/calendar.html", context)
@@ -223,6 +247,6 @@ def event_create(request):
         event.save()
         messages.success(request, f'"{event.title}" added to calendar.')
     except ValidationError as e:
-        messages.error(request, str(e))
+        messages.error(request, '; '.join(e.messages))
 
     return redirect("calendar")

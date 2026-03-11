@@ -1,4 +1,4 @@
-/* Authentication Pages Styles - Neptune Color Palette */
+/* Authentication Pages Styles*/
 
 /* Container Styles */
 .auth-container {
@@ -241,4 +241,81 @@
     font-size: 0.875rem;
     color: #718096;
     margin-top: 0.25rem;
+}
+
+/* ── Dark Mode ── */
+[data-theme="dark"] .auth-container {
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+}
+
+[data-theme="dark"] .auth-card {
+    background: var(--bg-primary, #1e1e2e);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+[data-theme="dark"] .auth-header {
+    background: linear-gradient(135deg, #2d3a6e 0%, #3a3fcf 100%);
+}
+
+[data-theme="dark"] .auth-body .form-label {
+    color: var(--text-primary, #e2e8f0);
+}
+
+[data-theme="dark"] .auth-body .form-control,
+[data-theme="dark"] .auth-body .form-select {
+    background: var(--bg-secondary, #2a2a3e);
+    border-color: var(--border-color, #3a3a4e);
+    color: var(--text-primary, #e2e8f0);
+}
+
+[data-theme="dark"] .auth-body .form-control:focus,
+[data-theme="dark"] .auth-body .form-select:focus {
+    border-color: #525AFF;
+    box-shadow: 0 0 0 3px rgba(82, 90, 255, 0.2);
+}
+
+[data-theme="dark"] .divider::before,
+[data-theme="dark"] .divider::after {
+    border-color: var(--border-color, #3a3a4e);
+}
+
+[data-theme="dark"] .divider span {
+    color: var(--text-secondary, #a0aec0);
+}
+
+[data-theme="dark"] .social-btn {
+    border-color: var(--border-color, #3a3a4e);
+}
+
+[data-theme="dark"] .social-btn-google {
+    color: #ff6b5a;
+    border-color: #ff6b5a;
+}
+
+[data-theme="dark"] .auth-link {
+    color: var(--text-secondary, #a0aec0);
+}
+
+[data-theme="dark"] .auth-link a {
+    color: var(--accent, #7b8cff);
+}
+
+[data-theme="dark"] .forgot-password-link {
+    color: var(--accent, #7b8cff);
+}
+
+[data-theme="dark"] .password-toggle-btn {
+    color: var(--text-secondary, #a0aec0);
+}
+
+[data-theme="dark"] .password-toggle-btn:hover {
+    color: var(--accent, #7b8cff);
+}
+
+[data-theme="dark"] .form-text {
+    color: var(--text-secondary, #a0aec0);
+}
+
+[data-theme="dark"] .form-check-label {
+    color: var(--text-secondary, #a0aec0);
 }

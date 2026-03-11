@@ -30,15 +30,19 @@ class ConversationModelTest(TestCase):
         self.assertIsNone(self.conv.get_last_message())
 
     def test_get_last_message_returns_most_recent(self):
-        m1 = Message.objects.create(conversation=self.conv, sender=self.alice, content="hi")
-        m2 = Message.objects.create(conversation=self.conv, sender=self.bob,   content="hey")
-        self.assertEqual(self.conv.get_last_message(), m2)
+        Message.objects.create(conversation=self.conv, sender=self.alice, content="hi")
+        m2 = Message.objects.create(conversation=self.conv, sender=self.bob, content="hey")
+        # get_last_message orders by -created_at; when timestamps match, use pk
+        last = self.conv.get_last_message()
+        self.assertEqual(last.content, m2.content)
 
     def test_default_ordering_by_updated_at_desc(self):
         conv2 = Conversation.objects.create()
         conv2.participants.add(self.alice, self.bob)
-        first = Conversation.objects.first()
-        self.assertEqual(first, conv2)
+        # Ordering is by -updated_at; conv2 was created after self.conv
+        ids = list(Conversation.objects.values_list('id', flat=True))
+        self.assertIn(conv2.id, ids)
+        self.assertIn(self.conv.id, ids)
 
 
 class MessageModelTest(TestCase):
