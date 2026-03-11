@@ -236,6 +236,6 @@ def event_create(request):
         event.save()
         messages.success(request, f'"{event.title}" added to calendar.')
     except ValidationError as e:
-        messages.error(request, str(e))
+        messages.error(request, '; '.join(e.messages))
 
     return redirect("calendar")
