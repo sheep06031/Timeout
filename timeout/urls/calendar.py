@@ -10,6 +10,7 @@ from timeout.views import ai_reschedule as ai_reschedule_views
 urlpatterns = [
     path('calendar/', cal_views.calendar_view, name='calendar'),
     path('calendar/add/', cal_views.event_create, name='event_create'),
+    path('calendar/event/<int:pk>/subscribe/', cal_views.subscribe_event, name='subscribe_event'),
     path('calendar/ai-add/', ai_cal_views.ai_create_event, name='ai_event_create'),
     path('calendar/ai-reschedule/', ai_reschedule_views.ai_suggest_reschedule, name='ai_reschedule'),
     path('calendar/<int:pk>/cancel/', event_cancel_views.event_cancel, name='event_cancel'),

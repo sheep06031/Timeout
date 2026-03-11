@@ -256,6 +256,31 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
+    document.querySelectorAll('.btn-subscribe-event').forEach(btn => {
+        btn.addEventListener('click', function () {
+            const url = this.dataset.url;
+            fetch(url, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': csrftoken,
+                    'Content-Type': 'application/json',
+                },
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    btn.textContent = '✓ Added';
+                    btn.disabled = true;
+                    btn.style.background = '#198754';
+                } else {
+                    btn.textContent = data.error || 'Error';
+                    btn.disabled = true;
+                }
+            })
+            .catch(err => console.error('Subscribe error:', err));
+        });
+    });
+
 });
 
 document.addEventListener('DOMContentLoaded', function () {
