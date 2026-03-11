@@ -47,6 +47,17 @@
           Edit Event
         </a>
 
+        <!-- Cancel Event Button -->
+        <form id="cancelEventForm" method="post" style="flex: 1; margin: 0;">
+          {% csrf_token %}
+          <button type="submit" id="cancelEventBtn"
+                  class="btn-auth w-100 text-center"
+                  style="background: #fd7e14; border-color: #fd7e14;"
+                  onclick="return confirm('Mark this event as cancelled?');">
+            Cancel Event
+          </button>
+        </form>
+
         <!-- Delete Button -->
         <a href="#" id="deleteEventBtn"
           onclick="return confirm('Are you sure you want to delete this event?');"
@@ -102,5 +113,6 @@
     // Links
     document.getElementById('editEventBtn').href = '/event/' + eventId + '/edit/';
     document.getElementById('deleteEventBtn').href = '/event/' + eventId + '/delete/';
+    document.getElementById('cancelEventForm').action = '/calendar/' + eventId + '/cancel/';
   });
 </script>
