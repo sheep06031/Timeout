@@ -53,12 +53,11 @@ class DeadlineService:
 
     @staticmethod
     def mark_complete(user, event_id):
-        """To mark the deadline of an event to completed"""
+        """Mark any event as completed (not just deadlines)."""
         try:
             event = Event.objects.get(
                 pk=event_id,
                 creator=user,
-                event_type=Event.EventType.DEADLINE,
                 is_completed=False,
             )
             event.is_completed = True
@@ -66,6 +65,63 @@ class DeadlineService:
             return event
         except Event.DoesNotExist:
             return None
+
+    @staticmethod
+    def get_all_active_events(user):
+        """
+        Return all non-completed, non-cancelled user events grouped by type.
+        Result: dict keyed by event_type string, values are lists of enriched item dicts.
+        - deadline: all incomplete regardless of date
+        - study_session: upcoming + past-but-uncompleted (so missed ones are visible)
+        - exam/class/meeting/other: upcoming only
+        """
+        if not user.is_authenticated:
+            return {}
+
+        now = timezone.now()
+
+        # Build a Q filter per type
+        from django.db.models import Q
+        qs = Event.objects.filter(
+            creator=user,
+            is_completed=False,
+        ).exclude(status=Event.EventStatus.CANCELLED).filter(
+            Q(event_type=Event.EventType.DEADLINE) |
+            Q(event_type=Event.EventType.STUDY_SESSION) |
+            Q(event_type__in=[
+                Event.EventType.EXAM,
+                Event.EventType.CLASS,
+                Event.EventType.MEETING,
+                Event.EventType.OTHER,
+            ], end_datetime__gte=now)
+        ).order_by('start_datetime')
+
+        events_by_type = {}
+        for event in qs:
+            time_remaining = event.end_datetime - now
+            time_elapsed = now - event.created_at
+            remaining_seconds = time_remaining.total_seconds()
+
+            if event.event_type == Event.EventType.DEADLINE:
+                if remaining_seconds < 0:
+                    urgency_status = 'overdue'
+                elif remaining_seconds <= 86400:
+                    urgency_status = 'urgent'
+                else:
+                    urgency_status = 'normal'
+            else:
+                urgency_status = 'missed' if remaining_seconds < 0 else 'upcoming'
+
+            item = {
+                'event': event,
+                'urgency_status': urgency_status,
+                'time_remaining': time_remaining,
+                'time_remaining_display': _format_timedelta(time_remaining),
+                'time_elapsed_display': _format_elapsed(time_elapsed),
+            }
+            events_by_type.setdefault(event.event_type, []).append(item)
+
+        return events_by_type
 
 # Function to create a human readable string for the reamining time
 def _format_timedelta(td):

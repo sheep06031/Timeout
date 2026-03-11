@@ -9,6 +9,9 @@
 
 {% block content %}
 <div class="cal-page">
+
+  {% include "partials/reschedule_banners.html" %}
+
   <div class="cal-card">
 
     <!-- Toolbar -->
@@ -214,6 +217,10 @@ function openAddEvent(dateStr) {
 
 window.AI_ADD_URL = '{% url "ai_event_create" %}';
 window.AI_CSRF_TOKEN = '{{ csrf_token }}';
+window.RESCHEDULE_URL = '{% url "ai_reschedule" %}';
+window.RESCHEDULE_CANCEL_URL_TPL = '/calendar/{id}/cancel/';
+window.EVENT_CREATE_URL = '{% url "event_create" %}';
 </script>
+<script src="{% static 'js/reschedule.js' %}"></script>
 <script src="{% static 'js/ai_calendar.js' %}"></script>
 {% endblock %}
