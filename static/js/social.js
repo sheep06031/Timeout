@@ -259,11 +259,7 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 document.addEventListener('DOMContentLoaded', function () {
-    let _navigatingAway = false;
-
-    window.addEventListener('beforeunload', function () {
-        _navigatingAway = true;
-    });
+    let inactiveTimer = null;
 
     function setStatus(status) {
         fetch('/social/status/update/', {
@@ -278,14 +274,20 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
+    window.addEventListener('beforeunload', function () {
+        clearTimeout(inactiveTimer);
+    });
+
     document.addEventListener('visibilitychange', function () {
-        if (_navigatingAway) return;
         const currentStatus = document.body.dataset.userStatus;
         if (currentStatus === 'focus') return;
 
         if (document.hidden) {
-            setStatus('inactive');
+            inactiveTimer = setTimeout(function () {
+                setStatus('inactive');
+            }, 1500);
         } else {
+            clearTimeout(inactiveTimer);
             setStatus('social');
         }
     });
