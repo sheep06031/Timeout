@@ -159,6 +159,13 @@ def calendar_view(request):
         "July", "August", "September", "October", "November", "December",
     ]
 
+<<<<<<< HEAD
+    upcoming_deadlines = Event.objects.filter(
+        creator=request.user,
+        event_type__in=[Event.EventType.DEADLINE, Event.EventType.EXAM],
+        start_datetime__gte=timezone.now(),
+    ).order_by('start_datetime')[:20]
+=======
     # Missed study sessions: past events still in UPCOMING status
     now = timezone.now()
     missed_sessions = Event.objects.filter(
@@ -179,6 +186,7 @@ def calendar_view(request):
 
     # Recently cancelled study sessions (stored in session after event_cancel view)
     reschedule_prompts += request.session.pop('reschedule_prompts', [])
+>>>>>>> main
 
     context = {
         "weeks": weeks,
@@ -190,7 +198,11 @@ def calendar_view(request):
         "next_year": next_year,
         "next_month": next_month,
         "weekdays": ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+<<<<<<< HEAD
+        "upcoming_deadlines": upcoming_deadlines,
+=======
         "reschedule_prompts": reschedule_prompts,
+>>>>>>> main
     }
     return render(request, "pages/calendar.html", context)
 
