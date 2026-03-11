@@ -259,6 +259,12 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 document.addEventListener('DOMContentLoaded', function () {
+    let _navigatingAway = false;
+
+    window.addEventListener('beforeunload', function () {
+        _navigatingAway = true;
+    });
+
     function setStatus(status) {
         fetch('/social/status/update/', {
             method: 'POST',
@@ -273,6 +279,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     document.addEventListener('visibilitychange', function () {
+        if (_navigatingAway) return;
         const currentStatus = document.body.dataset.userStatus;
         if (currentStatus === 'focus') return;
 
