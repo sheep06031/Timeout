@@ -24,7 +24,7 @@ class Conversation(models.Model):
 
     def get_last_message(self):
         """Return the most recent message."""
-        return self.messages.order_by('-created_at').first()
+        return self.messages.order_by('-created_at', '-pk').first()
 
 
 class Message(models.Model):

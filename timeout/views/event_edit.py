@@ -36,7 +36,7 @@ def event_edit(request, pk):
             messages.success(request, f'Event "{event.title}" updated successfully.')
             return redirect("calendar")  
         except ValidationError as e:
-            messages.error(request, "Error updating event: " + str(e))
+            messages.error(request, "Error updating event: " + '; '.join(e.messages))
         except Exception as e:
             messages.error(request, "Unexpected error: " + str(e))
 

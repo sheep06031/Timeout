@@ -182,7 +182,7 @@ OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY', '')
 
 # Login/Logout URLs
 LOGIN_URL = 'login'
-LOGIN_REDIRECT_URL = '/complete-profile/'
+LOGIN_REDIRECT_URL = '/dashboard/'
 LOGOUT_REDIRECT_URL = 'landing'
 
 

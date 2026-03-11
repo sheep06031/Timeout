@@ -54,14 +54,41 @@
 
                 <!-- University -->
                 <div class="mb-3">
-                    <label for="id_university" class="form-label">University</label>
-                    {{ form.university }}
+                    <label for="id_university_choice" class="form-label">University</label>
+                    {{ form.university_choice }}
+                    {% if form.university_choice.errors %}
+                        <div class="invalid-feedback d-block">
+                            {% for error in form.university_choice.errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <!-- University Other (hidden by default) -->
+                <div class="mb-3" id="universityOtherWrap" style="display:none">
+                    <label for="id_university_other" class="form-label">Please specify your university</label>
+                    {{ form.university_other }}
+                    {% if form.university_other.errors %}
+                        <div class="invalid-feedback d-block">
+                            {% for error in form.university_other.errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </div>
+                    {% endif %}
                 </div>
 
                 <!-- Year of Study -->
-                <div class="mb-3">
+                <div class="mb-4">
                     <label for="id_year_of_study" class="form-label">Year of Study</label>
                     {{ form.year_of_study }}
+                    {% if form.year_of_study.errors %}
+                        <div class="invalid-feedback d-block">
+                            {% for error in form.year_of_study.errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </div>
+                    {% endif %}
                 </div>
 
                 <button type="submit" class="btn btn-auth btn-primary w-100">
@@ -71,4 +98,18 @@
         </div>
     </div>
 </div>
+
+<script>
+(function() {
+    var choice = document.getElementById('id_university_choice');
+    var otherWrap = document.getElementById('universityOtherWrap');
+    if (!choice || !otherWrap) return;
+
+    function toggle() {
+        otherWrap.style.display = choice.value === '__other__' ? '' : 'none';
+    }
+    toggle();
+    choice.addEventListener('change', toggle);
+})();
+</script>
 {% endblock %}

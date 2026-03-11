@@ -1,12 +1,34 @@
+from django.contrib.sites.models import Site
 from django.test import TestCase, Client
 from django.urls import reverse
 from django.contrib.auth import get_user_model
 
+from allauth.socialaccount.models import SocialApp
+
 User = get_user_model()
+
+
+def _create_social_app():
+    """Create a dummy Google SocialApp so templates render."""
+    app, _ = SocialApp.objects.get_or_create(
+        provider='google',
+        defaults={
+            'name': 'Google',
+            'client_id': 'test-client-id',
+            'secret': 'test-secret',
+        },
+    )
+    site = Site.objects.get_current()
+    app.sites.add(site)
+    return app
 
 
 class PublicPageTests(TestCase):
     """Tests for pages accessible without authentication."""
+
+    @classmethod
+    def setUpTestData(cls):
+        _create_social_app()
 
     def test_landing_page(self):
         response = self.client.get(reverse('landing'))
@@ -61,46 +83,45 @@ class AuthenticatedPageTests(TestCase):
 class SignupViewTests(TestCase):
     """Tests for the signup view logic."""
 
+    @classmethod
+    def setUpTestData(cls):
+        _create_social_app()
+
     def test_signup_get_returns_form(self):
         response = self.client.get(reverse('signup'))
         self.assertIn('form', response.context)
 
     def test_signup_post_valid(self):
         response = self.client.post(reverse('signup'), {
-            'username': 'brand_new',
             'email': 'brand@example.com',
-            'first_name': 'Brand',
-            'last_name': 'New',
             'password1': 'Str0ng@Pass!',
             'password2': 'Str0ng@Pass!',
         })
-        self.assertRedirects(response, reverse('dashboard'))
-        self.assertTrue(User.objects.filter(username='brand_new').exists())
+        # After signup, redirects to complete_profile
+        self.assertRedirects(response, reverse('complete_profile'))
+        self.assertTrue(User.objects.filter(email='brand@example.com').exists())
 
     def test_signup_post_logs_user_in(self):
         self.client.post(reverse('signup'), {
-            'username': 'autouser',
             'email': 'auto@example.com',
-            'first_name': 'Auto',
-            'last_name': 'User',
             'password1': 'Str0ng@Pass!',
             'password2': 'Str0ng@Pass!',
         })
+        # User is logged in and can access dashboard
         response = self.client.get(reverse('dashboard'))
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(int(self.client.session['_auth_user_id']),
-                         User.objects.get(username='autouser').pk)
+        user = User.objects.get(email='auto@example.com')
+        self.assertEqual(int(self.client.session['_auth_user_id']), user.pk)
 
     def test_signup_post_invalid_rerenders(self):
         response = self.client.post(reverse('signup'), {
-            'username': 'bad',
             'email': 'bad@example.com',
             'password1': 'short',
             'password2': 'short',
         })
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'auth/signup.html')
-        self.assertFalse(User.objects.filter(username='bad').exists())
+        self.assertFalse(User.objects.filter(email='bad@example.com').exists())
 
     def test_signup_redirects_authenticated_user(self):
         User.objects.create_user(username='already', password='TestPass1!')
@@ -108,13 +129,35 @@ class SignupViewTests(TestCase):
         response = self.client.get(reverse('signup'))
         self.assertRedirects(response, reverse('dashboard'))
 
+    def test_signup_sets_session_flag(self):
+        self.client.post(reverse('signup'), {
+            'email': 'flag@example.com',
+            'password1': 'Str0ng@Pass!',
+            'password2': 'Str0ng@Pass!',
+        })
+        self.assertTrue(self.client.session.get('needs_profile_completion'))
+
+    def test_signup_creates_temp_username(self):
+        self.client.post(reverse('signup'), {
+            'email': 'temp@example.com',
+            'password1': 'Str0ng@Pass!',
+            'password2': 'Str0ng@Pass!',
+        })
+        user = User.objects.get(email='temp@example.com')
+        self.assertTrue(user.username.startswith('user_'))
+
 
 class LoginViewTests(TestCase):
     """Tests for the login view logic."""
 
+    @classmethod
+    def setUpTestData(cls):
+        _create_social_app()
+
     def setUp(self):
         self.user = User.objects.create_user(
-            username='loginuser', password='TestPass1!'
+            username='loginuser', email='login@example.com',
+            password='TestPass1!'
         )
 
     def test_login_get_returns_form(self):
@@ -123,7 +166,7 @@ class LoginViewTests(TestCase):
 
     def test_login_post_valid(self):
         response = self.client.post(reverse('login'), {
-            'username': 'loginuser',
+            'username': 'login@example.com',
             'password': 'TestPass1!',
         })
         self.assertRedirects(response, reverse('dashboard'))
@@ -131,15 +174,23 @@ class LoginViewTests(TestCase):
     def test_login_post_valid_with_next(self):
         url = reverse('login') + '?next=/profile/'
         response = self.client.post(url, {
-            'username': 'loginuser',
+            'username': 'login@example.com',
             'password': 'TestPass1!',
         })
         self.assertRedirects(response, '/profile/')
 
     def test_login_post_invalid(self):
         response = self.client.post(reverse('login'), {
-            'username': 'loginuser',
+            'username': 'login@example.com',
             'password': 'WrongPassword!',
+        })
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'auth/login.html')
+
+    def test_login_post_nonexistent_email(self):
+        response = self.client.post(reverse('login'), {
+            'username': 'nobody@example.com',
+            'password': 'TestPass1!',
         })
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'auth/login.html')
@@ -171,11 +222,19 @@ class LogoutViewTests(TestCase):
 class CompleteProfileViewTests(TestCase):
     """Tests for the complete_profile view."""
 
+    @classmethod
+    def setUpTestData(cls):
+        _create_social_app()
+
     def setUp(self):
         self.user = User.objects.create_user(
             username='social_user', password='TestPass1!'
         )
         self.client.login(username='social_user', password='TestPass1!')
+        # Set session flag - required for complete_profile access
+        session = self.client.session
+        session['needs_profile_completion'] = True
+        session.save()
 
     def test_complete_profile_get(self):
         response = self.client.get(reverse('complete_profile'))
@@ -188,13 +247,26 @@ class CompleteProfileViewTests(TestCase):
             'username': 'updated_user',
             'first_name': 'Updated',
             'last_name': 'User',
-            'university': 'Oxford University',
+            'university_choice': 'Oxford University',
             'year_of_study': 2,
         })
         self.assertRedirects(response, reverse('dashboard'))
         self.user.refresh_from_db()
         self.assertEqual(self.user.university, 'Oxford University')
         self.assertEqual(self.user.year_of_study, 2)
+
+    def test_complete_profile_post_valid_other_university(self):
+        response = self.client.post(reverse('complete_profile'), {
+            'username': 'updated_user',
+            'first_name': 'Updated',
+            'last_name': 'User',
+            'university_choice': '__other__',
+            'university_other': 'MIT',
+            'year_of_study': 3,
+        })
+        self.assertRedirects(response, reverse('dashboard'))
+        self.user.refresh_from_db()
+        self.assertEqual(self.user.university, 'MIT')
 
     def test_complete_profile_post_invalid(self):
         response = self.client.post(reverse('complete_profile'), {
@@ -208,3 +280,22 @@ class CompleteProfileViewTests(TestCase):
         response = self.client.get(reverse('complete_profile'))
         self.assertEqual(response.status_code, 302)
         self.assertIn('login', response.url)
+
+    def test_complete_profile_redirects_without_flag(self):
+        """Users without the session flag get redirected to dashboard."""
+        session = self.client.session
+        session.pop('needs_profile_completion', None)
+        session.save()
+        response = self.client.get(reverse('complete_profile'))
+        self.assertRedirects(response, reverse('dashboard'))
+
+    def test_complete_profile_clears_flag(self):
+        """Session flag is cleared after successful profile completion."""
+        self.client.post(reverse('complete_profile'), {
+            'username': 'cleared_user',
+            'first_name': 'Cleared',
+            'last_name': 'User',
+            'university_choice': 'Oxford University',
+            'year_of_study': 1,
+        })
+        self.assertFalse(self.client.session.get('needs_profile_completion', False))

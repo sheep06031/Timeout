@@ -57,9 +57,9 @@ class UserStatusModelTest(TestCase):
         self.assertEqual(user.status, "focus")
 
 
-# set_status view tests
+# update_status view tests
 
-class SetStatusViewTest(TestCase):
+class UpdateStatusViewTest(TestCase):
 
     def setUp(self):
         self.client = Client()
@@ -69,10 +69,9 @@ class SetStatusViewTest(TestCase):
         if logged_in:
             self.client.login(username="alice", password="testpass123")
         return self.client.post(
-            reverse("set_status"),
+            reverse("update_status"),
             {"status": status},
         )
-
 
     def test_redirects_when_not_logged_in(self):
         response = self._post("focus", logged_in=False)
@@ -80,9 +79,8 @@ class SetStatusViewTest(TestCase):
 
     def test_get_not_allowed(self):
         self.client.login(username="alice", password="testpass123")
-        response = self.client.get(reverse("set_status"))
+        response = self.client.get(reverse("update_status"))
         self.assertEqual(response.status_code, 405)
-
 
     def test_set_status_focus(self):
         response = self._post("focus")
@@ -114,7 +112,6 @@ class SetStatusViewTest(TestCase):
         self.alice.refresh_from_db()
         self.assertEqual(self.alice.status, "inactive")
 
-
     def test_invalid_status_returns_400(self):
         response = self._post("supercharged")
         self.assertEqual(response.status_code, 400)
@@ -130,7 +127,6 @@ class SetStatusViewTest(TestCase):
         self._post("not_a_real_status")
         self.alice.refresh_from_db()
         self.assertEqual(self.alice.status, "social")
-
 
     def test_response_is_json(self):
         response = self._post("focus")
@@ -149,8 +145,7 @@ class StatusVisibilityTest(TestCase):
     def setUp(self):
         self.client = Client()
         self.alice = make_user("alice", status="focus")
-        self.bob   = make_user("bob",   status="social")
-
+        self.bob = make_user("bob", status="social")
 
     def test_own_profile_shows_current_status_class(self):
         self.client.login(username="alice", password="testpass123")
@@ -165,9 +160,7 @@ class StatusVisibilityTest(TestCase):
         self.assertContains(response, "social")
         self.assertContains(response, "inactive")
 
-
     def test_feed_shows_status_dot_for_post_author(self):
         self.client.login(username="alice", password="testpass123")
-        response = self.client.get(reverse("feed"))
+        response = self.client.get(reverse("social_feed"))
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "status-")

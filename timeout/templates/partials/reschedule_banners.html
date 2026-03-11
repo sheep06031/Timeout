@@ -1,0 +1,52 @@
+<!-- Smart Rescheduler Banners -->
+{% for prompt in reschedule_prompts %}
+<div class="alert alert-warning d-flex align-items-center gap-2 mb-2"
+     id="reschedule-banner-{{ prompt.id }}" role="alert"
+     style="border-radius: 10px; padding: 10px 14px;">
+  <span style="font-size: 1rem;">&#9888;</span>
+  <div class="flex-grow-1">
+    <strong>{% if prompt.reason == 'missed' %}Missed{% else %}Cancelled{% endif %}:</strong>
+    "{{ prompt.title }}" &mdash; {{ prompt.duration_minutes }} min session
+  </div>
+  <button class="btn btn-sm btn-warning"
+          onclick="suggestReschedule({{ prompt.id }}, '{{ prompt.title|escapejs }}', {{ prompt.duration_minutes }}, '{{ prompt.reason }}')"
+          style="white-space: nowrap;">
+    Suggest Reschedule
+  </button>
+  <button class="btn btn-sm btn-success"
+          onclick="markBannerComplete({{ prompt.id }}, this)"
+          style="white-space: nowrap;">
+    Mark Complete
+  </button>
+  <button type="button" class="btn-close ms-1"
+          onclick="dismissReschedule({{ prompt.id }}, '{{ prompt.reason }}', this)"
+          aria-label="Dismiss"></button>
+</div>
+{% endfor %}
+
+<!-- Smart Rescheduler Result Modal -->
+<div class="modal fade" id="rescheduleResultModal" tabindex="-1" aria-labelledby="rescheduleResultLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content" style="border-radius: 14px; overflow: hidden;">
+      <div class="modal-header">
+        <h5 class="modal-title" id="rescheduleResultLabel">Suggested Reschedule</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <p id="rescheduleEventName" class="fw-semibold mb-1"></p>
+        <p id="rescheduleTime" class="text-muted mb-2" style="font-size: 0.9rem;"></p>
+        <p id="rescheduleReason" class="mb-0" style="font-size: 0.88rem;"></p>
+        <div id="rescheduleLoadingMsg" class="text-center text-muted py-3" style="display:none;">
+          Finding the best slot...
+        </div>
+        <div id="rescheduleErrorMsg" class="text-danger mt-2" style="display:none;"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-light" data-bs-dismiss="modal">Dismiss</button>
+        <button type="button" class="btn btn-warning" id="rescheduleAcceptBtn" onclick="acceptReschedule()">
+          Create Event
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

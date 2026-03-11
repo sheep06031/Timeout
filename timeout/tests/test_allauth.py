@@ -1,12 +1,33 @@
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
-from django.test import TestCase, RequestFactory, override_settings
+from django.test import TestCase, RequestFactory
 from django.contrib.auth import get_user_model
 from django.contrib.sessions.backends.db import SessionStore
 
-from timeout.adapters import TimeoutSocialAccountAdapter
+from timeout.adapters import TimeoutAccountAdapter, TimeoutSocialAccountAdapter
 
 User = get_user_model()
+
+
+class TimeoutAccountAdapterTests(TestCase):
+    """Tests for the custom AccountAdapter."""
+
+    def setUp(self):
+        self.adapter = TimeoutAccountAdapter()
+        self.factory = RequestFactory()
+
+    def test_signup_redirect_sets_flag_and_url(self):
+        request = self.factory.get('/')
+        request.session = SessionStore()
+        request.session.create()
+        url = self.adapter.get_signup_redirect_url(request)
+        self.assertEqual(url, '/complete-profile/')
+        self.assertTrue(request.session.get('needs_profile_completion'))
+
+    def test_login_redirect_goes_to_dashboard(self):
+        request = self.factory.get('/')
+        url = self.adapter.get_login_redirect_url(request)
+        self.assertEqual(url, '/dashboard/')
 
 
 class TimeoutSocialAccountAdapterTests(TestCase):
@@ -15,40 +36,6 @@ class TimeoutSocialAccountAdapterTests(TestCase):
     def setUp(self):
         self.adapter = TimeoutSocialAccountAdapter()
         self.factory = RequestFactory()
-
-    # ── _profile_incomplete ───────────────────────────────
-
-    def test_profile_incomplete_missing_university(self):
-        user = User(username='testuser', year_of_study=2, university='')
-        self.assertTrue(self.adapter._profile_incomplete(user))
-
-    def test_profile_incomplete_missing_year(self):
-        user = User(username='testuser', university='Oxford', year_of_study=None)
-        self.assertTrue(self.adapter._profile_incomplete(user))
-
-    def test_profile_incomplete_auto_generated_username(self):
-        user = User(username='user_12345', university='Oxford', year_of_study=2)
-        self.assertTrue(self.adapter._profile_incomplete(user))
-
-    def test_profile_complete(self):
-        user = User(username='realuser', university='Oxford', year_of_study=2)
-        self.assertFalse(self.adapter._profile_incomplete(user))
-
-    # ── get_login_redirect_url ────────────────────────────
-
-    def test_redirect_to_complete_profile_if_incomplete(self):
-        request = self.factory.get('/')
-        request.user = User(username='user_abc', university='', year_of_study=None)
-        url = self.adapter.get_login_redirect_url(request)
-        self.assertEqual(url, '/complete-profile/')
-
-    def test_redirect_to_dashboard_if_complete(self):
-        request = self.factory.get('/')
-        request.user = User(username='realuser', university='Oxford', year_of_study=3)
-        url = self.adapter.get_login_redirect_url(request)
-        self.assertEqual(url, '/dashboard/')
-
-    # ── pre_social_login ──────────────────────────────────
 
     def test_pre_social_login_links_existing_user_by_email(self):
         user = User.objects.create_user(

@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+
+{% block title %}{{ event.title }} — Timeout{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="card shadow-sm">
+    <div class="card-body p-4">
+      <h2 class="mb-3">{{ event.title }}</h2>
+      <p class="text-muted">
+        {{ event.start_datetime|date:"N j, Y g:i A" }} — {{ event.end_datetime|date:"N j, Y g:i A" }}
+      </p>
+      {% if event.description %}
+      <p>{{ event.description }}</p>
+      {% endif %}
+      {% if event.location %}
+      <p><strong>Location:</strong> {{ event.location }}</p>
+      {% endif %}
+      <p><strong>Type:</strong> {{ event.get_event_type_display }}</p>
+      <div class="mt-4 d-flex gap-2">
+        <a href="{% url 'event_edit' event.pk %}" class="btn btn-primary">Edit</a>
+        <a href="{% url 'event_delete' event.pk %}" class="btn btn-danger"
+           onclick="return confirm('Delete this event?')">Delete</a>
+        <a href="{% url 'calendar' %}" class="btn btn-secondary">Back to Calendar</a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

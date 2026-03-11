@@ -1,10 +1,15 @@
 {% extends "base.html" %}
 {% load i18n %}
+{% load static %}
 {% block title %}Complete Sign Up - Timeout{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/auth-styles.css' %}">
+{% endblock %}
 
 {% block content %}
 <div class="auth-container">
-    <div class="auth-card auth-card--wide">
+    <div class="auth-card auth-card-wide">
         <div class="auth-header">
             <h2>{% trans "Complete Sign Up" %}</h2>
             <p>{% blocktrans with provider_name=account.get_provider.name %}Almost there! Confirm your {{ provider_name }} details.{% endblocktrans %}</p>

@@ -1,7 +1,9 @@
 from django.test import TestCase
 from django.contrib.auth import get_user_model
 
-from timeout.forms import SignupForm, LoginForm
+from timeout.forms import SignupForm, LoginForm, CompleteProfileForm
+from timeout.forms.auth import validate_password_strength, check_similarity
+from django.core.exceptions import ValidationError
 
 User = get_user_model()
 
@@ -12,17 +14,12 @@ class SignupFormTests(TestCase):
     def _form_data(self, **overrides):
         """Return valid signup data with optional overrides."""
         data = {
-            'username': 'newuser',
             'email': 'new@example.com',
-            'first_name': 'New',
-            'last_name': 'User',
             'password1': 'Strong@Pass1',
             'password2': 'Strong@Pass1',
         }
         data.update(overrides)
         return data
-
-    # ── Valid submission ──────────────────────────────────
 
     def test_valid_form(self):
         form = SignupForm(data=self._form_data())
@@ -32,9 +29,9 @@ class SignupFormTests(TestCase):
         form = SignupForm(data=self._form_data())
         self.assertTrue(form.is_valid())
         user = form.save()
-        self.assertEqual(user.username, 'newuser')
+        self.assertTrue(user.username.startswith('user_'))
         self.assertTrue(user.check_password('Strong@Pass1'))
-        self.assertTrue(User.objects.filter(username='newuser').exists())
+        self.assertTrue(User.objects.filter(email='new@example.com').exists())
 
     def test_save_without_commit(self):
         form = SignupForm(data=self._form_data())
@@ -42,15 +39,11 @@ class SignupFormTests(TestCase):
         user = form.save(commit=False)
         self.assertIsNone(user.pk)
 
-    # ── Password too short ────────────────────────────────
-
     def test_password_too_short(self):
         form = SignupForm(data=self._form_data(password1='Ab1!', password2='Ab1!'))
         self.assertFalse(form.is_valid())
         self.assertIn('password1', form.errors)
         self.assertIn('at least 8 characters', form.errors['password1'][0])
-
-    # ── Missing uppercase ─────────────────────────────────
 
     def test_password_no_uppercase(self):
         form = SignupForm(data=self._form_data(
@@ -59,16 +52,12 @@ class SignupFormTests(TestCase):
         self.assertFalse(form.is_valid())
         self.assertIn('uppercase', form.errors['password1'][0])
 
-    # ── Missing lowercase ─────────────────────────────────
-
     def test_password_no_lowercase(self):
         form = SignupForm(data=self._form_data(
             password1='STRONG@PASS1', password2='STRONG@PASS1'
         ))
         self.assertFalse(form.is_valid())
         self.assertIn('lowercase', form.errors['password1'][0])
-
-    # ── Missing digit ─────────────────────────────────────
 
     def test_password_no_digit(self):
         form = SignupForm(data=self._form_data(
@@ -77,16 +66,12 @@ class SignupFormTests(TestCase):
         self.assertFalse(form.is_valid())
         self.assertIn('number', form.errors['password1'][0])
 
-    # ── Missing symbol ────────────────────────────────────
-
     def test_password_no_symbol(self):
         form = SignupForm(data=self._form_data(
             password1='StrongPass1', password2='StrongPass1'
         ))
         self.assertFalse(form.is_valid())
         self.assertIn('special character', form.errors['password1'][0])
-
-    # ── Passwords don't match ─────────────────────────────
 
     def test_password_mismatch(self):
         form = SignupForm(data=self._form_data(
@@ -95,19 +80,6 @@ class SignupFormTests(TestCase):
         self.assertFalse(form.is_valid())
         self.assertIn('password2', form.errors)
         self.assertIn('do not match', form.errors['password2'][0])
-
-    # ── Similarity to username ────────────────────────────
-
-    def test_password_similar_to_username(self):
-        form = SignupForm(data=self._form_data(
-            username='alexander',
-            password1='Alex@nder1!',
-            password2='Alex@nder1!',
-        ))
-        self.assertFalse(form.is_valid())
-        self.assertIn('too similar to your username', str(form.errors))
-
-    # ── Similarity to email ───────────────────────────────
 
     def test_password_similar_to_email(self):
         form = SignupForm(data=self._form_data(
@@ -118,18 +90,6 @@ class SignupFormTests(TestCase):
         self.assertFalse(form.is_valid())
         self.assertIn('too similar to your email', str(form.errors))
 
-    # ── Short username skips similarity check ─────────────
-
-    def test_short_username_skips_similarity(self):
-        form = SignupForm(data=self._form_data(
-            username='abc',
-            password1='Abc@1234!',
-            password2='Abc@1234!',
-        ))
-        self.assertTrue(form.is_valid())
-
-    # ── Short email local part skips similarity check ─────
-
     def test_short_email_local_skips_similarity(self):
         form = SignupForm(data=self._form_data(
             email='ab@example.com',
@@ -137,8 +97,6 @@ class SignupFormTests(TestCase):
             password2='Ab@12345!',
         ))
         self.assertTrue(form.is_valid())
-
-    # ── Duplicate email ───────────────────────────────────
 
     def test_duplicate_email(self):
         User.objects.create_user(
@@ -149,10 +107,7 @@ class SignupFormTests(TestCase):
         self.assertIn('email', form.errors)
         self.assertIn('already exists', form.errors['email'][0])
 
-    # ── clean() with invalid password1 (None) ─────────────
-
     def test_clean_skips_similarity_when_password1_invalid(self):
-        """If password1 fails validation, clean() should not run similarity."""
         form = SignupForm(data=self._form_data(
             password1='short',
             password2='short',
@@ -171,5 +126,151 @@ class LoginFormTests(TestCase):
 
     def test_form_has_placeholders(self):
         form = LoginForm()
-        self.assertEqual(form.fields['username'].widget.attrs['placeholder'], 'Username')
+        self.assertEqual(form.fields['username'].widget.attrs['placeholder'], 'your@email.com')
         self.assertEqual(form.fields['password'].widget.attrs['placeholder'], 'Password')
+
+    def test_login_form_uses_email_field(self):
+        form = LoginForm()
+        self.assertEqual(form.fields['username'].label, 'Email')
+
+
+class CompleteProfileFormTests(TestCase):
+    """Tests for the CompleteProfileForm."""
+
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username='user_temp123', password='TestPass1!'
+        )
+
+    def test_valid_form_with_known_university(self):
+        form = CompleteProfileForm(data={
+            'username': 'newname',
+            'first_name': 'Test',
+            'last_name': 'User',
+            'university_choice': 'Oxford University',
+            'year_of_study': 2,
+        }, instance=self.user)
+        self.assertTrue(form.is_valid())
+
+    def test_valid_form_with_other_university(self):
+        form = CompleteProfileForm(data={
+            'username': 'newname',
+            'first_name': 'Test',
+            'last_name': 'User',
+            'university_choice': '__other__',
+            'university_other': 'MIT',
+            'year_of_study': 3,
+        }, instance=self.user)
+        self.assertTrue(form.is_valid())
+
+    def test_other_university_requires_text(self):
+        form = CompleteProfileForm(data={
+            'username': 'newname',
+            'university_choice': '__other__',
+            'university_other': '',
+            'year_of_study': 3,
+        }, instance=self.user)
+        self.assertFalse(form.is_valid())
+        self.assertIn('university_other', form.errors)
+
+    def test_empty_university_choice_invalid(self):
+        form = CompleteProfileForm(data={
+            'username': 'newname',
+            'university_choice': '',
+            'year_of_study': 3,
+        }, instance=self.user)
+        self.assertFalse(form.is_valid())
+        self.assertIn('university_choice', form.errors)
+
+    def test_empty_username_invalid(self):
+        form = CompleteProfileForm(data={
+            'username': '',
+            'university_choice': 'Oxford University',
+            'year_of_study': 1,
+        }, instance=self.user)
+        self.assertFalse(form.is_valid())
+        self.assertIn('username', form.errors)
+
+    def test_duplicate_username_invalid(self):
+        User.objects.create_user(username='taken', password='TestPass1!')
+        form = CompleteProfileForm(data={
+            'username': 'taken',
+            'university_choice': 'Oxford University',
+            'year_of_study': 1,
+        }, instance=self.user)
+        self.assertFalse(form.is_valid())
+        self.assertIn('username', form.errors)
+
+    def test_same_username_valid(self):
+        form = CompleteProfileForm(data={
+            'username': 'user_temp123',
+            'university_choice': 'Oxford University',
+            'year_of_study': 1,
+        }, instance=self.user)
+        self.assertTrue(form.is_valid())
+
+    def test_save_sets_university(self):
+        form = CompleteProfileForm(data={
+            'username': 'newname',
+            'first_name': 'Test',
+            'last_name': 'User',
+            'university_choice': 'Durham University',
+            'year_of_study': 1,
+        }, instance=self.user)
+        self.assertTrue(form.is_valid())
+        user = form.save()
+        self.assertEqual(user.university, 'Durham University')
+
+    def test_prepopulates_known_university(self):
+        self.user.university = 'Oxford University'
+        self.user.save()
+        form = CompleteProfileForm(instance=self.user)
+        self.assertEqual(form.initial.get('university_choice'), 'Oxford University')
+
+    def test_prepopulates_other_university(self):
+        self.user.university = 'Some Unknown Uni'
+        self.user.save()
+        form = CompleteProfileForm(instance=self.user)
+        self.assertEqual(form.initial.get('university_choice'), '__other__')
+        self.assertEqual(form.initial.get('university_other'), 'Some Unknown Uni')
+
+
+class ValidatePasswordStrengthTests(TestCase):
+    """Tests for validate_password_strength helper."""
+
+    def test_valid_password(self):
+        validate_password_strength('Strong@Pass1')
+
+    def test_too_short(self):
+        with self.assertRaises(ValidationError):
+            validate_password_strength('Ab1!')
+
+    def test_no_uppercase(self):
+        with self.assertRaises(ValidationError):
+            validate_password_strength('strong@pass1')
+
+    def test_no_lowercase(self):
+        with self.assertRaises(ValidationError):
+            validate_password_strength('STRONG@PASS1')
+
+    def test_no_digit(self):
+        with self.assertRaises(ValidationError):
+            validate_password_strength('Strong@Pass')
+
+    def test_no_symbol(self):
+        with self.assertRaises(ValidationError):
+            validate_password_strength('StrongPass1')
+
+
+class CheckSimilarityTests(TestCase):
+    """Tests for check_similarity helper."""
+
+    def test_similar_raises(self):
+        with self.assertRaises(ValidationError):
+            check_similarity('Alexander1!', 'alexander', 'username')
+
+    def test_not_similar_passes(self):
+        check_similarity('Xyz@1234!', 'alexander', 'username')
+
+    def test_short_reference_skips(self):
+        check_similarity('Ab@12345!', 'ab', 'email')

@@ -259,6 +259,8 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 document.addEventListener('DOMContentLoaded', function () {
+    let inactiveTimer = null;
+
     function setStatus(status) {
         fetch('/social/status/update/', {
             method: 'POST',
@@ -272,13 +274,20 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
+    window.addEventListener('beforeunload', function () {
+        clearTimeout(inactiveTimer);
+    });
+
     document.addEventListener('visibilitychange', function () {
         const currentStatus = document.body.dataset.userStatus;
         if (currentStatus === 'focus') return;
 
         if (document.hidden) {
-            setStatus('inactive');
+            inactiveTimer = setTimeout(function () {
+                setStatus('inactive');
+            }, 1500);
         } else {
+            clearTimeout(inactiveTimer);
             setStatus('social');
         }
     });

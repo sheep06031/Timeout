@@ -15,16 +15,14 @@ class TimeoutAccountAdapter(DefaultAccountAdapter):
     """
 
     def get_signup_redirect_url(self, request):
+        request.session['needs_profile_completion'] = True
         return resolve_url('complete_profile')
 
     def get_login_redirect_url(self, request):
         """
-        After email/password login, redirect to "Complete Profile" if
-        essential fields are missing, otherwise go to the dashboard.
+        After email/password login, go straight to the dashboard.
+        Existing users are never forced to complete their profile.
         """
-        user = request.user
-        if TimeoutSocialAccountAdapter._profile_incomplete(user):
-            return resolve_url('complete_profile')
         return resolve_url('dashboard')
 
 
@@ -32,8 +30,7 @@ class TimeoutSocialAccountAdapter(DefaultSocialAccountAdapter):
     """
     Custom adapter that handles:
     1. Automatic email-based linking of social accounts to existing local users.
-    2. Redirecting new social users to a "Complete Profile" page when required
-       fields are missing.
+    2. Redirecting first-time social users to a "Complete Profile" page.
     """
 
     def pre_social_login(self, request, sociallogin):
@@ -60,29 +57,3 @@ class TimeoutSocialAccountAdapter(DefaultSocialAccountAdapter):
         # Connect the social account to the existing local user
         sociallogin.connect(request, user)
 
-    def get_signup_redirect_url(self, request):
-        """
-        After a new social user is auto-created (SOCIALACCOUNT_AUTO_SIGNUP = True),
-        send them straight to the profile-completion page to pick a username, etc.
-        This bypasses the default /accounts/social/signup/ form entirely.
-        """
-        return resolve_url('complete_profile')
-
-    def get_login_redirect_url(self, request):
-        """
-        After social login, redirect to "Complete Profile" if the user
-        is missing required profile fields, otherwise go to the dashboard.
-        """
-        user = request.user
-        if self._profile_incomplete(user):
-            return resolve_url('complete_profile')
-        return resolve_url('dashboard')
-
-    @staticmethod
-    def _profile_incomplete(user):
-        """Check if any essential profile fields are missing."""
-        return not all([
-            user.username and not user.username.startswith('user_'),
-            user.university,
-            user.year_of_study,
-        ])
