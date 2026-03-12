@@ -188,7 +188,7 @@ def calendar_view(request):
 
     # Get today's events for AI workload warning
     today_events = events_by_date.get(timezone.now().date(), [])
-    workload_warning = get_ai_workload_warning(today_events)
+    workload_warning = get_ai_workload_warning(request.user, today_events)
     
     upcoming_deadlines = Event.objects.filter(
         creator=request.user,
