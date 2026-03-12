@@ -28,12 +28,21 @@
 
     <!-- Linked Event -->
     {% if post.event %}
-      <div class="post-event-tag">
-        📅
-        <div>
-          <div>{{ post.event.title }}</div>
-          <div class="event-date">{{ post.event.start_datetime|date:"F j, Y g:i A" }}</div>
+      <div class="post-event-tag" style="display:flex; align-items:center; justify-content:space-between;">
+        <div style="display:flex; align-items:center; gap:8px;">
+          📅
+          <div>
+            <div>{{ post.event.title }}</div>
+            <div class="event-date">{{ post.event.start_datetime|date:"F j, Y g:i A" }}</div>
+          </div>
         </div>
+        {% if post.event.visibility == 'public' and post.event.creator != user %}
+          <button class="btn-subscribe-event"
+                  data-url="{% url 'subscribe_event' post.event.id %}"
+                  style="font-size:0.78rem; padding:4px 10px; border-radius:8px; border:none; background:#5b73e8; color:#fff; cursor:pointer; white-space:nowrap;">
+            + Add to Calendar
+          </button>
+        {% endif %}
       </div>
     {% endif %}
 
