@@ -52,6 +52,62 @@ class DeadlineService:
         return results
 
     @staticmethod
+    def get_filtered_deadlines(user, status_filter='active', sort_order='asc', event_type=None):
+        """
+        Get deadlines with filtering and sorting options.
+
+        status_filter: 'active' (default) | 'completed' | 'all'
+        sort_order:    'asc' (oldest first, default) | 'desc' (newest first)
+        event_type:    None (all types) | 'deadline' | 'exam' | 'class' | etc.
+        """
+        if not user.is_authenticated:
+            return []
+
+        qs = Event.objects.filter(
+            creator=user,
+        )
+
+        # Filter by event type if specified, otherwise show all
+        if event_type:
+            qs = qs.filter(event_type=event_type)
+
+        if status_filter == 'active':
+            qs = qs.filter(is_completed=False)
+        elif status_filter == 'completed':
+            qs = qs.filter(is_completed=True)
+        # 'all' → no extra filter
+
+        ordering = 'end_datetime' if sort_order == 'asc' else '-end_datetime'
+        qs = qs.order_by(ordering)
+
+        now = timezone.now()
+        results = []
+
+        for event in qs:
+            time_remaining = event.end_datetime - now
+            time_elapsed = now - event.created_at
+
+            remaining_seconds = time_remaining.total_seconds()
+            if event.is_completed:
+                urgency_status = 'completed'
+            elif remaining_seconds < 0:
+                urgency_status = 'overdue'
+            elif remaining_seconds <= 86400:
+                urgency_status = 'urgent'
+            else:
+                urgency_status = 'normal'
+
+            results.append({
+                'event': event,
+                'urgency_status': urgency_status,
+                'time_remaining': time_remaining,
+                'time_remaining_display': _format_timedelta(time_remaining),
+                'time_elapsed_display': _format_elapsed(time_elapsed),
+            })
+
+        return results
+
+    @staticmethod
     def mark_complete(user, event_id):
         """Mark any event as completed (not just deadlines)."""
         try:

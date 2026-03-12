@@ -7,6 +7,7 @@ from timeout.models.event import Event
 from timeout.services import FeedService, DeadlineService
 from timeout.views.statistics import get_focus_stats, build_context
 from timeout.views.profile import get_profile_event
+from timeout.services.ai_service import AIService
 from timeout.models.notification import Notification
 
 
@@ -66,6 +67,9 @@ def dashboard(request):
         conversation__in=user_conversations,
         is_read=False,
     ).exclude(sender=user).count()
+    # added 60-62 ai_briefing for weekly brief
+    # AI Weekly Insight — returns None on failure so the template hides the card
+    ai_briefing = AIService.get_dashboard_briefing(user)
 
     context = {
         'greeting': greeting,
@@ -74,6 +78,7 @@ def dashboard(request):
         'deadlines': deadlines,
         'social_posts': social_posts,
         'unread_count': unread_count,
+        'ai_briefing': ai_briefing, # added for weekly briefing
         **focus_stats,
     }
     return render(request, 'pages/dashboard.html', context)
