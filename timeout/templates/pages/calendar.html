@@ -99,16 +99,16 @@
                 data-bs-target="#eventDetailsModal"
                 data-event-id="{{ ev.id }}"
                 data-event-title="{{ ev.title }}"
-                data-event-type="{{ ev.get_event_type_display }}"
+                data-event-type="{{ ev.event_type_display }}"
                 data-event-color="{{ ev.color }}"
                 data-event-start="{{ ev.start_datetime|date:'Y-m-d H:i' }}"
                 data-event-end="{{ ev.end_datetime|date:'Y-m-d H:i' }}"
                 data-event-location="{{ ev.location }}"
                 data-event-description="{{ ev.description }}"
-                data-event-recurrence="{{ ev.get_recurrence_display }}"
+                data-event-recurrence="{{ ev.recurrence_display }}"
                 data-event-all-day="{{ ev.is_all_day }}"
                 data-event-visibility="{{ ev.visibility }}"
-                data-event-status="{% if day.date < now.date %}Past{% elif day.date > now.date %}Upcoming{% else %}Ongoing{% endif %}"
+                data-event-status="{{ ev.status_display }}"
                 data-event-duration="{{ ev.end_datetime|timesince:ev.start_datetime }}"
                 data-event-ongoing="{% if day.date == now.date %}Yes{% else %}No{% endif %}"
                 data-event-past="{% if day.date < now.date %}Yes{% else %}No{% endif %}">
@@ -323,6 +323,15 @@ function openDayEvents(dateStr, dateLabel, el) {
 
   new bootstrap.Modal(document.getElementById('dayEventsModal')).show();
 }
+
+// Highlight currently ongoing events
+document.querySelectorAll('.cal-chip').forEach(chip => {
+  const status = chip.getAttribute('data-event-status');
+  if (status === 'Ongoing') {
+    chip.classList.add('cal-chip--ongoing');
+  }
+});
+
 </script>
 <script src="{% static 'js/reschedule.js' %}"></script>
 <script src="{% static 'js/ai_calendar.js' %}"></script>

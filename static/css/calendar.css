@@ -361,3 +361,15 @@ td.cal-today .cal-day-num {
 .cal-chip-hidden {
   display: none;
 }
+
+/* ── Ongoing event glow ── */
+.cal-chip--ongoing {
+  animation: ongoingGlow 2s ease-in-out infinite;
+  position: relative;
+}
+
+@keyframes ongoingGlow {
+  0%   { box-shadow: 0 0 0px rgba(255, 255, 255, 0); }
+  50%  { box-shadow: 0 0 8px rgba(255, 255, 255, 0.8), 0 0 4px rgba(255,255,255,0.4); }
+  100% { box-shadow: 0 0 0px rgba(255, 255, 255, 0); }
+}
