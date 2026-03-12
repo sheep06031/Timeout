@@ -30,6 +30,7 @@ class Notification(models.Model):
     )
 
     is_read = models.BooleanField(default=False)
+    is_dismissed = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
 
     deadline = models.ForeignKey(

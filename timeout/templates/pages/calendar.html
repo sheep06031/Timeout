@@ -77,6 +77,7 @@
             List
           </a>
         </div>
+
         <a href="{% url 'calendar' %}" class="cal-today-btn">Today</a>
         <a href="#" class="cal-add-btn" data-bs-toggle="modal" data-bs-target="#studyPlannerModal">
           <span class="cal-add-label">Plan Study</span>
@@ -84,11 +85,13 @@
         <a href="#" class="cal-add-btn" data-bs-toggle="modal" data-bs-target="#aiEventModal">
           <span class="cal-add-label">AI Add</span>
         </a>
-        <a href="#" class="cal-add-btn" data-bs-toggle="modal" data-bs-target="#addEventModal">
+        <!-- onclick="openAddEvent(new Date().toISOString().slice(0,10))" used to be: data-bs-toggle="modal" data-bs-target="#addEventModal"-->
+        <a href="#" class="cal-add-btn" onclick="openAddEvent(new Date().toISOString().slice(0,10))">
           + <span class="cal-add-label">Add Event</span>
         </a>
       </div>
     </div>
+
 
     <!-- Calendar table -->
     <table class="cal-table">
@@ -111,34 +114,39 @@
             {% if day.events %}
             <div class="cal-events">
               {% for ev in day.events %}
-             <a href="#"
-              class="cal-chip cal-chip--{{ ev.event_type }}"
-              data-bs-toggle="modal"
-              onclick="event.stopPropagation();"
-              data-bs-target="#eventDetailsModal"
-              data-event-id="{{ ev.id }}"
-              data-event-title="{{ ev.title }}"
-              data-event-type="{{ ev.get_event_type_display }}"
-              data-event-color="{{ ev.color }}"
-              data-event-start="{{ ev.start_datetime|date:'Y-m-d H:i' }}"
-              data-event-end="{{ ev.end_datetime|date:'Y-m-d H:i' }}"
-              data-event-location="{{ ev.location }}"
-              data-event-description="{{ ev.description }}"
-              data-event-recurrence="{{ ev.get_recurrence_display }}"
-              data-event-all-day="{{ ev.is_all_day }}"
-              data-event-visibility="{{ ev.visibility }}"
-              data-event-status="{% if day.date < now.date %}Past{% elif day.date > now.date %}Upcoming{% else %}Ongoing{% endif %}"
-              data-event-duration="{{ ev.end_datetime|timesince:ev.start_datetime }}"
-              data-event-ongoing="{% if day.date == now.date %}Yes{% else %}No{% endif %}"
-              data-event-past="{% if day.date < now.date %}Yes{% else %}No{% endif %}">
-              {{ ev.title }}
-            </a>
+              <a href="#"
+                class="cal-chip cal-chip--{{ ev.event_type }} {% if ev.allow_conflict %}cal-chip--conflict{% endif %} {% if forloop.counter > 3 %}cal-chip-hidden{% endif %}"
+                data-bs-toggle="modal"
+                onclick="event.stopPropagation();"
+                data-bs-target="#eventDetailsModal"
+                data-event-id="{{ ev.id }}"
+                data-event-title="{{ ev.title }}"
+                data-event-type="{{ ev.event_type_display }}"
+                data-event-color="{{ ev.color }}"
+                data-event-start="{{ ev.start_datetime|date:'Y-m-d H:i' }}"
+                data-event-end="{{ ev.end_datetime|date:'Y-m-d H:i' }}"
+                data-event-location="{{ ev.location }}"
+                data-event-description="{{ ev.description }}"
+                data-event-recurrence="{{ ev.recurrence_display }}"
+                data-event-all-day="{{ ev.is_all_day }}"
+                data-event-visibility="{{ ev.visibility }}"
+                data-event-status="{{ ev.status_display }}"
+                data-event-duration="{{ ev.end_datetime|timesince:ev.start_datetime }}"
+                data-event-ongoing="{% if day.date == now.date %}Yes{% else %}No{% endif %}"
+                data-event-past="{% if day.date < now.date %}Yes{% else %}No{% endif %}">
+                {{ ev.title }}
+              </a>
               {% endfor %}
+
               {% if day.events|length > 3 %}
-              <span class="cal-chip-overflow">+{{ day.events|length|add:"-3" }} more</span>
+              <span class="cal-chip-overflow"
+                    onclick="event.stopPropagation(); openDayEvents('{{ day.date|date:'Y-m-d' }}', '{{ day.date|date:'d M Y' }}', this)">
+                +{{ day.events|length|add:"-3" }} more
+              </span>
               {% endif %}
             </div>
             {% endif %}
+
           </td>
           {% endfor %}
         </tr>
@@ -148,6 +156,7 @@
   </div>
 </div>
 
+<!-- Include the Event Details Modal -->
 {% include "pages/_event_details_modal.html" %}
 
 <!-- Add Event Modal -->
@@ -183,6 +192,7 @@
               <option value="private">Private</option>
             </select>
           </div>
+          <!-- Recurrence -->
           <div class="mb-3">
             <label for="eventRecurrence" class="form-label">Recurrence</label>
             <select class="form-select" id="eventRecurrence" name="recurrence">
@@ -193,19 +203,34 @@
               <option value="yearly">Yearly</option>
             </select>
           </div>
+          <!-- All Day -->
           <div class="form-check mb-3">
-            <input class="form-check-input" type="checkbox" id="eventAllDay" name="is_all_day">
-            <label class="form-check-label" for="eventAllDay">All Day Event</label>
+            <input class="form-check-input"
+                  type="checkbox"
+                  id="eventAllDay"
+                  name="is_all_day">
+            <label class="form-check-label" for="eventAllDay">
+              All Day Event
+            </label>
           </div>
+
+          <!-- Date/Time -->
           <div id="timeFields">
             <div class="row">
               <div class="col-md-6 mb-3">
                 <label for="eventStart" class="form-label">Start</label>
-                <input type="datetime-local" class="form-control" id="eventStart" name="start_datetime">
+                <input type="datetime-local"
+                      class="form-control"
+                      id="eventStart"
+                      name="start_datetime">
               </div>
               <div class="col-md-6 mb-3">
                 <label for="eventEnd" class="form-label">End</label>
-                <input type="datetime-local" class="form-control" id="eventEnd" name="end_datetime" required>
+                <input type="datetime-local"
+                      class="form-control"
+                      id="eventEnd"
+                      name="end_datetime"
+                      required>
               </div>
             </div>
           </div>
@@ -227,10 +252,25 @@
   </div>
 </div>
 
-<a href="#" class="cal-fab" data-bs-toggle="modal" data-bs-target="#addEventModal" aria-label="Add event">+</a>
-
+<!-- Mobile FAB -->
+ <!--onclick="openAddEvent(new Date().toISOString().slice(0,10))" used to be: data-bs-toggle="modal" data-bs-target="#addEventModal" -->
+<a href="#" class="cal-fab" onclick="openAddEvent(new Date().toISOString().slice(0,10))" aria-label="Add event">+</a>
 {% include "partials/modals/ai_modal.html" %}
 {% include "partials/modals/study_planner_modal.html" %}
+
+<!-- Day Events Modal -->
+<div class="modal fade" id="dayEventsModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="dayEventsModalTitle">Events</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body" id="dayEventsModalBody">
+      </div>
+    </div>
+  </div>
+</div>
 {% endblock %}
 
 {% block extra_js %}
@@ -244,7 +284,16 @@ function openAddEvent(dateStr) {
 
 (function () {
   const params = new URLSearchParams(window.location.search);
-  const openId = params.get('open_event');
+  const openId = params.get("open_event");
+  if (openId) {
+    const chip = document.querySelector(`[data-event-id="${openId}"]`);
+    if (chip) {
+      chip.scrollIntoView({ behavior: "smooth", block: "center" });
+      chip.classList.add("event-highlight");
+      setTimeout(() => chip.classList.remove("event-highlight"), 2500);
+      chip.click();
+    }
+  }
   if (!openId) return;
   window.addEventListener('load', function () {
     const chip = document.querySelector(`[data-event-id="${openId}"]`);
@@ -254,13 +303,56 @@ function openAddEvent(dateStr) {
 
 window.AI_ADD_URL = '{% url "ai_event_create" %}';
 window.AI_CSRF_TOKEN = '{{ csrf_token }}';
-
 window.SP_PLAN_URL = '{% url "study_planner_plan" %}';
 window.SP_CONFIRM_URL = '{% url "study_planner_confirm" %}';
-
 window.RESCHEDULE_URL = '{% url "ai_reschedule" %}';
 window.RESCHEDULE_CANCEL_URL_TPL = '/calendar/{id}/cancel/';
 window.EVENT_CREATE_URL = '{% url "event_create" %}';
+
+function openDayEvents(dateStr, dateLabel, el) {
+  const cell = el.closest('td');
+  const chips = cell.querySelectorAll('.cal-chip');
+
+  document.getElementById('dayEventsModalTitle').textContent = dateLabel;
+
+  const body = document.getElementById('dayEventsModalBody');
+  body.innerHTML = '';
+
+  chips.forEach(chip => {
+    const item = document.createElement('div');
+    item.className = 'day-modal-event-item';
+
+    const title = chip.dataset.eventTitle || chip.textContent.trim();
+    const start = chip.dataset.eventStart || '';
+    const end = chip.dataset.eventEnd || '';
+    const eventClass = [...chip.classList]
+      .find(c => c.startsWith('cal-chip--') && c !== 'cal-chip--conflict') || '';
+
+    item.innerHTML = `
+      <div class="day-modal-event ${eventClass}">
+        <div class="day-modal-event-title">${title}</div>
+        <div class="day-modal-event-time">${start} → ${end}</div>
+      </div>
+    `;
+
+    item.addEventListener('click', () => {
+      bootstrap.Modal.getInstance(document.getElementById('dayEventsModal'))?.hide();
+      setTimeout(() => chip.click(), 300);
+    });
+
+    body.appendChild(item);
+  });
+
+  new bootstrap.Modal(document.getElementById('dayEventsModal')).show();
+}
+
+// Highlight currently ongoing events
+document.querySelectorAll('.cal-chip').forEach(chip => {
+  const status = chip.getAttribute('data-event-status');
+  if (status === 'Ongoing') {
+    chip.classList.add('cal-chip--ongoing');
+  }
+});
 
 </script>
 <script src="{% static 'js/reschedule.js' %}"></script>

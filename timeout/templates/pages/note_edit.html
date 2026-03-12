@@ -55,16 +55,25 @@
           {{ form.content }}
           <div class="nt-word-count" id="wordCount">0 words</div>
         </div>
-        <div class="row g-3 mb-4">
-          <div class="col-md-6">
+        <div class="row g-3 mb-3">
+          <div class="col-md-4">
             <label for="id_category" class="form-label">Category</label>
             {{ form.category }}
           </div>
-          <div class="col-md-6">
+          <div class="col-md-4">
             <label for="id_event" class="form-label">Link to Event</label>
             {{ form.event }}
           </div>
+          <div class="col-md-4">
+            <label for="id_due_date" class="form-label">Due Date</label>
+            {{ form.due_date }}
+          </div>
         </div>
+        {% if note.time_spent_display %}
+        <div class="nt-time-spent-badge mb-4">
+          &#9201; {{ note.time_spent_display }} studied via Pomodoro
+        </div>
+        {% endif %}
         <div class="d-flex gap-2">
           <button type="submit" class="btn submit-btn">Save Changes</button>
           <a href="{% url 'notes' %}" class="btn btn-light">Cancel</a>

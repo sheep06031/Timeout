@@ -9,7 +9,7 @@ class Command(BaseCommand):
     help = "Check upcoming deadlines and create notifications"
 
     def handle(self, *args, **kwargs):
-        for user in User.objects.all():
-            NotificationService.create_deadline_notifications(user)
-
-        self.stdout.write(self.style.SUCCESS("Notifications checked."))
+    for user in User.objects.all():
+        NotificationService.create_deadline_notifications(user)
+        NotificationService.create_event_notifications(user)  # ADD THIS
+    self.stdout.write(self.style.SUCCESS("Notifications checked."))

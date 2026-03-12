@@ -5,7 +5,7 @@
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'css/notes.css' %}">
-<link rel="stylesheet" href="{% static 'css/information.css' %}">  
+<link rel="stylesheet" href="{% static 'css/information.css' %}">
 {% endblock %}
 
 {% block content %}
@@ -38,21 +38,107 @@
         <span class="nt-stat-label">pomodoros today</span>
       </div>
     </div>
-  
+
     <div class="nt-stat-actions">
       <button class="nt-focus-toggle" id="focusModeBtn" title="Enter Focus Mode">
         &#127919; Focus Mode
       </button>
     </div>
     <!-- Floating page info button -->
-          <div class="page-info-button">
-            <div class="page-info-tooltip" >
-              Use the pomodoro timer to stay focused.<br>
-              Add new notes using the 'New Note' button.<br>
-              Pin important notes to keep them at the top for quick access. <br>
-              Keep a streak of daily note-taking to level up and earn XP.
-            </div>
+    <div class="page-info-button">
+      <div class="page-info-tooltip">
+        Use the pomodoro timer to stay focused.<br>
+        Add new notes using the 'New Note' button.<br>
+        Pin important notes to keep them at the top for quick access.<br>
+        Keep a streak of daily note-taking to level up and earn XP.
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ Daily Goals Widget ══ -->
+  <div class="nt-goals-bar" id="goalsBar">
+    <div class="nt-goals-header">
+      <div class="nt-goals-title-row">
+        <span class="nt-goals-icon">&#127919;</span>
+        <h3 class="nt-goals-title">Daily Goals</h3>
+        {% if daily_progress.all_complete %}
+          <span class="nt-goals-complete-badge">All Goals Met! +50 XP</span>
+        {% endif %}
+      </div>
+      <button class="nt-goals-toggle" id="goalsToggle" title="Collapse">&#9650;</button>
+    </div>
+    <div class="nt-goals-body" id="goalsBody">
+      <div class="nt-goals-grid">
+        <!-- Pomodoros Goal -->
+        <div class="nt-goal-item">
+          <div class="nt-goal-ring-wrap">
+            <svg class="nt-goal-ring" viewBox="0 0 40 40">
+              <circle class="nt-goal-ring-bg" cx="20" cy="20" r="16" />
+              <circle class="nt-goal-ring-fill nt-goal-ring--pomo" id="goalRingPomo" cx="20" cy="20" r="16"
+                      stroke-dasharray="100.531" stroke-dashoffset="100.531" />
+            </svg>
+            <span class="nt-goal-ring-icon">&#127813;</span>
           </div>
+          <div class="nt-goal-info">
+            <span class="nt-goal-progress" id="goalPomoText">{{ daily_progress.pomodoros }} / {{ daily_progress.pomo_goal }}</span>
+            <span class="nt-goal-label">Pomodoros</span>
+          </div>
+        </div>
+
+        <!-- Notes Goal -->
+        <div class="nt-goal-item">
+          <div class="nt-goal-ring-wrap">
+            <svg class="nt-goal-ring" viewBox="0 0 40 40">
+              <circle class="nt-goal-ring-bg" cx="20" cy="20" r="16" />
+              <circle class="nt-goal-ring-fill nt-goal-ring--notes" id="goalRingNotes" cx="20" cy="20" r="16"
+                      stroke-dasharray="100.531" stroke-dashoffset="100.531" />
+            </svg>
+            <span class="nt-goal-ring-icon">&#128221;</span>
+          </div>
+          <div class="nt-goal-info">
+            <span class="nt-goal-progress" id="goalNotesText">{{ daily_progress.notes_created }} / {{ daily_progress.notes_goal }}</span>
+            <span class="nt-goal-label">Notes Created</span>
+          </div>
+        </div>
+
+        <!-- Focus Goal -->
+        <div class="nt-goal-item">
+          <div class="nt-goal-ring-wrap">
+            <svg class="nt-goal-ring" viewBox="0 0 40 40">
+              <circle class="nt-goal-ring-bg" cx="20" cy="20" r="16" />
+              <circle class="nt-goal-ring-fill nt-goal-ring--focus" id="goalRingFocus" cx="20" cy="20" r="16"
+                      stroke-dasharray="100.531" stroke-dashoffset="100.531" />
+            </svg>
+            <span class="nt-goal-ring-icon">&#9201;</span>
+          </div>
+          <div class="nt-goal-info">
+            <span class="nt-goal-progress" id="goalFocusText">{{ daily_progress.focus_minutes }} / {{ daily_progress.focus_goal }}m</span>
+            <span class="nt-goal-label">Focus Time</span>
+          </div>
+        </div>
+      </div>
+      <button class="nt-goals-edit-btn" id="goalsEditBtn" title="Edit goals">&#9881; Edit Goals</button>
+    </div>
+  </div>
+
+  <!-- ══ Study Heatmap ══ -->
+  <div class="nt-heatmap-card" id="heatmapCard">
+    <div class="nt-heatmap-header">
+      <h3 class="nt-heatmap-title">&#128200; Study Activity</h3>
+      <span class="nt-heatmap-subtitle">Last 12 weeks</span>
+    </div>
+    <div class="nt-heatmap-grid" id="heatmapGrid">
+      <!-- Filled by JS -->
+    </div>
+    <div class="nt-heatmap-legend">
+      <span class="nt-heatmap-legend-label">Less</span>
+      <span class="nt-heatmap-cell" data-level="0"></span>
+      <span class="nt-heatmap-cell" data-level="1"></span>
+      <span class="nt-heatmap-cell" data-level="2"></span>
+      <span class="nt-heatmap-cell" data-level="3"></span>
+      <span class="nt-heatmap-cell" data-level="4"></span>
+      <span class="nt-heatmap-legend-label">More</span>
+    </div>
   </div>
 
   <div class="nt-main-layout">
@@ -93,6 +179,9 @@
               </option>
             {% endfor %}
           </select>
+          <a href="{% url 'notes' %}?filter=due_soon" class="nt-due-filter {% if active_filter == 'due_soon' %}nt-due-filter--active{% endif %}">
+            &#9203; Due Soon
+          </a>
           {% if search_query %}
             <button type="submit" class="nt-search-btn">Search</button>
           {% endif %}
@@ -102,7 +191,7 @@
         <div class="nt-list">
           {% if notes %}
             {% for note in notes %}
-              <div class="nt-item nt-item--{{ note.category }}" id="note-{{ note.id }}">
+              <div class="nt-item nt-item--{{ note.category }}" id="note-{{ note.id }}" data-note-id="{{ note.id }}">
 
                 <div class="nt-item__body">
                   <div class="nt-item__header">
@@ -113,12 +202,29 @@
                     <span class="nt-cat-tag nt-cat-tag--{{ note.category }}">
                       {{ note.get_category_display }}
                     </span>
+                    {% if note.urgency %}
+                      <span class="nt-urgency nt-urgency--{{ note.urgency }}" title="{{ note.urgency|title }}">
+                        {% if note.urgency == 'overdue' %}&#128680; Overdue
+                        {% elif note.urgency == 'urgent' %}&#9888;&#65039; Due Today
+                        {% elif note.urgency == 'soon' %}&#128337; Due Soon
+                        {% else %}&#128197; Upcoming
+                        {% endif %}
+                      </span>
+                    {% endif %}
                   </div>
 
                   <p class="nt-item__preview">{{ note.content|truncatewords:20 }}</p>
 
                   <div class="nt-item__meta">
                     <span class="nt-meta">{{ note.updated_at|timesince }} ago</span>
+                    {% if note.due_date %}
+                      <span class="nt-meta nt-meta--due {% if note.urgency == 'overdue' %}nt-meta--overdue{% endif %}">
+                        &#128197; Due {{ note.due_date|date:"M j, g:i A" }}
+                      </span>
+                    {% endif %}
+                    {% if note.time_spent_display %}
+                      <span class="nt-meta nt-meta--time">&#9201; {{ note.time_spent_display }} studied</span>
+                    {% endif %}
                     {% if note.event %}
                       <span class="nt-meta nt-meta--event">&#128197; {{ note.event.title }}</span>
                     {% endif %}
@@ -168,6 +274,14 @@
       <div class="nt-pomo-header">
         <span class="nt-pomo-tomato">&#127813;</span>
         <h3 class="nt-pomo-title">Pomodoro</h3>
+      </div>
+
+      <!-- Note Linking Dropdown -->
+      <div class="nt-pomo-link">
+        <label for="pomoNoteSelect" class="nt-pomo-link-label">Focus on:</label>
+        <select id="pomoNoteSelect" class="nt-pomo-link-select">
+          <option value="">No specific note</option>
+        </select>
       </div>
 
       <!-- Timer Ring -->
@@ -228,6 +342,36 @@
   <span class="nt-xp-toast-text" id="xpToastText">+25 XP</span>
 </div>
 
+<!-- ══ Edit Goals Modal ══ -->
+<div class="modal fade" id="editGoalsModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-sm">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Edit Daily Goals</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-3">
+          <label class="form-label">Pomodoros per day</label>
+          <input type="number" class="form-control" id="goalInputPomo" min="1" max="20" value="{{ daily_progress.pomo_goal }}">
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Notes to create per day</label>
+          <input type="number" class="form-control" id="goalInputNotes" min="1" max="20" value="{{ daily_progress.notes_goal }}">
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Focus time goal (minutes)</label>
+          <input type="number" class="form-control" id="goalInputFocus" min="10" max="480" step="10" value="{{ daily_progress.focus_goal }}">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn submit-btn" id="goalsSaveBtn">Save Goals</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- New Note Modal -->
 <div class="modal fade" id="newNoteModal" tabindex="-1" aria-labelledby="newNoteLabel" aria-hidden="true">
   <div class="modal-dialog">
@@ -261,6 +405,12 @@
               {{ form.event }}
             </div>
           </div>
+          <div class="row g-3 mt-1">
+            <div class="col-12">
+              <label for="noteDueDate" class="form-label">Due Date (optional)</label>
+              <input type="datetime-local" class="form-control" id="noteDueDate" name="due_date">
+            </div>
+          </div>
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
@@ -281,21 +431,14 @@
     csrfToken: '{{ csrf_token }}',
     pomodoroCompleteUrl: '{% url "pomodoro_complete" %}',
     statsUrl: '{% url "notes_stats" %}',
+    heatmapUrl: '{% url "heatmap_data" %}',
+    goalsUpdateUrl: '{% url "update_daily_goals" %}',
+    goalsProgressUrl: '{% url "daily_progress" %}',
     pomoWork: {{ request.user.pomo_work_minutes }},
     pomoShort: {{ request.user.pomo_short_break }},
     pomoLong: {{ request.user.pomo_long_break }},
     sounds: {{ request.user.notification_sounds|yesno:"true,false" }},
-  };
-</script>
-<script>
-  window.NOTES_CONFIG = {
-    csrfToken: '{{ csrf_token }}',
-    pomodoroCompleteUrl: '{% url "pomodoro_complete" %}',
-    statsUrl: '{% url "notes_stats" %}',
-    pomoWork: {{ request.user.pomo_work_minutes }},
-    pomoShort: {{ request.user.pomo_short_break }},
-    pomoLong: {{ request.user.pomo_long_break }},
-    sounds: {{ request.user.notification_sounds|yesno:"true,false" }},
+    userNotes: {{ user_notes_json|safe }},
   };
 </script>
 <script src="{% static 'js/notes.js' %}"></script>

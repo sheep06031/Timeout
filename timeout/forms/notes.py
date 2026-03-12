@@ -8,7 +8,7 @@ class NoteForm(forms.ModelForm):
 
     class Meta:
         model = Note
-        fields = ['title', 'content', 'category', 'event']
+        fields = ['title', 'content', 'category', 'event', 'due_date']
         widgets = {
             'title': forms.TextInput(attrs={
                 'class': 'form-control',
@@ -27,6 +27,10 @@ class NoteForm(forms.ModelForm):
             'event': forms.Select(attrs={
                 'class': 'form-select',
             }),
+            'due_date': forms.DateTimeInput(attrs={
+                'class': 'form-control',
+                'type': 'datetime-local',
+            }),
         }
 
     def __init__(self, *args, user=None, **kwargs):
@@ -35,3 +39,4 @@ class NoteForm(forms.ModelForm):
             self.fields['event'].queryset = user.created_events.all()
         self.fields['event'].empty_label = 'No event'
         self.fields['event'].required = False
+        self.fields['due_date'].required = False

@@ -18,29 +18,51 @@ _TYPE_META = [
 
 @login_required
 def deadline_list_view(request):
-    """Renders the list view showing all active events grouped by type."""
-    events_by_type = DeadlineService.get_all_active_events(request.user)
+    """Renders the deadline list view showing deadlines with filter and sort options."""
+    # Read filter/sort from query params with sensible defaults
+    status_filter = request.GET.get('status', 'active')   # active | completed | all
+    sort_order = request.GET.get('sort', 'asc')            # asc | desc
+    event_type = request.GET.get('type', '')               # '' (all) | deadline | exam | ...
 
-    # Build ordered sections (skip empty types)
-    sections = [
-        {'type_key': key, 'label': label, 'items': events_by_type[key]}
-        for key, label in _TYPE_META
-        if key in events_by_type
-    ]
+    # Validate inputs to prevent bad values
+    if status_filter not in ('active', 'completed', 'all'):
+        status_filter = 'active'
+    if sort_order not in ('asc', 'desc'):
+        sort_order = 'asc'
 
-    all_items = [item for items in events_by_type.values() for item in items]
+    valid_types = ('deadline', 'exam', 'class', 'meeting', 'study_session', 'other')
+    if event_type and event_type not in valid_types:
+        event_type = ''
+
+    deadlines = DeadlineService.get_filtered_deadlines(
+        request.user,
+        status_filter=status_filter,
+        sort_order=sort_order,
+        event_type=event_type or None,
+    )
 
     NotificationService.create_deadline_notifications(request.user)
 
     context = {
-        
-
+        'deadlines': deadlines,
+        'total_count': len(deadlines),
+        'overdue_count': sum(1 for d in deadlines if d['urgency_status'] == 'overdue'),
+        'urgent_count': sum(1 for d in deadlines if d['urgency_status'] == 'urgent'),
+        'completed_count': sum(1 for d in deadlines if d['urgency_status'] == 'completed'),
+        # Pass current filter/sort back so the template can highlight active controls
+        'status_filter': status_filter,
+        'sort_order': sort_order,
+        'event_type': event_type,
+        'event_types': [
+            ('', 'All Types'),
+            ('deadline', 'Deadlines'),
+            ('exam', 'Exams'),
+            ('class', 'Classes'),
+            ('meeting', 'Meetings'),
+            ('study_session', 'Study Sessions'),
+            ('other', 'Other'),
+        ],
         'unread_notifications': request.user.notifications.filter(is_read=False),
-        'sections': sections,
-        'total_count': len(all_items),
-        'overdue_count': sum(1 for i in all_items if i['urgency_status'] == 'overdue'),
-        'urgent_count': sum(1 for i in all_items if i['urgency_status'] == 'urgent'),
-        'missed_count': sum(1 for i in all_items if i['urgency_status'] == 'missed'),
     }
     return render(request, 'pages/deadlines.html', context)
 

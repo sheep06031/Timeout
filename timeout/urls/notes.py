@@ -11,4 +11,7 @@ urlpatterns = [
     path('<int:note_id>/share/', notes.note_share, name='note_share'),
     path('pomodoro/complete/', notes.pomodoro_complete, name='pomodoro_complete'),
     path('stats/', notes.notes_stats, name='notes_stats'),
+    path('heatmap/', notes.heatmap_data, name='heatmap_data'),
+    path('goals/update/', notes.update_daily_goals, name='update_daily_goals'),
+    path('goals/progress/', notes.daily_progress, name='daily_progress'),
 ]
