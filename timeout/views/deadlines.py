@@ -61,8 +61,8 @@ def deadline_list_view(request):
             ('meeting', 'Meetings'),
             ('study_session', 'Study Sessions'),
             ('other', 'Other'),
-            'unread_notifications': request.user.notifications.filter(is_read=False),
         ],
+        'unread_notifications': request.user.notifications.filter(is_read=False),
     }
     return render(request, 'pages/deadlines.html', context)
 
