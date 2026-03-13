@@ -6,13 +6,17 @@ from django.utils import timezone
 class Notification(models.Model):
 
     class Type(models.TextChoices):
-        DEADLINE = "deadline", "Deadline"
-        EVENT = "event", "Event"
-        MESSAGE = "message", "Message"
-        LIKE = "like", "Like"
-        COMMENT = "comment", "Comment"
-        BOOKMARK = "bookmark", "Bookmark"
-        FOLLOW = "follow", "Follow"
+        DEADLINE =      "deadline",      "Deadline"
+        EVENT =         "event",         "Event"
+        MESSAGE =       "message",       "Message"
+        LIKE =          "like",          "Like"
+        COMMENT =       "comment",       "Comment"
+        BOOKMARK =      "bookmark",      "Bookmark"
+        FOLLOW =        "follow",        "Follow"
+        EXAM =          "exam",          "Exam"
+        CLASS =         "class",         "Class"
+        MEETING =       "meeting",       "Meeting"
+        STUDY_SESSION = "study_session", "Study Session"
 
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,

@@ -78,6 +78,7 @@
 .notification-item[data-type="deadline"] {
     border-left-color: #5b5ddf;
 }
+
 .notification-unread[data-type="deadline"] {
     background: rgba(91, 93, 223, 0.08);
 }
@@ -92,34 +93,37 @@
 
 /* Class amber */
 .notification-item[data-type="class"] {
-    border-left-color: #f4a100;
+    border-left-color: #43a047;
 }
 .notification-unread[data-type="class"] {
-    background: rgba(244, 161, 0, 0.08);
+    background: rgba(67, 160, 71, 0.08);
 }
 
 /* Meeting purple */
 .notification-item[data-type="meeting"] {
     border-left-color: #8e24aa;
 }
+
 .notification-unread[data-type="meeting"] {
     background: rgba(142, 36, 170, 0.08);
 }
 
 /* Study session green */
 .notification-item[data-type="study_session"] {
-    border-left-color: #43a047;
+    border-left-color: #00acc1;
 }
+
 .notification-unread[data-type="study_session"] {
-    background: rgba(67, 160, 71, 0.08);
+    background: rgba(0, 172, 193, 0.08);
 }
 
 /* Event / other blue */
 .notification-item[data-type="event"] {
-    border-left-color: #1e88e5;
+    border-left-color: #78909c;
 }
+
 .notification-unread[data-type="event"] {
-    background: rgba(30, 136, 229, 0.08);
+    background: rgba(120, 144, 156, 0.08);
 }
 
 /* ───────── Content ───────── */

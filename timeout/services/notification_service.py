@@ -114,7 +114,12 @@ class NotificationService:
     @staticmethod
     def _get_notification_type(event_type):
         """Map event type to notification type."""
-        if event_type == Event.EventType.DEADLINE:
-            return Notification.Type.DEADLINE
-        else:
-            return Notification.Type.EVENT
+        mapping = {
+            Event.EventType.DEADLINE:      Notification.Type.DEADLINE,
+            Event.EventType.EXAM:          Notification.Type.EXAM,
+            Event.EventType.CLASS:         Notification.Type.CLASS,
+            Event.EventType.MEETING:       Notification.Type.MEETING,
+            Event.EventType.STUDY_SESSION: Notification.Type.STUDY_SESSION,
+            Event.EventType.OTHER:         Notification.Type.EVENT,
+        }
+        return mapping.get(event_type, Notification.Type.EVENT)
