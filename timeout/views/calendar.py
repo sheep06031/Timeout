@@ -93,15 +93,32 @@ def calendar_view(request):
             calendar_events.append(event)
 
     # Index events by date, including recurrence expansion
+    now_dt = timezone.now()
     events_by_date = {}
+
     for ev in events_qs:
-        # Always add original event
-        events_by_date.setdefault(ev.start_datetime.date(), []).append(ev)
+        # Build consistent dict for real event
+        event_data = {
+            'id': ev.id,
+            'title': ev.title,
+            'start_datetime': ev.start_datetime,
+            'end_datetime': ev.end_datetime,
+            'event_type': ev.event_type,
+            'event_type_display': ev.get_event_type_display(),
+            'recurrence_display': ev.get_recurrence_display(),
+            'location': ev.location,
+            'description': ev.description,
+            'is_all_day': ev.is_all_day,
+            'visibility': ev.visibility,
+            'allow_conflict': ev.allow_conflict,
+            'color': getattr(ev, 'color', ''),
+            'status_display': get_event_status(ev.start_datetime, ev.end_datetime, now_dt),
+        }
+        events_by_date.setdefault(ev.start_datetime.date(), []).append(event_data)  # ← event_data not ev
 
         if ev.recurrence == 'none':
-            continue  # skip non-recurring
+            continue
 
-        # Expand recurring events into visible range
         current_date = ev.start_datetime.date()
         while True:
             if ev.recurrence == 'daily':
@@ -109,7 +126,6 @@ def calendar_view(request):
             elif ev.recurrence == 'weekly':
                 current_date += timedelta(weeks=1)
             elif ev.recurrence == 'monthly':
-                # Advance one month
                 month_num = current_date.month + 1
                 year_num = current_date.year
                 if month_num > 12:
@@ -123,21 +139,25 @@ def calendar_view(request):
             if current_date > last_visible:
                 break
 
-            # Create a pseudo-event instance for display
+            start_dt = timezone.make_aware(datetime.combine(current_date, ev.start_datetime.time()))
+            end_dt   = timezone.make_aware(datetime.combine(current_date, ev.end_datetime.time()))
+
             pseudo_event = {
-                'original': ev,
-                'recurrence_instance': True,
-                'id': ev.id,  # pass the real ID
+                'id': ev.id,
                 'title': ev.title,
-                'start_datetime': datetime.combine(current_date, ev.start_datetime.time()),
-                'end_datetime': datetime.combine(current_date, ev.end_datetime.time()),
+                'start_datetime': start_dt,
+                'end_datetime': end_dt,
                 'event_type': ev.event_type,
+                'event_type_display': ev.get_event_type_display(),
+                'recurrence_display': ev.get_recurrence_display(),
                 'location': ev.location,
                 'description': ev.description,
                 'is_all_day': ev.is_all_day,
-                'instance_date': current_date,  # the date this occurrence is shown
+                'visibility': ev.visibility,
+                'allow_conflict': ev.allow_conflict,
+                'color': getattr(ev, 'color', ''),
+                'status_display': get_event_status(start_dt, end_dt, now_dt),
             }
-
             events_by_date.setdefault(current_date, []).append(pseudo_event)
 
     # Build weeks structure for template
@@ -159,13 +179,11 @@ def calendar_view(request):
         "July", "August", "September", "October", "November", "December",
     ]
 
-<<<<<<< HEAD
     upcoming_deadlines = Event.objects.filter(
         creator=request.user,
         event_type__in=[Event.EventType.DEADLINE, Event.EventType.EXAM],
         start_datetime__gte=timezone.now(),
     ).order_by('start_datetime')[:20]
-=======
     # Missed study sessions: past events still in UPCOMING status
     now = timezone.now()
     missed_sessions = Event.objects.filter(
@@ -186,7 +204,6 @@ def calendar_view(request):
 
     # Recently cancelled study sessions (stored in session after event_cancel view)
     reschedule_prompts += request.session.pop('reschedule_prompts', [])
->>>>>>> main
 
     context = {
         "weeks": weeks,
@@ -198,13 +215,39 @@ def calendar_view(request):
         "next_year": next_year,
         "next_month": next_month,
         "weekdays": ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
-<<<<<<< HEAD
+
         "upcoming_deadlines": upcoming_deadlines,
-=======
         "reschedule_prompts": reschedule_prompts,
->>>>>>> main
     }
     return render(request, "pages/calendar.html", context)
+
+def get_event_status(start_dt, end_dt, now):
+    if start_dt < now and end_dt > now:
+        return 'Ongoing'
+    elif end_dt < now:
+        return 'Past'
+    else:
+        return 'Upcoming'
+
+@login_required
+@require_POST
+def subscribe_event(request, pk):
+    from django.shortcuts import get_object_or_404
+    original = get_object_or_404(Event, pk=pk, visibility=Event.Visibility.PUBLIC)
+    if original.creator == request.user:
+        return JsonResponse({'success': False, 'error': 'You own this event.'}, status=400)
+    already = Event.objects.filter(creator=request.user, title=original.title, start_datetime=original.start_datetime,
+    ).exists()
+    if already:
+        return JsonResponse({'success': False, 'error': 'Already subscribed.'}, status=400)
+    Event.objects.create( creator=request.user,title=original.title,
+        event_type=original.event_type, start_datetime=original.start_datetime,
+        end_datetime=original.end_datetime, location=original.location,
+        description=original.description, visibility=Event.Visibility.PRIVATE,
+        is_all_day=original.is_all_day, recurrence=original.recurrence,
+        allow_conflict=True,
+    )
+    return JsonResponse({'success': True})
 
 
 @login_required
