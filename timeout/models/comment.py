@@ -65,16 +65,18 @@ def create_comment_notification(sender, instance, created, **kwargs):
         if instance.post.author != instance.author:
             Notification.objects.create(
                 user=instance.post.author,
-                title=f"{instance.author.username} commented on your post",
-                message=f"{instance.author.username} commented on your post #{instance.post.id}",
-                type=Notification.Type.MESSAGE  # you can create a COMMENT type if desired
+                title=f"💬 {instance.author.username} commented on your post",
+                message=instance.content[:80],
+                type=Notification.Type.COMMENT,
+                post=instance.post,
             )
 
         # Notify parent comment author if this is a reply
         if instance.parent and instance.parent.author != instance.author:
             Notification.objects.create(
                 user=instance.parent.author,
-                title=f"{instance.author.username} replied to your comment",
-                message=f"{instance.author.username} replied to your comment on post #{instance.post.id}",
-                type=Notification.Type.MESSAGE  # you can also create a REPLY type
+                title=f"💬 {instance.author.username} replied to your comment",
+                message=instance.content[:80],
+                type=Notification.Type.COMMENT,
+                post=instance.post,
             )

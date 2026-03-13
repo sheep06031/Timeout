@@ -241,3 +241,27 @@
     align-items: center;
     gap: 0.5rem;
 }
+
+/* Like — rose */
+.notification-item[data-type="like"] {
+    border-left-color: #e91e63;
+}
+.notification-unread[data-type="like"] {
+    background: rgba(233, 30, 99, 0.08);
+}
+
+/* Comment — orange */
+.notification-item[data-type="comment"] {
+    border-left-color: #ff6f00;
+}
+.notification-unread[data-type="comment"] {
+    background: rgba(255, 111, 0, 0.08);
+}
+
+/* Bookmark — teal-green */
+.notification-item[data-type="bookmark"] {
+    border-left-color: #00897b;
+}
+.notification-unread[data-type="bookmark"] {
+    background: rgba(0, 137, 123, 0.08);
+}

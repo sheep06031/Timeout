@@ -35,7 +35,8 @@ def create_like_notification(sender, instance, created, **kwargs):
     if created and instance.post.author != instance.user:
         Notification.objects.create(
             user=instance.post.author,
-            title="New Like",
+            title="❤️ New Like",
             message=f"{instance.user.username} liked your post",
             type=Notification.Type.LIKE,
+            post=instance.post,
         )

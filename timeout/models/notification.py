@@ -41,6 +41,14 @@ class Notification(models.Model):
         related_name='notifications',
     )
 
+    post = models.ForeignKey(
+        'Post',
+        null=True,
+        blank=True,
+        on_delete=models.CASCADE,
+        related_name='notifications',
+    )
+
     deadline = models.ForeignKey(
         'Event',
         null=True,

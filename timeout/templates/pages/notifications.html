@@ -40,7 +40,8 @@
                 class="notification-item {% if not n.is_read %}notification-unread{% else %}notification-read{% endif %}"
                 data-type="{{ n.type }}"
                 data-event-id="{{ n.deadline.id }}"
-                data-convo-id="{{ n.conversation.id }}">
+                data-convo-id="{{ n.conversation.id }}"
+                data-post-id="{{ n.post.id }}">
 
             <div class="notification-main">
                 <div class="notification-title">
@@ -210,6 +211,12 @@ document.addEventListener("DOMContentLoaded", () => {
             if (convoId && convoId !== "None") {
                 window.location.href = `/messaging/conversation/${convoId}/`;
             }
+            return;
+        }
+
+        const postId = notifItem.dataset.postId;
+        if (postId && postId !== "None") {
+            window.location.href = `/social/feed/?highlight_post=${postId}`;
             return;
         }
 
