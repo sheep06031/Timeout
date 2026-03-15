@@ -67,6 +67,10 @@ document.addEventListener('DOMContentLoaded', () => {
   const badge = document.querySelector('.nav-link .badge');
 
   async function updateNotifications() {
+    if (document.body.dataset.userStatus === 'focus') {
+        fetch("{% url 'poll_notifications' %}").catch(() => {});
+        return;
+    }
     try {
       const response = await fetch("{% url 'poll_notifications' %}");
       if (!response.ok) return;
@@ -87,6 +91,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Update immediately and then every 10 seconds
   updateNotifications();
+  window.addEventListener('focusModeEnded', updateNotifications);
   setInterval(updateNotifications, 10000); 
 });
 </script>

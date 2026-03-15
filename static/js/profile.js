@@ -47,6 +47,9 @@
           if (navText) navText.textContent = data.status_display;
           setNavDot(data.status);
           document.body.dataset.userStatus = data.status;
+          if (data.status != 'focus') {
+            window.dispatchEvent(new CustomEvent('focusModeEnded'));
+          }
 
           const navTimer = document.getElementById('nav-focus-timer');
           const profileTimer = document.getElementById('profile-focus-timer');
@@ -118,6 +121,25 @@ document.getElementById('followingModal')?.addEventListener('show.bs.modal', () 
       input.oninput = function () {
         const query = this.value.toLowerCase().trim();
         document.getElementById('following-list').querySelectorAll('.user-item').forEach(item => {
+          const text = item.textContent.replace(/\s+/g, ' ').toLowerCase();
+          item.style.display = text.includes(query) ? '' : 'none';
+        });
+      };
+    });
+});
+
+document.getElementById('friendsModal')?.addEventListener('show.bs.modal', () => {
+  const input = document.querySelector('[data-modal-search="friends-list"]');
+  input.value = '';
+  input.oninput = null;
+
+  fetch(FRIENDS_URL)
+    .then(r => r.json())
+    .then(data => {
+      document.getElementById('friends-list').innerHTML = renderUserList(data.users);
+      input.oninput = function () {
+        const query = this.value.toLowerCase().trim();
+        document.getElementById('friends-list').querySelectorAll('.user-item').forEach(item => {
           const text = item.textContent.replace(/\s+/g, ' ').toLowerCase();
           item.style.display = text.includes(query) ? '' : 'none';
         });

@@ -81,4 +81,5 @@
 
   setupModal('followersModal', FOLLOWERS_URL, 'followers-list', 'followers-list');
   setupModal('followingModal', FOLLOWING_URL, 'following-list', 'following-list');
+  setupModal('friendsModal', FRIENDS_URL, 'friends-list', 'friends-list');
 })();

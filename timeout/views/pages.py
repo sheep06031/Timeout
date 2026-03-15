@@ -88,12 +88,14 @@ def dashboard(request):
 def profile(request):
     posts = FeedService.get_user_posts(request.user, request.user)
     event, event_status = get_profile_event(request.user)
+    friends_count = request.user.following.filter(followers=request.user).count()
 
     context = {
         'posts': posts,
         'status_choices': User.Status.choices,
         'event': event,
         'event_status': event_status,
+        'friends_count': friends_count,
     }
     return render(request, 'pages/profile.html', context)
 

@@ -76,8 +76,8 @@
                   <span class="badge bg-light text-dark me-2">{{ profile_user.posts.count }} Posts</span>
                   {% if can_view %}
                     <span class="badge bg-light text-dark me-2" style="cursor:pointer;" data-bs-toggle="modal" data-bs-target="#followersModal">{{ profile_user.followers.count }} Followers</span>
-                    <span class="badge bg-light text-dark" style="cursor:pointer;" data-bs-toggle="modal" data-bs-target="#followingModal">{{ profile_user.following.count }} Following</span>
-                  {% else %}
+                    <span class="badge bg-light text-dark me-2" style="cursor:pointer;" data-bs-toggle="modal" data-bs-target="#followingModal">{{ profile_user.following.count }} Following</span>
+                    <span class="badge bg-light text-dark me-2" style="cursor:pointer;" data-bs-toggle="modal" data-bs-target="#friendsModal">{{ friends_count }} Friends</span>                  {% else %}
                     <span class="badge bg-light text-dark me-2">{{ profile_user.followers.count }} Followers</span>
                     <span class="badge bg-light text-dark">{{ profile_user.following.count }} Following</span>
                   {% endif %}
@@ -127,6 +127,7 @@
               {% endif %}
             </div>
           </div>
+          {% include 'partials/modals/friends_modal.html' %}
         {% endif %}
 
         <!-- Posts -->
@@ -162,6 +163,8 @@
   <script>
     const FOLLOWERS_URL = "{% url 'user_followers_api' profile_user.username %}"
     const FOLLOWING_URL = "{% url 'user_following_api' profile_user.username %}"
+    const FRIENDS_URL   = "{% url 'user_friends_api' profile_user.username %}"
+
   </script>
   <script src="{% static 'js/social.js' %}"></script>
   <script src="{% static 'js/user_profile.js' %}"></script>

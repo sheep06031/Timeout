@@ -33,7 +33,7 @@
     Notifications
     <span id="nav-notif-badge" 
       class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
-      {% if unread_count == 0 %}style="display:none"{% endif %}>
+      {% if unread_count == 0 or user.status == 'focus' %}style="display:none"{% endif %}>
   {{ unread_count }}
 </span>
   </a>
@@ -159,7 +159,9 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   // Set initial badge state from server-rendered count
-  updateNotifBadge(currentUnread);
+  if (document.body.dataset.userStatus !== 'focus') {
+    updateNotifBadge(currentUnread);
+}
 
   function showNewNotificationTooltip() {
     if (!badge) return;
@@ -197,6 +199,11 @@ document.addEventListener("DOMContentLoaded", function () {
   let lastNotifId = parseInt("{{ latest_notif_id|default:0 }}") || 0;
 
   function pollNotifications() {
+    if (document.body.dataset.userStatus === 'focus') {
+        fetch(`/notifications/poll/?last_id=${lastNotifId}`).catch(() => {});
+        return;
+    }
+    
     fetch(`/notifications/poll/?last_id=${lastNotifId}`)
       .then(res => res.json())
       .then(data => {
@@ -216,7 +223,7 @@ document.addEventListener("DOMContentLoaded", function () {
       })
       .catch(err => console.error("Polling error:", err));
   }
-
+  window.addEventListener('focusModeEnded', pollNotifications);
   setInterval(pollNotifications, 10000);
 
 });
