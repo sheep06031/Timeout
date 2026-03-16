@@ -23,18 +23,15 @@
     <!-- Navigation Bar Placeholder -->
     {% include 'partials/_navbar.html' %}
 
-    {% comment %} maybe no need {% endcomment %}
-    {% comment %} <!-- Messages -->
-    {% include 'partials/_messages.html' %} {% endcomment %}
-
     <!-- Full Width Main (only for landing page) -->
     <main>
+
       {% block content %}
 
       {% endblock %}
     </main>
 
-    <!-- Footer  -->
+    <!-- Footer -->
     {% include 'partials/_footer.html' %}
 
     <!-- Bootstrap JS -->

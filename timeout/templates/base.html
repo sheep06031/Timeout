@@ -41,16 +41,16 @@
     <!-- Navigation Bar -->
     {% include 'partials/_navbar.html' %}
 
-    <!-- Messages -->
-    {% block flash_messages %}
-      {% include 'partials/_messages.html' %}
-    {% endblock %}
     <!-- Main Content Area -->
     {% comment %} <main class="container mt-4 flex-grow-1"> {% endcomment %}
     <main class="{% block main_class %}container mt-4 flex-grow-1{% endblock %}">
-      {% block content %}
+    <!-- Messages -->    
+    {% block flash_messages %}
+        {% include 'partials/_messages.html' %}
+    {% endblock %}
 
-      {% endblock %}
+    {% block content %}
+    {% endblock %}
     </main>
 
     <!-- Bootstrap 5 JS -->
@@ -97,7 +97,7 @@ document.addEventListener('DOMContentLoaded', () => {
   setInterval(updateNotifications, 10000); 
 });
 </script>
-  </body>
   <!-- Footer -->
   {% include 'partials/_footer.html' %}
+  </body>
 </html>

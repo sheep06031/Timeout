@@ -11,9 +11,12 @@
 {% block main_class %}
   flex-grow-1 p-0 m-0
 {% endblock %}
+{% block flash_messages %}{% endblock %}
 {% block content %}
+
   <div class="dashboard-bg">
     <div class="dashboard-wrapper">
+      {% include 'partials/_messages.html' %}
       <!-- lines 13-29 for ai weekly brief -->
       <!-- ═══ AI Weekly Insight (hero card) ═══ -->
       {% if ai_briefing %}
