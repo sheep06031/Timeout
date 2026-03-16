@@ -10,7 +10,7 @@ from .social import (
     CommentForm,
 )
 from .notes import NoteForm
-from .profileEditForm import ProfileEditForm
+from .profileEditForm import ProfileEditForm, ChangeUsernameForm
 from .settings import AppearanceForm
 
 
@@ -24,5 +24,6 @@ __all__ = [
     'CommentForm',
     'NoteForm',
     'ProfileEditForm',
+    'ChangeUsernameForm',
     'AppearanceForm',
 ]

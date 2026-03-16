@@ -1,78 +1,213 @@
 {% extends "base.html" %}
 {% load static %}
 
-{% block title %}Edit Note — Timeout{% endblock %}
+{% block title %}{{ note.title }} — Timeout{% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'css/notes.css' %}">
+<link href="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.snow.css" rel="stylesheet">
+<style>
+  /* ── Editor layout ── */
+  .note-editor-page {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 24px 16px;
+  }
+  .note-editor-topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+  }
+  .note-editor-topbar .btn { flex-shrink: 0; }
+  .note-editor-title {
+    flex: 1;
+    font-size: 1.5rem;
+    font-weight: 700;
+    border: none;
+    background: transparent;
+    color: var(--text-primary, #1a202c);
+    outline: none;
+    padding: 4px 8px;
+    border-radius: 6px;
+    min-width: 200px;
+  }
+  .note-editor-title:focus {
+    background: var(--bg-secondary, #f0f2f5);
+  }
+  .note-editor-meta {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+    font-size: 0.85rem;
+    color: var(--text-secondary, #718096);
+  }
+  .note-editor-meta .badge { font-weight: 500; }
+  .autosave-indicator {
+    font-size: 0.8rem;
+    color: var(--text-secondary, #718096);
+    transition: opacity 0.3s;
+  }
+  .autosave-indicator.saving { color: #f59e0b; }
+  .autosave-indicator.saved { color: #22c55e; }
+
+  /* ── Spacing control ── */
+  .spacing-control {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.8rem;
+    color: var(--text-secondary, #718096);
+  }
+  .spacing-control select {
+    padding: 2px 6px;
+    border-radius: 4px;
+    border: 1px solid var(--border-color, #e2e8f0);
+    background: var(--bg-primary, #fff);
+    color: var(--text-primary, #1a202c);
+    font-size: 0.8rem;
+  }
+
+  /* ── Quill editor ── */
+  .ql-editor {
+    min-height: 500px;
+    font-size: 1rem;
+    line-height: 1.7;
+    padding: 24px 28px;
+  }
+  .ql-toolbar.ql-snow {
+    border-radius: 8px 8px 0 0;
+    border-color: var(--border-color, #e2e8f0);
+    background: var(--bg-secondary, #f8f9fa);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+  .ql-container.ql-snow {
+    border-radius: 0 0 8px 8px;
+    border-color: var(--border-color, #e2e8f0);
+    background: var(--bg-primary, #fff);
+  }
+  .ql-editor.ql-blank::before {
+    color: var(--text-secondary, #a0aec0);
+    font-style: normal;
+  }
+
+  /* ── Dark mode ── */
+  [data-theme="dark"] .note-editor-title {
+    color: var(--text-primary, #e2e8f0);
+  }
+  [data-theme="dark"] .note-editor-title:focus {
+    background: var(--bg-secondary, #2a2a3e);
+  }
+  [data-theme="dark"] .spacing-control select {
+    background: var(--bg-secondary, #2a2a3e);
+    border-color: var(--border-color, #3a3a4e);
+    color: var(--text-primary, #e2e8f0);
+  }
+  [data-theme="dark"] .ql-toolbar.ql-snow {
+    background: var(--bg-secondary, #2a2a3e);
+    border-color: var(--border-color, #3a3a4e);
+  }
+  [data-theme="dark"] .ql-container.ql-snow {
+    background: var(--bg-primary, #1e1e2e);
+    border-color: var(--border-color, #3a3a4e);
+  }
+  [data-theme="dark"] .ql-editor {
+    color: var(--text-primary, #e2e8f0);
+  }
+  [data-theme="dark"] .ql-editor.ql-blank::before {
+    color: var(--text-secondary, #6b7a90);
+  }
+  [data-theme="dark"] .ql-toolbar .ql-stroke {
+    stroke: var(--text-secondary, #a0aec0);
+  }
+  [data-theme="dark"] .ql-toolbar .ql-fill {
+    fill: var(--text-secondary, #a0aec0);
+  }
+  [data-theme="dark"] .ql-toolbar .ql-picker-label {
+    color: var(--text-secondary, #a0aec0);
+  }
+  [data-theme="dark"] .ql-toolbar .ql-picker-options {
+    background: var(--bg-secondary, #2a2a3e);
+    border-color: var(--border-color, #3a3a4e);
+  }
+  [data-theme="dark"] .ql-snow .ql-picker-options .ql-picker-item {
+    color: var(--text-primary, #e2e8f0);
+  }
+  [data-theme="dark"] .ql-toolbar button:hover .ql-stroke,
+  [data-theme="dark"] .ql-toolbar button.ql-active .ql-stroke {
+    stroke: var(--accent, #7b8cff);
+  }
+  [data-theme="dark"] .ql-toolbar button:hover .ql-fill,
+  [data-theme="dark"] .ql-toolbar button.ql-active .ql-fill {
+    fill: var(--accent, #7b8cff);
+  }
+  [data-theme="dark"] .ql-snow.ql-toolbar button:hover,
+  [data-theme="dark"] .ql-snow.ql-toolbar button.ql-active {
+    color: var(--accent, #7b8cff);
+  }
+</style>
 {% endblock %}
 
 {% block content %}
-<div class="nt-page" id="notesPage">
+<div class="note-editor-page" id="notesPage">
 
-  <!-- ══ Study Stats Bar ══ -->
-  <div class="nt-stats-bar">
-    <div class="nt-stat-item nt-stat-streak">
-      <span class="nt-stat-icon">&#128293;</span>
-      <div class="nt-stat-text">
-        <span class="nt-stat-value" id="streakValue">{{ note_streak }}</span>
-        <span class="nt-stat-label">day streak</span>
-      </div>
-    </div>
-    <div class="nt-stat-divider"></div>
-    <div class="nt-stat-item nt-stat-level">
-      <span class="nt-stat-badge" id="levelBadge">Lv {{ level }}</span>
-      <div class="nt-stat-xp-wrap">
-        <div class="nt-stat-xp-bar">
-          <div class="nt-stat-xp-fill" id="xpFill" style="width: {{ xp_progress_pct }}%"></div>
-        </div>
-        <span class="nt-stat-xp-text" id="xpText">{{ xp }} / {{ xp_for_next_level }} XP</span>
-      </div>
-    </div>
-    <div class="nt-stat-actions">
-      <button class="nt-focus-toggle" id="focusModeBtn" title="Enter Focus Mode">
-        &#127919; Focus Mode
-      </button>
-    </div>
-  </div>
-
-  <div class="nt-card">
-
-    <div class="nt-toolbar">
-      <h1 class="nt-title">Edit Note</h1>
-      <a href="{% url 'notes' %}" class="nt-action-btn">&#8592; Back</a>
-    </div>
-
-    <div class="p-4">
-      <form method="post" action="{% url 'note_edit' note.id %}">
+  <!-- ══ Top bar: Back / Title / Save ══ -->
+  <div class="note-editor-topbar">
+    <a href="{% url 'notes' %}" class="btn btn-light btn-sm">&#8592; Back to Notes</a>
+    <input
+      type="text"
+      class="note-editor-title"
+      id="noteTitleInput"
+      value="{{ note.title }}"
+      placeholder="Untitled Note"
+      maxlength="200"
+    >
+    <div class="d-flex align-items-center gap-3">
+      <span class="autosave-indicator" id="autosaveStatus"></span>
+      <form method="post" action="{% url 'note_edit' note.id %}" id="noteEditForm">
         {% csrf_token %}
-        <div class="mb-3">
-          <label for="id_title" class="form-label">Title</label>
-          {{ form.title }}
-        </div>
-        <div class="mb-3">
-          <label for="id_content" class="form-label">Content</label>
-          {{ form.content }}
-          <div class="nt-word-count" id="wordCount">0 words</div>
-        </div>
-        <div class="row g-3 mb-4">
-          <div class="col-md-6">
-            <label for="id_category" class="form-label">Category</label>
-            {{ form.category }}
-          </div>
-          <div class="col-md-6">
-            <label for="id_event" class="form-label">Link to Event</label>
-            {{ form.event }}
-          </div>
-        </div>
-        <div class="d-flex gap-2">
-          <button type="submit" class="btn submit-btn">Save Changes</button>
-          <a href="{% url 'notes' %}" class="btn btn-light">Cancel</a>
-        </div>
+        {{ form.content }}
+        <input type="hidden" name="title" id="hiddenTitle" value="{{ note.title }}">
+        <input type="hidden" name="category" value="{{ note.category }}">
+        {% if note.event_id %}
+          <input type="hidden" name="event" value="{{ note.event_id }}">
+        {% endif %}
+        <button type="submit" class="btn submit-btn btn-sm">Save &amp; Exit</button>
       </form>
     </div>
-
   </div>
+
+  <!-- ══ Meta info ══ -->
+  <div class="note-editor-meta">
+    <span class="badge bg-light text-dark">{{ note.get_category_display }}</span>
+    {% if note.event %}
+      <span>&#128197; {{ note.event.title }}</span>
+    {% endif %}
+    {% if note.time_spent_display %}
+      <span>&#9201; {{ note.time_spent_display }} studied</span>
+    {% endif %}
+    <span>{{ note.created_at|date:"M j, Y" }}</span>
+    <div class="spacing-control">
+      <label for="lineSpacing">Spacing:</label>
+      <select id="lineSpacing">
+        <option value="1.4">Compact</option>
+        <option value="1.7" selected>Normal</option>
+        <option value="2.0">Relaxed</option>
+        <option value="2.5">Double</option>
+      </select>
+    </div>
+    <div class="nt-word-count" id="wordCount" style="margin-left:auto;">0 words</div>
+  </div>
+
+  <!-- ══ Quill Editor ══ -->
+  <div id="quill-editor"></div>
+
 </div>
 
 <!-- ══ Focus Mode Overlay ══ -->
@@ -110,4 +245,121 @@
   };
 </script>
 <script src="{% static 'js/notes.js' %}"></script>
+<script src="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.js"></script>
+<script>
+(function() {
+  /* ── Quill setup ── */
+  const quill = new Quill('#quill-editor', {
+    theme: 'snow',
+    placeholder: 'Start writing your note...',
+    modules: {
+      toolbar: [
+        [{ 'font': [] }],
+        [{ 'header': [1, 2, 3, false] }],
+        [{ 'size': ['small', false, 'large', 'huge'] }],
+        ['bold', 'italic', 'underline', 'strike'],
+        [{ 'color': [] }, { 'background': [] }],
+        [{ 'list': 'ordered' }, { 'list': 'bullet' }, { 'list': 'check' }],
+        [{ 'indent': '-1' }, { 'indent': '+1' }],
+        [{ 'align': [] }],
+        ['blockquote', 'code-block'],
+        ['link'],
+        ['clean'],
+      ],
+    },
+  });
+
+  /* ── Load existing content ── */
+  const hiddenInput = document.getElementById('id_content');
+  if (hiddenInput.value) {
+    quill.root.innerHTML = hiddenInput.value;
+  }
+
+  /* ── Word count ── */
+  function updateWordCount() {
+    const text = quill.getText().trim();
+    const words = text ? text.split(/\s+/).length : 0;
+    document.getElementById('wordCount').textContent = words + ' words';
+  }
+  quill.on('text-change', updateWordCount);
+  updateWordCount();
+
+  /* ── Line spacing control ── */
+  const spacingSelect = document.getElementById('lineSpacing');
+  spacingSelect.addEventListener('change', function() {
+    quill.root.style.lineHeight = this.value;
+  });
+
+  /* ── Sync to hidden input on manual save ── */
+  const editForm = document.getElementById('noteEditForm');
+  editForm.addEventListener('submit', function() {
+    hiddenInput.value = quill.root.innerHTML;
+    document.getElementById('hiddenTitle').value = document.getElementById('noteTitleInput').value;
+  });
+
+  /* ── Autosave ── */
+  const autosaveUrl = '{% url "note_autosave" note.id %}';
+  const csrfToken = '{{ csrf_token }}';
+  const statusEl = document.getElementById('autosaveStatus');
+  let autosaveTimer = null;
+  let lastSavedContent = hiddenInput.value || '';
+  let lastSavedTitle = '{{ note.title|escapejs }}';
+
+  function doAutosave() {
+    const currentContent = quill.root.innerHTML;
+    const currentTitle = document.getElementById('noteTitleInput').value;
+
+    if (currentContent === lastSavedContent && currentTitle === lastSavedTitle) return;
+
+    statusEl.textContent = 'Saving...';
+    statusEl.className = 'autosave-indicator saving';
+
+    const formData = new FormData();
+    formData.append('content', currentContent);
+    formData.append('title', currentTitle);
+    formData.append('csrfmiddlewaretoken', csrfToken);
+
+    fetch(autosaveUrl, { method: 'POST', body: formData })
+      .then(function(res) { return res.json(); })
+      .then(function(data) {
+        if (data.status === 'ok') {
+          lastSavedContent = currentContent;
+          lastSavedTitle = currentTitle;
+          statusEl.textContent = 'Saved';
+          statusEl.className = 'autosave-indicator saved';
+          setTimeout(function() {
+            if (statusEl.textContent === 'Saved') {
+              statusEl.textContent = '';
+            }
+          }, 3000);
+        }
+      })
+      .catch(function() {
+        statusEl.textContent = 'Save failed';
+        statusEl.className = 'autosave-indicator';
+      });
+  }
+
+  function scheduleAutosave() {
+    clearTimeout(autosaveTimer);
+    autosaveTimer = setTimeout(doAutosave, 2000);
+  }
+
+  quill.on('text-change', scheduleAutosave);
+  document.getElementById('noteTitleInput').addEventListener('input', scheduleAutosave);
+
+  /* ── Save on page leave ── */
+  window.addEventListener('beforeunload', function() {
+    const currentContent = quill.root.innerHTML;
+    const currentTitle = document.getElementById('noteTitleInput').value;
+    if (currentContent !== lastSavedContent || currentTitle !== lastSavedTitle) {
+      const formData = new FormData();
+      formData.append('content', currentContent);
+      formData.append('title', currentTitle);
+      formData.append('csrfmiddlewaretoken', csrfToken);
+      navigator.sendBeacon(autosaveUrl, formData);
+    }
+  });
+})();
+</script>
 {% endblock %}

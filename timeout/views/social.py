@@ -196,6 +196,8 @@ def user_profile(request, username):
         'can_view': can_view,
         'event': event,
         'event_status': event_status,
+        'friends_count': profile_user.following.filter(followers=profile_user).count() if can_view else 0,
+
     }
     return render(request, 'social/user_profile.html', context)
 
@@ -322,6 +324,23 @@ def search_users(request):
     ]
     return JsonResponse({'users': results})
 
+@login_required
+def friends_api(request):
+    friends = request.user.following.filter(followers=request.user)
+    return JsonResponse({'users': _serialize_users(friends)})
+
+@login_required
+def user_friends_api(request, username):
+    profile_user = get_object_or_404(User, username=username)
+    can_view = (
+        request.user == profile_user or
+        not profile_user.privacy_private or
+        request.user.following.filter(id=profile_user.id).exists()
+    )
+    if not can_view:
+        return JsonResponse({'error': 'This account is private.'}, status=403)
+    friends = profile_user.following.filter(followers=profile_user)
+    return JsonResponse({'users': _serialize_users(friends)})
 
 def _serialize_users(users):
     return [

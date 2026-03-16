@@ -4,7 +4,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from datetime import timedelta
 from timeout.models import Event
-from timeout.forms import ProfileEditForm
+from timeout.forms import ProfileEditForm, ChangeUsernameForm
 
 
 def get_profile_event(user):
@@ -52,4 +52,23 @@ def profile_edit(request):
     else:
         form = ProfileEditForm(instance=request.user)
 
-    return render(request, 'pages/profile_edit.html', {'form': form})
+    username_form = ChangeUsernameForm(user=request.user)
+    return render(request, 'pages/profile_edit.html', {
+        'form': form,
+        'username_form': username_form,
+    })
+
+
+@login_required
+def change_username(request):
+    """Handle username change from the profile edit page."""
+    if request.method == 'POST':
+        form = ChangeUsernameForm(request.POST, user=request.user)
+        if form.is_valid():
+            request.user.username = form.cleaned_data['new_username']
+            request.user.save(update_fields=['username'])
+            messages.success(request, 'Username updated successfully!')
+            return redirect('profile')
+        else:
+            messages.error(request, form.errors['new_username'][0])
+    return redirect('profile_edit')

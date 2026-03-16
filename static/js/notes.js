@@ -1,21 +1,22 @@
-/* Notes Page — Pomodoro, Focus Mode, Streaks*/
+/* Notes Page: Pomodoro, Focus Mode, Streaks, Heatmap, Daily Goals */
 
-/*Helpers*/
+/* ═══ Helpers ═══ */
 
 function getCsrfToken() {
-  for (const cookie of document.cookie.split(';')) {
-    const [key, val] = cookie.trim().split('=');
-    if (key === 'csrftoken') return decodeURIComponent(val);
+  for (var c of document.cookie.split(';')) {
+    var parts = c.trim().split('=');
+    if (parts[0] === 'csrftoken') return decodeURIComponent(parts[1]);
   }
   return window.NOTES_CONFIG?.csrfToken || '';
 }
 
 function updatePinIcon(item, pinned) {
-  const header = item.querySelector('.note-header');
-  const existing = header.querySelector('.pin-icon');
+  var header = item.querySelector('.nt-item__header');
+  if (!header) return;
+  var existing = header.querySelector('.nt-pin-icon');
   if (pinned && !existing) {
-    const icon = document.createElement('span');
-    icon.className = 'pin-icon';
+    var icon = document.createElement('span');
+    icon.className = 'nt-pin-icon';
     icon.title = 'Pinned';
     icon.textContent = '\uD83D\uDCCC';
     header.insertBefore(icon, header.firstChild);
@@ -33,14 +34,14 @@ function togglePin(noteId, btn) {
   .then(function(data) {
     btn.textContent = data.pinned ? 'Unpin' : 'Pin';
     btn.dataset.pinned = data.pinned;
-    const item = document.getElementById('note-' + noteId);
-    updatePinIcon(item, data.pinned);
+    var item = document.getElementById('note-' + noteId);
+    if (item) updatePinIcon(item, data.pinned);
   })
   .catch(function(err) { console.error('Pin toggle failed:', err); });
 }
 
 
-/*Audio Utility */
+/* ═══ Audio Utility ═══ */
 
 function playBeep(freq, duration, volume) {
   try {
@@ -53,7 +54,7 @@ function playBeep(freq, duration, volume) {
     gain.gain.value = volume || 0.3;
     osc.start();
     setTimeout(function() { osc.stop(); ctx.close(); }, duration || 200);
-  } catch(e) { /* AudioContext not supported */ }
+  } catch(e) {}
 }
 
 function isSoundEnabled() {
@@ -63,7 +64,6 @@ function isSoundEnabled() {
 
 function playAlarm() {
   if (!isSoundEnabled()) return;
-  // Triple beep for phase end
   playBeep(880, 150, 0.35);
   setTimeout(function() { playBeep(880, 150, 0.35); }, 250);
   setTimeout(function() { playBeep(1100, 300, 0.4); }, 500);
@@ -71,13 +71,12 @@ function playAlarm() {
 
 function playWarning() {
   if (!isSoundEnabled()) return;
-  // Urgent double beep for inactivity
   playBeep(520, 300, 0.5);
   setTimeout(function() { playBeep(520, 300, 0.5); }, 400);
 }
 
 
-/*XP Toast*/
+/* ═══ XP Toast ═══ */
 
 function showXpToast(amount) {
   var toast = document.getElementById('xpToast');
@@ -106,27 +105,197 @@ function updateStatsUI(data) {
 }
 
 
-/*Pomodoro Timer*/
+/* ═══ Daily Goals ═══ */
+
+var DailyGoals = (function() {
+  var CIRCUMFERENCE = 2 * Math.PI * 16; // 100.531
+
+  function updateRing(id, current, goal) {
+    var ring = document.getElementById(id);
+    if (!ring) return;
+    var pct = Math.min(current / goal, 1);
+    ring.setAttribute('stroke-dashoffset', CIRCUMFERENCE * (1 - pct));
+    if (pct >= 1) {
+      ring.classList.add('nt-goal-ring--done');
+    } else {
+      ring.classList.remove('nt-goal-ring--done');
+    }
+  }
+
+  function render(data) {
+    if (!data) return;
+    updateRing('goalRingPomo', data.pomodoros, data.pomo_goal);
+    updateRing('goalRingNotes', data.notes_created, data.notes_goal);
+    updateRing('goalRingFocus', data.focus_minutes, data.focus_goal);
+
+    var pomoText = document.getElementById('goalPomoText');
+    var notesText = document.getElementById('goalNotesText');
+    var focusText = document.getElementById('goalFocusText');
+    if (pomoText) pomoText.textContent = data.pomodoros + ' / ' + data.pomo_goal;
+    if (notesText) notesText.textContent = data.notes_created + ' / ' + data.notes_goal;
+    if (focusText) focusText.textContent = data.focus_minutes + ' / ' + data.focus_goal + 'm';
+  }
+
+  function refresh() {
+    var cfg = window.NOTES_CONFIG || {};
+    if (!cfg.goalsProgressUrl) return;
+    fetch(cfg.goalsProgressUrl)
+      .then(function(r) { return r.json(); })
+      .then(render)
+      .catch(function() {});
+  }
+
+  function initToggle() {
+    var toggle = document.getElementById('goalsToggle');
+    var body = document.getElementById('goalsBody');
+    if (!toggle || !body) return;
+    // Restore collapsed state
+    if (localStorage.getItem('goals_collapsed') === '1') {
+      body.style.display = 'none';
+      toggle.textContent = '\u25BC'; // ▼
+    }
+    toggle.addEventListener('click', function() {
+      if (body.style.display === 'none') {
+        body.style.display = '';
+        toggle.textContent = '\u25B2'; // ▲
+        localStorage.removeItem('goals_collapsed');
+      } else {
+        body.style.display = 'none';
+        toggle.textContent = '\u25BC'; // ▼
+        localStorage.setItem('goals_collapsed', '1');
+      }
+    });
+  }
+
+  function initEdit() {
+    var editBtn = document.getElementById('goalsEditBtn');
+    var saveBtn = document.getElementById('goalsSaveBtn');
+    if (!editBtn || !saveBtn) return;
+
+    editBtn.addEventListener('click', function() {
+      var modal = new bootstrap.Modal(document.getElementById('editGoalsModal'));
+      modal.show();
+    });
+
+    saveBtn.addEventListener('click', function() {
+      var cfg = window.NOTES_CONFIG || {};
+      var body = new FormData();
+      body.append('daily_pomo_goal', document.getElementById('goalInputPomo').value);
+      body.append('daily_notes_goal', document.getElementById('goalInputNotes').value);
+      body.append('daily_focus_goal', document.getElementById('goalInputFocus').value);
+
+      fetch(cfg.goalsUpdateUrl, {
+        method: 'POST',
+        headers: { 'X-CSRFToken': getCsrfToken() },
+        body: body,
+      })
+      .then(function(r) { return r.json(); })
+      .then(function() {
+        bootstrap.Modal.getInstance(document.getElementById('editGoalsModal')).hide();
+        refresh();
+      })
+      .catch(function() {});
+    });
+  }
+
+  function init() {
+    initToggle();
+    initEdit();
+    // Initial render from server data
+    refresh();
+  }
+
+  return { init: init, render: render, refresh: refresh };
+})();
+
+
+/* ═══ Study Heatmap ═══ */
+
+var Heatmap = (function() {
+  function render(days) {
+    var grid = document.getElementById('heatmapGrid');
+    if (!grid || !days) return;
+    grid.innerHTML = '';
+
+    // Build 7-row grid (Mon-Sun)
+    // First, organize by weeks
+    var weeks = [];
+    var week = [];
+    for (var i = 0; i < days.length; i++) {
+      var d = new Date(days[i].date + 'T00:00:00');
+      var dow = d.getDay(); // 0=Sun
+      // Convert to Mon=0
+      var mdow = dow === 0 ? 6 : dow - 1;
+
+      // If first entry, pad leading days
+      if (i === 0 && mdow > 0) {
+        for (var p = 0; p < mdow; p++) week.push(null);
+      }
+      week.push(days[i]);
+      if (mdow === 6) {
+        weeks.push(week);
+        week = [];
+      }
+    }
+    if (week.length > 0) weeks.push(week);
+
+    // Render as columns (each week is a column)
+    for (var w = 0; w < weeks.length; w++) {
+      var col = document.createElement('div');
+      col.className = 'nt-heatmap-col';
+      for (var r = 0; r < 7; r++) {
+        var cell = document.createElement('span');
+        cell.className = 'nt-heatmap-cell';
+        var day = weeks[w][r];
+        if (day) {
+          cell.setAttribute('data-level', day.level);
+          cell.title = day.date + ': ' + day.pomodoros + ' pomodoros, ' + day.notes + ' notes, ' + day.focus + 'm focus';
+        } else {
+          cell.setAttribute('data-level', '-1');
+          cell.style.visibility = 'hidden';
+        }
+        col.appendChild(cell);
+      }
+      grid.appendChild(col);
+    }
+  }
+
+  function load() {
+    var cfg = window.NOTES_CONFIG || {};
+    if (!cfg.heatmapUrl) return;
+    fetch(cfg.heatmapUrl)
+      .then(function(r) { return r.json(); })
+      .then(function(data) { render(data.days); })
+      .catch(function() {});
+  }
+
+  function init() {
+    load();
+  }
+
+  return { init: init };
+})();
+
+
+/* ═══ Pomodoro Timer ═══ */
 
 var Pomodoro = (function() {
   var cfg = window.NOTES_CONFIG || {};
   var WORK = (cfg.pomoWork || 25) * 60;
   var SHORT_BREAK = (cfg.pomoShort || 5) * 60;
   var LONG_BREAK = (cfg.pomoLong || 15) * 60;
-  var SOUNDS_ENABLED = cfg.sounds !== undefined ? cfg.sounds : true;
   var CIRCUMFERENCE = 2 * Math.PI * 54; // 339.292
 
   var state = {
-    phase: 'work',       // 'work' | 'short_break' | 'long_break'
+    phase: 'work',
     remaining: WORK,
     total: WORK,
     running: false,
-    session: 0,          // completed work sessions (0-3)
+    session: 0,
     todayCount: 0,
     intervalId: null,
   };
 
-  // Load from localStorage
   function loadState() {
     try {
       var saved = JSON.parse(localStorage.getItem('pomo_state'));
@@ -155,6 +324,11 @@ var Pomodoro = (function() {
     return 'Long Break';
   }
 
+  function getLinkedNoteId() {
+    var sel = document.getElementById('pomoNoteSelect');
+    return sel ? sel.value : '';
+  }
+
   function render() {
     var mins = Math.floor(state.remaining / 60);
     var secs = state.remaining % 60;
@@ -170,12 +344,7 @@ var Pomodoro = (function() {
     if (ringEl) {
       var progress = 1 - (state.remaining / state.total);
       ringEl.setAttribute('stroke-dashoffset', CIRCUMFERENCE * (1 - progress));
-      // Color based on phase
-      if (state.phase === 'work') {
-        ringEl.style.stroke = '#5B73E8';
-      } else {
-        ringEl.style.stroke = '#4ECDC4';
-      }
+      ringEl.style.stroke = state.phase === 'work' ? '#5B73E8' : '#4ECDC4';
     }
 
     if (phaseEl) phaseEl.textContent = getPhaseLabel(state.phase);
@@ -186,7 +355,6 @@ var Pomodoro = (function() {
       pauseBtn.style.display = state.running ? '' : 'none';
     }
 
-    // Session dots
     var dots = document.querySelectorAll('#pomoDots .nt-pomo-dot');
     dots.forEach(function(dot, i) {
       dot.classList.toggle('nt-pomo-dot--filled', i < state.session);
@@ -213,22 +381,29 @@ var Pomodoro = (function() {
       state.todayCount++;
       saveState();
 
-      // Award XP via AJAX
-      var cfg = window.NOTES_CONFIG || {};
+      // Award XP via AJAX, include linked note
       if (cfg.pomodoroCompleteUrl) {
+        var body = new FormData();
+        var noteId = getLinkedNoteId();
+        if (noteId) body.append('note_id', noteId);
+
         fetch(cfg.pomodoroCompleteUrl, {
           method: 'POST',
           headers: { 'X-CSRFToken': getCsrfToken() },
+          body: body,
         })
         .then(function(r) { return r.json(); })
         .then(function(data) {
           updateStatsUI(data);
           showXpToast(25);
+          // Update daily goals
+          if (data.daily_progress) {
+            DailyGoals.render(data.daily_progress);
+          }
         })
         .catch(function() {});
       }
 
-      // Next phase
       if (state.session >= 4) {
         state.phase = 'long_break';
         state.session = 0;
@@ -236,7 +411,6 @@ var Pomodoro = (function() {
         state.phase = 'short_break';
       }
     } else {
-      // back to work
       state.phase = 'work';
     }
 
@@ -275,8 +449,21 @@ var Pomodoro = (function() {
     render();
   }
 
+  function populateNoteSelect() {
+    var sel = document.getElementById('pomoNoteSelect');
+    if (!sel) return;
+    var notes = cfg.userNotes || [];
+    for (var i = 0; i < notes.length; i++) {
+      var opt = document.createElement('option');
+      opt.value = notes[i][0];
+      opt.textContent = notes[i][1].length > 35 ? notes[i][1].substring(0, 35) + '...' : notes[i][1];
+      sel.appendChild(opt);
+    }
+  }
+
   function init() {
     loadState();
+    populateNoteSelect();
     render();
 
     var startBtn = document.getElementById('pomoStartBtn');
@@ -294,7 +481,7 @@ var Pomodoro = (function() {
 })();
 
 
-/*Focus Mode*/
+/* ═══ Focus Mode ═══ */
 
 var FocusMode = (function() {
   var active = false;
@@ -302,7 +489,7 @@ var FocusMode = (function() {
   var elapsedInterval = null;
   var lastActivity = 0;
   var inactivityInterval = null;
-  var INACTIVITY_MS = 2 * 60 * 1000; // 2 minutes
+  var INACTIVITY_MS = 2 * 60 * 1000;
   var warningShown = false;
 
   function enter() {
@@ -311,30 +498,21 @@ var FocusMode = (function() {
     lastActivity = Date.now();
     warningShown = false;
 
-    // Show focus overlay bar
     var overlay = document.getElementById('focusOverlay');
     if (overlay) overlay.style.display = 'flex';
 
-    // Hide navbar
     var nav = document.querySelector('.timeout-nav');
     if (nav) nav.style.display = 'none';
 
-    // Add body class
     document.body.classList.add('nt-focus-active');
 
-    // Update elapsed timer
     elapsedInterval = setInterval(updateElapsed, 1000);
-
-    // Start inactivity watcher
     inactivityInterval = setInterval(checkInactivity, 5000);
 
-    // Listen for activity
     document.addEventListener('keydown', onActivity);
     document.addEventListener('mousemove', onActivity);
     document.addEventListener('click', onActivity);
     document.addEventListener('scroll', onActivity);
-
-    // Block navigation with beforeunload
     window.addEventListener('beforeunload', onBeforeUnload);
   }
 
@@ -421,7 +599,7 @@ var FocusMode = (function() {
 })();
 
 
-/*Word Count (for note_edit)*/
+/* ═══ Word Count (for note_edit) ═══ */
 
 function initWordCount() {
   var textarea = document.getElementById('id_content');
@@ -439,10 +617,12 @@ function initWordCount() {
 }
 
 
-/*Init*/
+/* ═══ Init ═══ */
 
 document.addEventListener('DOMContentLoaded', function() {
   if (document.getElementById('pomoPanel')) Pomodoro.init();
   FocusMode.init();
   initWordCount();
+  DailyGoals.init();
+  Heatmap.init();
 });

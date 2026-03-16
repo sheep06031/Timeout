@@ -23,6 +23,10 @@ class TimeoutAccountAdapter(DefaultAccountAdapter):
         After email/password login, go straight to the dashboard.
         Existing users are never forced to complete their profile.
         """
+        user = request.user
+        if user.is_authenticated and user.auto_online and user.status != user.Status.SOCIAL:
+            user.status = user.Status.SOCIAL
+            user.save(update_fields=['status'])
         return resolve_url('dashboard')
 
 

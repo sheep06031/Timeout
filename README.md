@@ -36,7 +36,7 @@ Timeout is a web app designed to help university students stay organized, focuse
 
 ### Gamification
 - **XP System**: Earn XP for creating notes (10 XP), editing notes (5 XP), completing focus sessions (25 XP), and maintaining streaks (5 XP/day bonus)
-- **Levels**: Calculated from total XP — level up as you study more
+- **Levels**: Calculated from total XP, level up as you study more
 - **Streaks**: Track consecutive days of note-taking with longest streak records
 
 ### Social Community

@@ -40,6 +40,7 @@ class Event(models.Model):
         WEEKLY = 'weekly', 'Weekly'
         MONTHLY = 'monthly', 'Monthly'
 
+
     creator = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
@@ -87,6 +88,7 @@ class Event(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     is_global = models.BooleanField(default=False)
     is_completed = models.BooleanField(default=False) # Added to track event
+
 
     class Meta:
         ordering = ['-start_datetime']
@@ -198,6 +200,18 @@ class Event(models.Model):
         """Check if the event is in the future."""
         from django.utils import timezone
         return self.start_datetime > timezone.now()
+    
+    def mark_completed(self):
+        """Mark event as completed and calculate actual duration."""
+        from django.utils import timezone
+        self.is_completed = True
+        self.completed_at = timezone.now()
+        # Calculate duration in hours from creation to completion
+        delta = self.completed_at - self.created_at
+        self.actual_duration_hours = round(delta.total_seconds() / 3600, 2)
+        self.save(update_fields=[
+            'is_completed', 'completed_at', 'actual_duration_hours', 'updated_at',
+        ])
 
     def __str__(self):
         return f"{self.title} ({self.start_datetime.date()})"

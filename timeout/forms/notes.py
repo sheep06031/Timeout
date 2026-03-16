@@ -15,11 +15,8 @@ class NoteForm(forms.ModelForm):
                 'placeholder': 'Note title',
                 'maxlength': '200',
             }),
-            'content': forms.Textarea(attrs={
-                'class': 'form-control',
-                'rows': 5,
-                'placeholder': 'Write your note here...',
-                'maxlength': '5000',
+            'content': forms.HiddenInput(attrs={
+                'id': 'id_content',
             }),
             'category': forms.Select(attrs={
                 'class': 'form-select',
@@ -35,3 +32,4 @@ class NoteForm(forms.ModelForm):
             self.fields['event'].queryset = user.created_events.all()
         self.fields['event'].empty_label = 'No event'
         self.fields['event'].required = False
+        self.fields['content'].required = False

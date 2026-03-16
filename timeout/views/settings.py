@@ -46,7 +46,7 @@ def settings_view(request):
 @login_required
 @require_POST
 def settings_save_ajax(request):
-    """AJAX endpoint — auto-save appearance/pomodoro/notes settings."""
+    """AJAX endpoint, auto-save appearance/pomodoro/notes settings."""
     form = AppearanceForm(request.POST, instance=request.user)
     if form.is_valid():
         form.save()

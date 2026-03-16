@@ -13,6 +13,7 @@ urlpatterns = [
     path('dashboard/', pages.dashboard, name='dashboard'),
     path('profile/', pages.profile, name='profile'),
     path('profile/edit/', profile_views.profile_edit, name='profile_edit'),
+    path('profile/change-username/', profile_views.change_username, name='change_username'),
     path('settings/', settings_views.settings_view, name='settings'),
     path('settings/save/', settings_views.settings_save_ajax, name='settings_save'),
     path('statistics/', pages.statistics, name='statistics'),

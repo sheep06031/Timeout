@@ -6,6 +6,8 @@ from django.contrib.sessions.backends.db import SessionStore
 
 from timeout.adapters import TimeoutAccountAdapter, TimeoutSocialAccountAdapter
 
+from django.contrib.auth.models import AnonymousUser
+
 User = get_user_model()
 
 
@@ -26,6 +28,7 @@ class TimeoutAccountAdapterTests(TestCase):
 
     def test_login_redirect_goes_to_dashboard(self):
         request = self.factory.get('/')
+        request.user = AnonymousUser() 
         url = self.adapter.get_login_redirect_url(request)
         self.assertEqual(url, '/dashboard/')
 

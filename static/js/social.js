@@ -283,37 +283,3 @@ document.addEventListener('DOMContentLoaded', function() {
 
 });
 
-document.addEventListener('DOMContentLoaded', function () {
-    let inactiveTimer = null;
-
-    function setStatus(status) {
-        fetch('/social/status/update/', {
-            method: 'POST',
-            headers: {
-                'X-CSRFToken': csrftoken,
-                'Content-Type': 'application/x-www-form-urlencoded'
-            },
-            body: `status=${status}`
-        }).then(r => r.json()).then(data => {
-            document.body.dataset.userStatus = data.status;
-        });
-    }
-
-    window.addEventListener('beforeunload', function () {
-        clearTimeout(inactiveTimer);
-    });
-
-    document.addEventListener('visibilitychange', function () {
-        const currentStatus = document.body.dataset.userStatus;
-        if (currentStatus === 'focus') return;
-
-        if (document.hidden) {
-            inactiveTimer = setTimeout(function () {
-                setStatus('inactive');
-            }, 1500);
-        } else {
-            clearTimeout(inactiveTimer);
-            setStatus('social');
-        }
-    });
-});

@@ -1,5 +1,5 @@
 /* ============================================
-   Main JS — Global settings & theme management
+   Main JS Global settings & theme management
    ============================================ */
 
 (function() {
@@ -21,7 +21,7 @@
   }
 
   if (rawTheme === 'dark' || rawTheme === 'light') {
-    // Explicit choice — mark so the listener doesn't override
+    // Explicit choice, mark so the listener doesn't override
     html.dataset.themeSource = 'explicit';
   } else {
     // "system" was resolved by inline script; mark for live updates
@@ -33,7 +33,7 @@
 
   /* ---------- Colorblind filter ---------- */
   // Already applied via data-colorblind attribute + CSS filters in custom.css.
-  // Nothing extra needed here — the attribute on <html> drives it.
+  // Nothing extra needed here the attribute on <html> drives it.
 
   /* ---------- Font size ---------- */
   // Already applied via inline style="font-size: X%" on <html> in base.html.

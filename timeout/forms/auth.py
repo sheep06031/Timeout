@@ -160,7 +160,7 @@ class CompleteProfileForm(forms.ModelForm):
 
     class Meta:
         model = User
-        # 'university' is intentionally excluded — resolved in clean() / save()
+        # 'university' is intentionally excluded, resolved in clean() / save()
         fields = ['username', 'first_name', 'last_name', 'year_of_study']
         widgets = {
             'username': forms.TextInput(attrs={

@@ -26,6 +26,37 @@ UNIVERSITY_CHOICES = [
 _KNOWN_UNIVERSITIES = {c[0] for c in UNIVERSITY_CHOICES if c[0] not in ('', '__other__')}
 
 
+class ChangeUsernameForm(forms.Form):
+    """Standalone form for changing username from the profile page."""
+
+    new_username = forms.CharField(
+        max_length=150,
+        min_length=3,
+        widget=forms.TextInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'New username',
+            'autocomplete': 'username',
+        }),
+    )
+
+    def __init__(self, *args, user=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.user = user
+
+    def clean_new_username(self):
+        username = self.cleaned_data['new_username'].strip()
+        if self.user and username == self.user.username:
+            raise forms.ValidationError('Please choose a different username — this is already your current one.')
+        if not username.isalnum() and not all(c.isalnum() or c in '_-.' for c in username):
+            raise forms.ValidationError('Username can only contain letters, numbers, underscores, hyphens, and dots.')
+        qs = User.objects.filter(username=username)
+        if self.user:
+            qs = qs.exclude(pk=self.user.pk)
+        if qs.exists():
+            raise forms.ValidationError('This username is already taken.')
+        return username
+
+
 class ProfileEditForm(forms.ModelForm):
 
     university_choice = forms.ChoiceField(

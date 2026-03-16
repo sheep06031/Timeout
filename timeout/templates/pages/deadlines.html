@@ -59,108 +59,153 @@
             List
           </a>
         </div>
-
-        
-
-        <a href="#" class="dl-add-btn" data-bs-toggle="modal" data-bs-target="#addEventModal">
-          + <span class="dl-add-label">Add Event</span>
+        <a href="#" class="dl-add-btn" onclick="openAddEvent(new Date().toISOString().slice(0,10))"> <!-- used to be instead of onclick: data-bs-toggle="modal" data-bs-target="#addEventModal" -->
+          + <span class="dl-add-label">Add Deadline</span>
         </a>
 
         
       </div>
     </div>
 
-    {% if sections %}
-    <!-- Tab bar -->
-    <div class="dl-tabs" role="tablist">
-      {% for section in sections %}
-      <button
-        class="dl-tab-btn {% if forloop.first %}dl-tab-btn--active{% endif %}"
-        data-tab="{{ section.type_key }}"
-        role="tab"
-        aria-selected="{% if forloop.first %}true{% else %}false{% endif %}"
-      >
-        {{ section.label }}
-        <span class="dl-tab-count">{{ section.items|length }}</span>
-      </button>
-      {% endfor %}
-    </div>
-
-    <!-- Tab panels -->
-    {% for section in sections %}
-    <div
-      class="dl-tab-panel {% if forloop.first %}dl-tab-panel--active{% endif %} dl-list"
-      data-panel="{{ section.type_key }}"
-      role="tabpanel"
-    >
-      {% for item in section.items %}
-      <div class="dl-item dl-item--{{ item.urgency_status }}" data-id="{{ item.event.id }}">
-        <div class="dl-item__check">
-          <input
-            type="checkbox"
-            class="dl-checkbox"
-            id="dl-check-{{ item.event.id }}"
-            data-event-id="{{ item.event.id }}"
-            aria-label="Mark '{{ item.event.title }}' as complete"
-          >
-        </div>
-        <div class="dl-item__body">
-          <div class="dl-item__header">
-            <span class="dl-item__title">{{ item.event.title }}</span>
-            <span class="dl-urgency-tag dl-urgency-tag--{{ item.urgency_status }}">
-              {% if item.urgency_status == 'overdue' %}Overdue
-              {% elif item.urgency_status == 'urgent' %}Urgent
-              {% elif item.urgency_status == 'missed' %}Missed
-              {% elif item.urgency_status == 'upcoming' %}Upcoming
-              {% else %}On Track
-              {% endif %}
-            </span>
-          </div>
-          {% if item.event.description %}
-          <p class="dl-item__desc">{{ item.event.description|truncatewords:20 }}</p>
-          {% endif %}
-          <div class="dl-item__meta">
-            <span class="dl-meta dl-meta--time">
-              <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                <circle cx="7" cy="7" r="6" stroke="currentColor" stroke-width="1.2"/>
-                <path d="M7 4v3l2 1.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
-              </svg>
-              {{ item.time_remaining_display }}
-            </span>
-            <span class="dl-meta dl-meta--added">{{ item.time_elapsed_display }}</span>
-            {% if item.event.location %}
-            <span class="dl-meta dl-meta--location">
-              <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                <path d="M7 1C4.79 1 3 2.79 3 5c0 3.5 4 7.5 4 7.5s4-4 4-7.5c0-2.21-1.79-4-4-4z" stroke="currentColor" stroke-width="1.2"/>
-                <circle cx="7" cy="5" r="1.5" stroke="currentColor" stroke-width="1.2"/>
-              </svg>
-              {{ item.event.location }}
-            </span>
-            {% endif %}
-            {% if section.type_key == 'deadline' %}
-            <span class="dl-meta dl-meta--due">Due {{ item.event.end_datetime|date:"D, d M Y \a\t H:i" }}</span>
-            {% else %}
-            <span class="dl-meta dl-meta--due">{{ item.event.start_datetime|date:"D, d M Y \a\t H:i" }}</span>
-            {% endif %}
-          </div>
-        </div>
+    <!-- Filter & Sort Controls -->
+    <div class="dl-controls">
+      <div class="dl-filter-tabs">
+        <a href="?status=active&sort={{ sort_order }}&type={{ event_type }}"
+           class="dl-filter-tab {% if status_filter == 'active' %}dl-filter-tab--active{% endif %}">
+          Active
+        </a>
+        <a href="?status=completed&sort={{ sort_order }}&type={{ event_type }}"
+           class="dl-filter-tab {% if status_filter == 'completed' %}dl-filter-tab--active{% endif %}">
+          Completed
+        </a>
+        <a href="?status=all&sort={{ sort_order }}&type={{ event_type }}"
+           class="dl-filter-tab {% if status_filter == 'all' %}dl-filter-tab--active{% endif %}">
+          All
+        </a>
       </div>
+      <a href="?status={{ status_filter }}&sort={% if sort_order == 'asc' %}desc{% else %}asc{% endif %}&type={{ event_type }}"
+         class="dl-sort-btn">
+        <span class="dl-sort-icon">{% if sort_order == 'asc' %}&#8593;{% else %}&#8595;{% endif %}</span>
+        {% if sort_order == 'asc' %}Old → New{% else %}New → Old{% endif %}
+      </a>
+    </div>
+
+    <!-- Event Type Filter -->
+    <div class="dl-type-filter">
+      {% for type_value, type_label in event_types %}
+      <a href="?status={{ status_filter }}&sort={{ sort_order }}&type={{ type_value }}"
+         class="dl-type-pill {% if event_type == type_value %}dl-type-pill--active{% endif %}">
+        <span class="dl-type-dot dl-type-dot--{{ type_value }}"></span>
+        {{ type_label }}
+      </a>
       {% endfor %}
     </div>
-    {% endfor %}
 
-    {% else %}
+    <!-- Deadline List -->
     <div class="dl-list">
-      <div class="dl-empty">
-        <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <circle cx="24" cy="24" r="20" stroke="#c8cfe0" stroke-width="2"/>
-          <path d="M16 24l5 5 11-11" stroke="#c8cfe0" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-        <p class="dl-empty__text">Nothing on your schedule — you're all caught up!</p>
-        <a href="#" class="dl-add-btn" data-bs-toggle="modal" data-bs-target="#addEventModal">+ Add Event</a>
-      </div>
+      {% if deadlines %}
+        {% for item in deadlines %}
+        <div class="dl-item dl-item--{{ item.urgency_status }}" data-id="{{ item.event.id }}">
+          <div class="dl-item__check">
+            {% if item.urgency_status != 'completed' %}
+            <input
+              type="checkbox"
+              class="dl-checkbox"
+              id="dl-check-{{ item.event.id }}"
+              data-event-id="{{ item.event.id }}"
+              aria-label="Mark '{{ item.event.title }}' as complete"
+            >
+            {% else %}
+            <input type="checkbox" class="dl-checkbox" checked disabled
+                   aria-label="'{{ item.event.title }}' is completed">
+            {% endif %}
+          </div>
+          <div class="dl-item__body">
+            <div class="dl-item__header">
+              <a href="#" class="dl-item__title dl-item__title-link"
+                 data-bs-toggle="modal"
+                 data-bs-target="#eventDetailsModal"
+                 data-event-id="{{ item.event.id }}"
+                 data-event-title="{{ item.event.title }}"
+                 data-event-type="{{ item.event.get_event_type_display }}"
+                 data-event-color="{% if item.event.event_type == 'deadline' %}#5b5ddf{% elif item.event.event_type == 'exam' %}#e53935{% elif item.event.event_type == 'class' %}#43a047{% elif item.event.event_type == 'meeting' %}#8e24aa{% elif item.event.event_type == 'study_session' %}#00acc1{% else %}#78909c{% endif %}"
+                 data-event-visibility="{{ item.event.visibility }}"
+                 data-event-start="{{ item.event.start_datetime|date:'D, d M Y H:i' }}"
+                 data-event-end="{{ item.event.end_datetime|date:'D, d M Y H:i' }}"
+                 data-event-status="{{ item.event.get_status_display }}"
+                 data-event-recurrence="{{ item.event.get_recurrence_display }}"
+                 data-event-all-day="{% if item.event.is_all_day %}Yes{% else %}No{% endif %}"
+                 data-event-duration="{{ item.time_remaining_display }}"
+                 data-event-ongoing="{% if item.event.is_ongoing %}Yes{% else %}No{% endif %}"
+                 data-event-past="{% if item.event.is_past %}Yes{% else %}No{% endif %}"
+                 data-event-location="{{ item.event.location }}"
+                 data-event-description="{{ item.event.description }}">
+                {{ item.event.title }}
+              </a>
+              <span class="dl-urgency-tag dl-urgency-tag--{{ item.urgency_status }}">
+                {% if item.urgency_status == 'overdue' %}Overdue
+                {% elif item.urgency_status == 'urgent' %}Urgent
+                {% elif item.urgency_status == 'completed' %}Done
+                {% else %}On Track
+                {% endif %}
+              </span>
+              <span class="dl-urgency-tag dl-urgency-tag--{{ item.event.event_type }}">
+                {{ item.event.get_event_type_display }}
+              </span>
+            </div>
+            {% if item.event.description %}
+            <p class="dl-item__desc">{{ item.event.description|truncatewords:20 }}</p>
+            {% endif %}
+            <div class="dl-item__meta">
+              <span class="dl-meta dl-meta--time">
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                  <circle cx="7" cy="7" r="6" stroke="currentColor" stroke-width="1.2"/>
+                  <path d="M7 4v3l2 1.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+                </svg>
+                {{ item.time_remaining_display }}
+              </span>
+              <span class="dl-meta dl-meta--added">{{ item.time_elapsed_display }}</span>
+              {% if item.event.location %}
+              <span class="dl-meta dl-meta--location">
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                  <path d="M7 1C4.79 1 3 2.79 3 5c0 3.5 4 7.5 4 7.5s4-4 4-7.5c0-2.21-1.79-4-4-4z" stroke="currentColor" stroke-width="1.2"/>
+                  <circle cx="7" cy="5" r="1.5" stroke="currentColor" stroke-width="1.2"/>
+                </svg>
+                {{ item.event.location }}
+              </span>
+              {% endif %}
+              <span class="dl-meta dl-meta--due">Due {{ item.event.end_datetime|date:"D, d M Y \a\t H:i" }}</span>
+            </div>
+          </div>
+          <div class="dl-item__actions">
+            <a href="{% url 'event_edit' pk=item.event.id %}" class="dl-action-btn" title="Edit">
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                <path d="M8.5 2.5l3 3M1.5 9.5l-.5 3.5 3.5-.5 8-8-3-3-8 8z" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </a>
+
+          </div>
+        </div>
+        {% endfor %}
+      {% else %}
+        <div class="dl-empty">
+          <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="24" cy="24" r="20" stroke="#c8cfe0" stroke-width="2"/>
+            <path d="M16 24l5 5 11-11" stroke="#c8cfe0" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          {% if status_filter == 'completed' %}
+          <p class="dl-empty__text">No completed deadlines yet.</p>
+          {% elif status_filter == 'all' %}
+          <p class="dl-empty__text">No deadlines found.</p>
+          {% else %}
+          <p class="dl-empty__text">No active deadlines, you're all caught up!</p>
+          {% endif %}
+          <a href="#" class="dl-add-btn" data-bs-toggle="modal" data-bs-target="#addEventModal">+ Add Deadline</a>
+        </div>
+      {% endif %}
     </div>
-    {% endif %}
+
+    
 
   </div>
 </div>
@@ -214,42 +259,33 @@
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
-          <button type="submit" class="btn btn-nep text-white">Add Event</button>
+          <button type="submit" class="btn text-white" style="background:#5b5ddf;">Add Deadline</button>
+          <!--class="btn text-white" style="background:#5b5ddf;" used to be class="btn btn-nep text-white"-->
         </div>
       </form>
     </div>
   </div>
 </div>
 
+<!-- Event Details Modal -->
+{% include "pages/_event_details_modal.html" %}
 
 <!-- Mobile FAB -->
-<a href="#" class="dl-fab" data-bs-toggle="modal" data-bs-target="#addEventModal" aria-label="Add event">+</a>
+ <!--onclick="openAddEvent(new Date().toISOString().slice(0,10))" used to be: data-bs-toggle="modal" data-bs-target="#addEventModal"-->
+<a href="#" class="dl-fab" onclick="openAddEvent(new Date().toISOString().slice(0,10))" aria-label="Add deadline">+</a>
 {% endblock %}
 
 {% block extra_js %}
 <script>
-// ── Tab switching ──────────────────────────────────────────────────
-document.querySelectorAll('.dl-tab-btn').forEach(function(btn) {
-  btn.addEventListener('click', function() {
-    var target = this.dataset.tab;
-
-    document.querySelectorAll('.dl-tab-btn').forEach(function(b) {
-      b.classList.remove('dl-tab-btn--active');
-      b.setAttribute('aria-selected', 'false');
-    });
-    document.querySelectorAll('.dl-tab-panel').forEach(function(p) {
-      p.classList.remove('dl-tab-panel--active');
-    });
-
-    this.classList.add('dl-tab-btn--active');
-    this.setAttribute('aria-selected', 'true');
-    document.querySelector('[data-panel="' + target + '"]').classList.add('dl-tab-panel--active');
-  });
-});
-
-// ── Mark complete ──────────────────────────────────────────────────
+    function openAddEvent(dateStr) {
+  document.getElementById('eventStart').value = dateStr + 'T09:00';
+  document.getElementById('eventEnd').value = dateStr + 'T10:00';
+  var modal = new bootstrap.Modal(document.getElementById('addEventModal'));
+  modal.show();
+}
 document.addEventListener('DOMContentLoaded', function() {
-  document.querySelectorAll('.dl-checkbox').forEach(function(checkbox) {
+   
+  document.querySelectorAll('.dl-checkbox:not([disabled])').forEach(function(checkbox) {
     checkbox.addEventListener('change', function() {
       completeDeadline(this.dataset.eventId, this);
     });

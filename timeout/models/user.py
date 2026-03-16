@@ -75,6 +75,14 @@ class User(AbstractUser):
     )
     daily_study_reminder = models.TimeField(null=True, blank=True)
 
+    # Daily Study Goals
+    daily_pomo_goal = models.PositiveSmallIntegerField(default=4)
+    daily_notes_goal = models.PositiveSmallIntegerField(default=3)
+    daily_focus_goal = models.PositiveSmallIntegerField(default=120)  # minutes
+
+    # Status preferences
+    auto_online = models.BooleanField(default=False)
+
     # Gamification
     xp = models.PositiveIntegerField(default=0)
     note_streak = models.PositiveIntegerField(default=0)

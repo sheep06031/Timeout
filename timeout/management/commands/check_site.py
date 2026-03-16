@@ -112,7 +112,7 @@ class Command(BaseCommand):
                 ))
         else:
             self.stdout.write(self.style.SUCCESS(
-                '  OK: No "APP" override in settings — credentials will be '
+                '  OK: No "APP" override in settings, credentials will be '
                 'read from the database SocialApp.'
             ))
 

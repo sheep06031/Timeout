@@ -34,7 +34,8 @@ def create_bookmark_notification(sender, instance, created, **kwargs):
     if created and instance.post.author != instance.user:
         Notification.objects.create(
             user=instance.post.author,
-            title="New Bookmark",
+            title="🏷️ New Bookmark",
             message=f"{instance.user.username} bookmarked your post",
             type=Notification.Type.BOOKMARK,
+            post=instance.post,
         )

@@ -38,6 +38,9 @@ def login_view(request):
         if form.is_valid():
             user = form.get_user()
             login(request, user)
+            if user.auto_online and user.status != user.Status.SOCIAL:
+                user.status = user.Status.SOCIAL
+                user.save(update_fields=['status'])
             messages.success(
                 request,
                 f'Welcome back, {user.username}!'

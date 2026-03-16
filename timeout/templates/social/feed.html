@@ -55,7 +55,7 @@
         <div class="empty-state">
           <div class="icon">🌱</div>
           {% if active_tab == 'following' %}
-            No posts yet — follow some people to see their posts here!
+            No posts yet, follow some people to see their posts here!
           {% elif active_tab == 'bookmarks' %}
             You haven't bookmarked any posts yet. 
           {% else %}
@@ -117,4 +117,19 @@
 
 {% block extra_js %}
 <script src="{% static 'js/social.js' %}"></script>
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    const params = new URLSearchParams(window.location.search);
+    const highlightId = params.get("highlight_post");
+    if (highlightId) {
+        const postEl = document.querySelector(`.post-card[data-post-id="${highlightId}"]`);
+        if (postEl) {
+            postEl.scrollIntoView({ behavior: "smooth", block: "center" });
+            postEl.style.transition = "box-shadow 0.4s ease";
+            postEl.style.boxShadow = "0 0 0 3px #5b73e8";
+            setTimeout(() => postEl.style.boxShadow = "", 2500);
+        }
+    }
+});
+</script>
 {% endblock %}

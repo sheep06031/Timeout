@@ -73,14 +73,14 @@ class NoteFormTest(TestCase):
         self.assertFalse(form.is_valid())
         self.assertIn('title', form.errors)
 
-    def test_missing_content_invalid(self):
+    def test_empty_content_valid(self):
+        """Content is optional — notes are created empty and filled via the editor."""
         form = NoteForm(data={
             'title': 'Title',
             'content': '',
             'category': Note.Category.OTHER,
         }, user=self.user)
-        self.assertFalse(form.is_valid())
-        self.assertIn('content', form.errors)
+        self.assertTrue(form.is_valid())
 
     def test_invalid_category_rejected(self):
         form = NoteForm(data={

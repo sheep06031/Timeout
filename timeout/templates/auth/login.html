@@ -7,6 +7,7 @@
 <link rel="stylesheet" href="{% static 'css/auth-styles.css' %}">
 {% endblock %}
 
+{% block main_class %}flex-grow-1 p-0 m-0{% endblock %}
 {% block content %}
 <div class="auth-container">
   <div class="auth-card auth-card-wide">
@@ -63,7 +64,7 @@
               Remember me
             </label>
           </div>
-          <a href="{% url 'account_reset_password' %}" class="forgot-password-link">
+          <a href="{% url 'forgot_password' %}" class="forgot-password-link">
             Forgot password?
           </a>
         </div>

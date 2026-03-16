@@ -53,21 +53,21 @@ class UnseedCommandTests(TestCase):
     def _seed_db(self):
         call_command('seed', stdout=StringIO())
 
-    def test_unseed_keeps_johndoe(self):
+    def test_unseed_removes_everyone_by_default(self):
         self._seed_db()
         out = StringIO()
         call_command('unseed', stdout=out)
 
-        self.assertTrue(User.objects.filter(username='johndoe').exists())
-        self.assertEqual(User.objects.count(), 1)
+        self.assertEqual(User.objects.count(), 0)
         self.assertIn('Removed', out.getvalue())
 
-    def test_unseed_all_removes_everyone(self):
+    def test_unseed_keep_super_keeps_johndoe(self):
         self._seed_db()
         out = StringIO()
-        call_command('unseed', '--all', stdout=out)
+        call_command('unseed', '--keep-super', stdout=out)
 
-        self.assertEqual(User.objects.count(), 0)
+        self.assertTrue(User.objects.filter(username='johndoe').exists())
+        self.assertEqual(User.objects.count(), 1)
 
     def test_unseed_on_empty_database(self):
         out = StringIO()

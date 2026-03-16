@@ -62,6 +62,7 @@
                   <span class="badge bg-light text-dark me-2">{{ posts|length }} Posts</span>
                   <span class="badge bg-light text-dark me-2" style="cursor:pointer;" data-bs-toggle="modal" data-bs-target="#followersModal">{{ user.follower_count }} Followers</span>
                   <span class="badge bg-light text-dark me-2" style="cursor:pointer;" data-bs-toggle="modal" data-bs-target="#followingModal">{{ user.following_count }} Following</span>
+                  <span class="badge bg-light text-dark me-2" style="cursor:pointer;" data-bs-toggle="modal" data-bs-target="#friendsModal">{{ friends_count }} Friends</span>
                 </div>
               </div>
             </div>
@@ -156,12 +157,14 @@
 
   {% include 'partials/modals/followers_modal.html' %}
   {% include 'partials/modals/following_modal.html' %}
+  {% include 'partials/modals/friends_modal.html' %}
 {% endblock %}
 
 {% block extra_js %}
   <script>
     const FOLLOWERS_URL = "{% url 'followers_api' %}"
     const FOLLOWING_URL = "{% url 'following_api' %}"
+    const FRIENDS_URL = "{% url 'friends_api' %}"
   </script>
   <script src="{% static 'js/social.js' %}"></script>
   <div id="profile-status-config" data-update-url="{% url 'update_status' %}" data-csrf-token="{{ csrf_token }}"></div>

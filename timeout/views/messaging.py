@@ -101,10 +101,11 @@ def send_message(request, conversation_id):
     if receiver:
         Notification.objects.create(
             user=receiver,
-            title="New Message",
-            message=f"{request.user.username} sent you a message",
-            type=Notification.Type.EVENT,
-        )       
+            title=f"💬 {request.user.username} sent you a message",
+            message=content[:80],
+            type=Notification.Type.MESSAGE,
+            conversation=conv,
+        )    
 
     return JsonResponse({
         'id': message.id,

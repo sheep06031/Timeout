@@ -21,6 +21,8 @@ urlpatterns = [
     path('user/<str:username>/', social.user_profile, name='user_profile'),
     path('user/<str:username>/follow/', social.follow_user, name='follow_user'),
     path('status/update/', social.update_status, name='update_status'),
+    path('friends/', social.friends_api, name='friends_api'),
+    path('user/<str:username>/friends/', social.user_friends_api, name='user_friends_api'),
 
     # Follow lists (own)
     path('followers/', social.followers_api, name='followers_api'),

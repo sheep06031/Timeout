@@ -9,3 +9,4 @@ pyJWT
 cryptography
 python-dotenv
 openai
+sendgrid

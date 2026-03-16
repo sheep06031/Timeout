@@ -1,0 +1,94 @@
+/* ============================================
+   AI Suggestions Button Dashboard Style Match
+   ============================================ */
+
+.nav-ai-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px; 
+    
+    height: 30px;
+    padding: 0 12px;
+
+    border-radius: 15px;
+    border: 1.5px solid rgba(91, 115, 232, 0.18);
+
+    background: rgba(91, 115, 232, 0.08);
+    color: #5B73E8;
+    font-size: 12.5px;
+    font-weight: 700;
+
+    cursor: pointer;
+    transition: all 0.18s ease;
+    position: relative;
+}
+
+/* Hover */
+.nav-ai-btn:hover {
+    background: rgba(91, 115, 232, 0.15);
+    border-color: rgba(91, 115, 232, 0.30);
+    color: #5B73E8;
+    transform: translateY(-1px);
+}
+
+/* Icon inside button */
+.nav-ai-btn svg {
+    width: 16px;
+    height: 16px;
+    fill: currentColor;
+}
+
+/* Tooltip styling matches dashboard cards */
+.tooltip-inner {
+    max-width: 280px;
+    text-align: left;
+    font-size: 13px;
+    line-height: 1.5;
+    padding: 12px 14px;
+    border-radius: 12px;
+    background: #fff;
+    color: #1A1F36;
+    border: 1px solid rgba(91, 115, 232, 0.12);
+    box-shadow: 0 6px 24px rgba(91, 115, 232, 0.14);
+}
+
+/* Spacing for multiple tips */
+.ai-tip {
+    margin-bottom: 8px;
+}
+.ai-tip:last-child {
+    margin-bottom: 0;
+}
+
+/* Overload glow effect use when >5 events or overloaded */
+.nav-ai-btn.overloaded {
+    box-shadow: 0 0 12px 2px rgba(91, 115, 232, 0.5);
+    animation: pulse-glow 1.6s infinite;
+}
+
+@keyframes pulse-glow {
+    0% { box-shadow: 0 0 6px 2px rgba(91, 115, 232, 0.3); }
+    50% { box-shadow: 0 0 12px 4px rgba(91, 115, 232, 0.5); }
+    100% { box-shadow: 0 0 6px 2px rgba(91, 115, 232, 0.3); }
+}
+
+/* AI icon style replaces the 'i' icon */
+.nav-ai-btn .ai-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: 800;
+    color: #5B73E8;
+    background: rgba(91, 115, 232, 0.08);
+    border-radius: 4px;
+    padding: 2px 6px;
+    min-width: 20px;
+    text-align: center;
+}
+
+/* Optional: add spacing to the right of the button */
+.nav-ai-btn {
+    margin-right: 8px; /* adds space after the button */
+}

@@ -6,13 +6,17 @@ from django.utils import timezone
 class Notification(models.Model):
 
     class Type(models.TextChoices):
-        DEADLINE = "deadline", "Deadline"
-        EVENT = "event", "Event"
-        MESSAGE = "message", "Message"
-        LIKE = "like", "Like"
-        COMMENT = "comment", "Comment"
-        BOOKMARK = "bookmark", "Bookmark"
-        FOLLOW = "follow", "Follow"
+        DEADLINE =      "deadline",      "Deadline"
+        EVENT =         "event",         "Event"
+        MESSAGE =       "message",       "Message"
+        LIKE =          "like",          "Like"
+        COMMENT =       "comment",       "Comment"
+        BOOKMARK =      "bookmark",      "Bookmark"
+        FOLLOW =        "follow",        "Follow"
+        EXAM =          "exam",          "Exam"
+        CLASS =         "class",         "Class"
+        MEETING =       "meeting",       "Meeting"
+        STUDY_SESSION = "study_session", "Study Session"
 
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -30,7 +34,24 @@ class Notification(models.Model):
     )
 
     is_read = models.BooleanField(default=False)
+    is_dismissed = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
+
+    conversation = models.ForeignKey(
+        'Conversation',
+        null=True,
+        blank=True,
+        on_delete=models.CASCADE,
+        related_name='notifications',
+    )
+
+    post = models.ForeignKey(
+        'Post',
+        null=True,
+        blank=True,
+        on_delete=models.CASCADE,
+        related_name='notifications',
+    )
 
     deadline = models.ForeignKey(
         'Event',

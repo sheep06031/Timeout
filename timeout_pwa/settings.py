@@ -76,6 +76,8 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'timeout.context_processors.ai_suggestions',
+                'timeout.context_processors.unread_notifications_count',
             ],
         },
     },
@@ -110,7 +112,7 @@ AUTHENTICATION_BACKENDS = [
 SITE_ID = 1
 
 
-# Password hashing — Argon2 is the primary hasher
+# Password hashing, Argon2 is the primary hasher
 PASSWORD_HASHERS = [
     'django.contrib.auth.hashers.Argon2PasswordHasher',
     'django.contrib.auth.hashers.PBKDF2PasswordHasher',
@@ -178,6 +180,10 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # OpenAI API Key
 OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY', '')
+
+# SendGrid Email Configuration
+SENDGRID_API_KEY = os.environ.get('SENDGRID_API_KEY', '')
+SENDGRID_FROM_EMAIL = os.environ.get('SENDGRID_FROM_EMAIL', 'noreply@kcltimeout.com')
 
 
 # Login/Logout URLs

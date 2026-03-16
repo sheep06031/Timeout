@@ -36,19 +36,21 @@
 
     {% endblock %}
   </head>
+
   <body class="d-flex flex-column min-vh-100" data-user-status="{{ request.user.status }}">
     <!-- Navigation Bar -->
     {% include 'partials/_navbar.html' %}
 
-    <!-- Messages -->
-    {% block flash_messages %}
-      {% include 'partials/_messages.html' %}
-    {% endblock %}
     <!-- Main Content Area -->
-    <main class="container mt-4 flex-grow-1">
-      {% block content %}
+    {% comment %} <main class="container mt-4 flex-grow-1"> {% endcomment %}
+    <main class="{% block main_class %}container mt-4 flex-grow-1{% endblock %}">
+    <!-- Messages -->    
+    {% block flash_messages %}
+        {% include 'partials/_messages.html' %}
+    {% endblock %}
 
-      {% endblock %}
+    {% block content %}
+    {% endblock %}
     </main>
 
     <!-- Bootstrap 5 JS -->
@@ -67,6 +69,10 @@ document.addEventListener('DOMContentLoaded', () => {
   const badge = document.querySelector('.nav-link .badge');
 
   async function updateNotifications() {
+    if (document.body.dataset.userStatus === 'focus') {
+        fetch("{% url 'poll_notifications' %}").catch(() => {});
+        return;
+    }
     try {
       const response = await fetch("{% url 'poll_notifications' %}");
       if (!response.ok) return;
@@ -87,10 +93,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Update immediately and then every 10 seconds
   updateNotifications();
+  window.addEventListener('focusModeEnded', updateNotifications);
   setInterval(updateNotifications, 10000); 
 });
 </script>
-  </body>
   <!-- Footer -->
   {% include 'partials/_footer.html' %}
+  </body>
 </html>

@@ -149,6 +149,29 @@
       </div>
     </div>
 
+    <!-- ═══ Social ═══ -->
+    <div class="stg-section">
+      <div class="stg-section-header">
+        <span class="stg-section-icon">&#128172;</span>
+        <div>
+          <h2 class="stg-section-title">Social</h2>
+          <p class="stg-section-desc">Control your online presence.</p>
+        </div>
+      </div>
+
+      <div class="stg-field">
+        <label class="stg-toggle-row">
+          <input type="checkbox" name="auto_online" class="stg-toggle-input"
+                 {% if appearance_form.instance.auto_online %}checked{% endif %}>
+          <span class="stg-toggle-switch"></span>
+          <span class="stg-toggle-text">
+            <span class="stg-label">Appear online on login</span>
+            <span class="stg-field-hint">Automatically set your status to Social when you log in. When off, your status stays Inactive until you change it manually.</span>
+          </span>
+        </label>
+      </div>
+    </div>
+
     <!-- Auto-save status -->
     <div class="stg-autosave" id="autosaveStatus" style="display:none">
       <span class="stg-autosave-text" id="autosaveText">Saved</span>
@@ -228,9 +251,12 @@
   function doSave() {
     showStatus('Saving...', 'saving');
     var data = new FormData(form);
-    // Checkbox: if unchecked, FormData won't include it — add explicit "off"
+    // Checkboxes: if unchecked, FormData won't include them and delete explicitly
     if (!form.querySelector('[name="notification_sounds"]').checked) {
       data.delete('notification_sounds');
+    }
+    if (!form.querySelector('[name="auto_online"]').checked) {
+      data.delete('auto_online');
     }
     fetch(saveUrl, {
       method: 'POST',

@@ -20,7 +20,7 @@ from django.utils import timezone
 from faker import Faker
 
 from allauth.socialaccount.models import SocialApp
-from timeout.models import Event, Post, Comment, Like, Bookmark, FocusSession
+from timeout.models import Event, Post, Comment, Like, Bookmark, FocusSession, Note, StudyLog
 
 User = get_user_model()
 fake = Faker()
@@ -28,6 +28,8 @@ fake = Faker()
 NUM_USERS = 25
 NUM_EVENTS = 15
 NUM_POSTS = 40
+NUM_NOTES_PER_USER = (5, 50)  # min, max notes per user
+HEATMAP_WEEKS = 12
 SUPERUSER_USERNAME = 'johndoe'
 SUPERUSER_PASSWORD = 'Password123'
 SUPERUSER_EMAIL = 'john.doe@email.com'
@@ -69,6 +71,63 @@ INTERESTS = [
 ]
 
 MANAGEMENT_STYLES = ['early_bird', 'night_owl']
+
+NOTE_CATEGORIES = ['lecture', 'todo', 'study_plan', 'personal', 'other']
+
+NOTE_TITLES = {
+    'lecture': [
+        'Lecture 1 — Introduction to {}',
+        '{} — Key Concepts',
+        'Week {} Notes: {}',
+        '{} Lecture Summary',
+        'Guest Lecture: {}',
+    ],
+    'todo': [
+        'Submit {} assignment',
+        'Review {} before exam',
+        'Email professor about {}',
+        'Finish {} lab report',
+        'Prepare slides for {}',
+        'Buy materials for {}',
+    ],
+    'study_plan': [
+        '{} Exam Prep Plan',
+        'Weekly Study Schedule — {}',
+        '{} Revision Strategy',
+        'Group Study Plan: {}',
+        'Final Exam Roadmap — {}',
+    ],
+    'personal': [
+        'Gym routine this week',
+        'Meal prep ideas',
+        'Books to read this month',
+        'Budget tracker — {}',
+        'Weekend plans',
+        'Self-care reminders',
+    ],
+    'other': [
+        'Meeting notes — {}',
+        'Random thoughts on {}',
+        'Club event planning',
+        'Internship application notes',
+        'Career fair prep',
+    ],
+}
+
+NOTE_CONTENT_SNIPPETS = [
+    'Need to focus on the main concepts here. The professor emphasized that this will be on the exam.',
+    'Key takeaway: always start with the fundamentals before moving to advanced topics.',
+    'Remember to cross-reference with the textbook chapter {}. There are some discrepancies with the slides.',
+    'This connects to what we learned last week about {}. Important to see the bigger picture.',
+    'TODO: re-watch the recorded lecture and fill in the gaps from my notes.',
+    'Great discussion in today\'s seminar. The point about {} really changed my perspective.',
+    'Step 1: Outline the problem. Step 2: Break it into subproblems. Step 3: Solve each part.',
+    'The formula is straightforward but the edge cases are tricky. Need more practice problems.',
+    'Deadline is approaching fast. Prioritize sections A and C, section B can wait.',
+    'Group decided to split the work: I\'m handling the implementation, Alex does the report.',
+    'Interesting approach using {} — could be useful for the final project too.',
+    'Don\'t forget to include citations from the {} paper. The professor is strict about referencing.',
+]
 
 SITE_DOMAIN = '127.0.0.1:8000'
 SITE_NAME = 'Timeout Local'
@@ -118,12 +177,24 @@ class Command(BaseCommand):
         self.stdout.write(f'\n[6b/9] Creating global recurring events...')
         self._create_global_events()
 
+        self.stdout.write('\n[12] Creating notes for all users...')
+        self._create_notes(users)
+
+        self.stdout.write('\n[13] Creating study logs (heatmap data)...')
+        self._create_study_logs(users)
+
+        self.stdout.write('\n[14] Setting gamification stats...')
+        self._set_gamification_stats(users)
+
         total_users = User.objects.count()
         total_posts = Post.objects.count()
         total_events = Event.objects.count()
+        total_notes = Note.objects.count()
+        total_logs = StudyLog.objects.count()
         self.stdout.write(self.style.SUCCESS(
             f'\nDone! Users: {total_users}, '
-            f'Posts: {total_posts}, Events: {total_events}'
+            f'Posts: {total_posts}, Events: {total_events}, '
+            f'Notes: {total_notes}, StudyLogs: {total_logs}'
         ))
 
     def _setup_site(self):
@@ -542,4 +613,184 @@ class Command(BaseCommand):
 
         self.stdout.write(self.style.SUCCESS(
             f'  Created {like_count} likes and {bookmark_count} bookmarks.'
+        ))
+
+    def _create_notes(self, users):
+        """Create notes with due dates, categories, and time spent for all users."""
+        all_users = list(User.objects.all())
+        subjects = ['Algorithms', 'Machine Learning', 'Database Systems',
+                     'Software Engineering', 'Networks', 'Maths', 'Statistics',
+                     'Operating Systems', 'AI', 'Web Development']
+        now = timezone.now()
+        note_count = 0
+
+        for user in all_users:
+            # Get user's events for linking
+            user_events = list(user.created_events.all()[:10])
+            num_notes = random.randint(*NUM_NOTES_PER_USER)
+
+            for i in range(num_notes):
+                category = random.choice(NOTE_CATEGORIES)
+                subject = random.choice(subjects)
+
+                # Pick a title template
+                titles = NOTE_TITLES[category]
+                title_template = random.choice(titles)
+                try:
+                    if '{}' in title_template:
+                        if 'Week' in title_template:
+                            title = title_template.format(random.randint(1, 12), subject)
+                        else:
+                            title = title_template.format(subject)
+                    else:
+                        title = title_template
+                except (IndexError, KeyError):
+                    title = f'{subject} Notes'
+
+                # Build content from snippets
+                num_snippets = random.randint(1, 3)
+                content_parts = []
+                for _ in range(num_snippets):
+                    snippet = random.choice(NOTE_CONTENT_SNIPPETS)
+                    if '{}' in snippet:
+                        snippet = snippet.format(subject)
+                    content_parts.append(snippet)
+                content = '\n\n'.join(content_parts)
+
+                # Due date: ~40% of todo/study_plan notes have due dates
+                due_date = None
+                if category in ('todo', 'study_plan') and random.random() < 0.6:
+                    days_ahead = random.randint(-3, 14)
+                    due_date = now + timedelta(days=days_ahead, hours=random.randint(8, 23))
+                elif random.random() < 0.15:
+                    due_date = now + timedelta(days=random.randint(1, 30))
+
+                # Time spent: some notes have Pomodoro time logged
+                time_spent = 0
+                if random.random() < 0.4:
+                    time_spent = random.choice([25, 25, 50, 50, 75, 100, 125, 150])
+
+                # Created at: spread notes over last 2 months
+                created_offset = timedelta(
+                    days=random.randint(0, 60),
+                    hours=random.randint(0, 23),
+                    minutes=random.randint(0, 59),
+                )
+                created_at = now - created_offset
+
+                # Pin some notes
+                is_pinned = random.random() < 0.15
+
+                # Link to event occasionally
+                event = None
+                if user_events and random.random() < 0.3:
+                    event = random.choice(user_events)
+
+                note = Note(
+                    owner=user,
+                    title=title[:200],
+                    content=content[:5000],
+                    category=category,
+                    event=event,
+                    is_pinned=is_pinned,
+                    due_date=due_date,
+                    time_spent_minutes=time_spent,
+                )
+                note.save()
+                # Override auto_now_add for created_at
+                Note.objects.filter(pk=note.pk).update(created_at=created_at)
+                note_count += 1
+
+        self.stdout.write(self.style.SUCCESS(
+            f'  Created {note_count} notes across {len(all_users)} users.'
+        ))
+
+    def _create_study_logs(self, users):
+        """Create study log entries for heatmap data over the past 12 weeks."""
+        all_users = list(User.objects.all())
+        now = timezone.localtime(timezone.now())
+        today = now.date()
+        log_count = 0
+
+        for user in all_users:
+            # Each user has varying activity levels
+            activity_level = random.choice(['low', 'medium', 'high'])
+            active_prob = {'low': 0.25, 'medium': 0.5, 'high': 0.75}[activity_level]
+
+            for day_offset in range(HEATMAP_WEEKS * 7):
+                date = today - timedelta(days=day_offset)
+
+                # Skip some days based on activity level
+                if random.random() > active_prob:
+                    continue
+
+                # Weekend = lower activity
+                if date.weekday() >= 5 and random.random() < 0.4:
+                    continue
+
+                pomodoros = random.choices(
+                    [0, 1, 2, 3, 4, 5, 6],
+                    weights=[10, 20, 25, 20, 15, 7, 3],
+                )[0]
+                notes_created = random.choices(
+                    [0, 1, 2, 3, 4],
+                    weights=[20, 35, 25, 15, 5],
+                )[0]
+                focus_minutes = pomodoros * random.randint(20, 30) + random.randint(0, 15)
+
+                if pomodoros == 0 and notes_created == 0 and focus_minutes == 0:
+                    continue
+
+                StudyLog.objects.get_or_create(
+                    user=user,
+                    date=date,
+                    defaults={
+                        'pomodoros': pomodoros,
+                        'notes_created': notes_created,
+                        'focus_minutes': focus_minutes,
+                    },
+                )
+                log_count += 1
+
+        self.stdout.write(self.style.SUCCESS(
+            f'  Created {log_count} study log entries.'
+        ))
+
+    def _set_gamification_stats(self, users):
+        """Set XP, streaks, and daily goals for all users."""
+        all_users = list(User.objects.all())
+        now = timezone.localtime(timezone.now()).date()
+
+        for user in all_users:
+            # XP: proportional to their study logs
+            log_count = StudyLog.objects.filter(user=user).count()
+            note_count = Note.objects.filter(owner=user).count()
+            base_xp = log_count * random.randint(15, 35) + note_count * 10
+            user.xp = base_xp + random.randint(0, 200)
+
+            # Streak: check consecutive days with study logs
+            streak = 0
+            check_date = now
+            while True:
+                if StudyLog.objects.filter(user=user, date=check_date).exists():
+                    streak += 1
+                    check_date -= timedelta(days=1)
+                else:
+                    break
+            user.note_streak = streak
+            user.longest_note_streak = max(streak, random.randint(streak, streak + 10))
+            user.last_note_date = now if streak > 0 else (now - timedelta(days=random.randint(2, 10)))
+
+            # Daily goals: randomize per user
+            user.daily_pomo_goal = random.choice([2, 3, 4, 5, 6])
+            user.daily_notes_goal = random.choice([1, 2, 3, 4])
+            user.daily_focus_goal = random.choice([60, 90, 120, 150, 180])
+
+            user.save(update_fields=[
+                'xp', 'note_streak', 'longest_note_streak', 'last_note_date',
+                'daily_pomo_goal', 'daily_notes_goal', 'daily_focus_goal',
+            ])
+
+        self.stdout.write(self.style.SUCCESS(
+            f'  Set gamification stats for {len(all_users)} users.'
         ))

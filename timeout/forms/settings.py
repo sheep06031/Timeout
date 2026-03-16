@@ -10,6 +10,7 @@ class AppearanceForm(forms.ModelForm):
             'notification_sounds',
             'pomo_work_minutes', 'pomo_short_break', 'pomo_long_break',
             'default_note_category', 'daily_study_reminder',
+            'auto_online',
         ]
         widgets = {
             'theme': forms.RadioSelect(choices=User.Theme.choices),
@@ -32,4 +33,5 @@ class AppearanceForm(forms.ModelForm):
             'daily_study_reminder': forms.TimeInput(attrs={
                 'type': 'time', 'class': 'form-control',
             }),
+            'auto_online': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
         }
