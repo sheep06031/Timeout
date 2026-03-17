@@ -1,7 +1,3 @@
-/* ============================================
-   Settings Page
-   ============================================ */
-
 .stg-page {
   max-width: 720px;
   margin: 0 auto;
@@ -26,7 +22,7 @@
   margin: 0;
 }
 
-/* ── Sections ── */
+/*  Sections  */
 .stg-section {
   background: #fff;
   border: 1px solid rgba(91, 115, 232, 0.10);
@@ -63,7 +59,7 @@
   margin: 0;
 }
 
-/* ── Fields ── */
+/*  Fields  */
 .stg-field {
   margin-bottom: 20px;
 }
@@ -114,7 +110,7 @@
   box-shadow: 0 0 0 3px rgba(91, 115, 232, 0.08);
 }
 
-/* ── Theme Cards ── */
+/*  Theme Cards  */
 .stg-theme-options {
   display: flex;
   gap: 12px;
@@ -196,7 +192,7 @@
   color: #2a3547;
 }
 
-/* ── Radio Options ── */
+/*  Radio Options  */
 .stg-radio-group {
   display: flex;
   flex-direction: column;
@@ -257,7 +253,7 @@
   background: #5B73E8;
 }
 
-/* ── Slider ── */
+/*  Slider  */
 .stg-slider-wrap {
   display: flex;
   align-items: center;
@@ -313,7 +309,7 @@
   text-align: center;
 }
 
-/* ── Toggle Switch ── */
+/*  Toggle Switch  */
 .stg-toggle-row {
   display: flex;
   align-items: center;
@@ -369,7 +365,7 @@
   margin-bottom: 0;
 }
 
-/* ── Save Bar ── */
+/*  Save Bar  */
 .stg-save-bar {
   margin-bottom: 20px;
 }
@@ -394,7 +390,7 @@
   box-shadow: 0 6px 20px rgba(91, 115, 232, 0.3);
 }
 
-/* ── Buttons ── */
+/*  Buttons  */
 .stg-btn {
   display: inline-flex;
   align-items: center;
@@ -425,7 +421,7 @@
   background: rgba(239, 68, 68, 0.15);
 }
 
-/* ── Danger Zone ── */
+/*  Danger Zone  */
 .stg-danger-zone {
   margin-top: 24px;
   padding-top: 20px;
@@ -445,7 +441,7 @@
   margin: 0 0 12px;
 }
 
-/* ── Auto-save status ── */
+/*  Auto-save status  */
 .stg-autosave {
   text-align: center;
   padding: 8px;
@@ -471,7 +467,7 @@
   background: rgba(239, 68, 68, 0.08);
 }
 
-/* ── Responsive ── */
+/*  Responsive  */
 @media (max-width: 575.98px) {
   .stg-section {
     padding: 18px 16px;

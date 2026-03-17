@@ -1,4 +1,4 @@
-/* ───────── Notifications Toolbar ───────── */
+/*  Notifications Toolbar  */
 .notifications-toolbar {
     display: flex;
     justify-content: space-between;
@@ -23,14 +23,14 @@
     color: #2a3547;
 }
 
-/* ───────── Notifications List ───────── */
+/*  Notifications List  */
 .notifications-list {
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
 }
 
-/* ───────── Notification Row ───────── */
+/*  Notification Row  */
 .notification-item {
     display: flex;
     justify-content: space-between;
@@ -49,7 +49,7 @@
     filter: brightness(0.97);
 }
 
-/* ───────── Read vs Unread ───────── */
+/*  Read vs Unread  */
 .notification-unread {
     background: #ffffff;
 }
@@ -64,7 +64,7 @@
 .notification-read .notification-message { color: #8a929e; }
 .notification-read .notification-time { color: #a0a8b3; }
 
-/* ───────── Colour palette per type ───────── */
+/*  Colour palette per type  */
 
 /* Message teal */
 .notification-item[data-type="message"] {
@@ -126,7 +126,7 @@
     background: rgba(120, 144, 156, 0.08);
 }
 
-/* ───────── Content ───────── */
+/*  Content  */
 .notification-main {
     display: flex;
     flex-direction: column;
@@ -149,7 +149,7 @@
     color: #adb5bd;
 }
 
-/* ───────── Action Buttons ───────── */
+/*  Action Buttons  */
 .notification-actions {
     display: flex;
     gap: 6px;
@@ -183,7 +183,7 @@
     color: #b71c1c;
 }
 
-/* ───────── Toggle Unread Button ───────── */
+/*  Toggle Unread Button  */
 #toggle-unread-btn {
     padding: 7px 14px;
     border: 1px solid #5b5ddf;
@@ -201,7 +201,7 @@
     color: #2a3547;
 }
 
-/* ───────── Empty State ───────── */
+/*  Empty State  */
 .no-notifications-state {
     display: flex;
     flex-direction: column;
@@ -231,14 +231,14 @@
     margin: 0;
 }
 
-/* ───────── Dark mode: blend card with page ───────── */
+/*  Dark mode: blend card with page  */
 [data-theme="dark"] .chart-card {
     background: transparent;
     border-color: transparent;
     box-shadow: none;
 }
 
-/* ───────── Pagination ───────── */
+/*  Pagination  */
 .pagination-container {
     display: flex;
     justify-content: center;
