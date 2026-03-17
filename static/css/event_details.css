@@ -1,4 +1,4 @@
-/* ── Modal shell ── */
+/* Modal shell */
 .event-modal-content {
   border: none;
   border-radius: 16px;
@@ -7,7 +7,7 @@
   font-family: 'Plus Jakarta Sans', -apple-system, sans-serif;
 }
 
-/* ── Top colour bar ── */
+/* Top colour bar */
 .event-modal-bar {
   height: 5px;
   width: 100%;
@@ -15,7 +15,7 @@
   transition: background 0.2s ease;
 }
 
-/* ── Header ── */
+/* Header */
 .event-modal-header {
   padding: 22px 24px 16px;
   border-bottom: 1px solid #eef1f6;
@@ -87,7 +87,7 @@
   font-weight: 500;
 }
 
-/* ── Body ── */
+/* Body */
 .event-modal-body {
   padding: 20px 24px;
 }
@@ -140,7 +140,7 @@
   line-height: 1.6;
 }
 
-/* ── Footer ── */
+/* Footer */
 .event-modal-footer {
   padding: 16px 24px;
   border-top: 1px solid #eef1f6;

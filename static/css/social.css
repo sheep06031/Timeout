@@ -16,9 +16,7 @@
 }
 
 
-/* -------------------------------------------------------------
-   Page Background
-   ------------------------------------------------------------- */
+/* Page Background */
 
 .social-bg {
     background: var(--to-bg);
@@ -32,9 +30,7 @@
 }
 
 
-/* -------------------------------------------------------------
-   Glass Card (base for all social cards)
-   ------------------------------------------------------------- */
+/* Glass Card (base for all social cards) */
 
 .glass-card {
     background: var(--to-surface);
@@ -50,13 +46,12 @@
 .glass-card:hover { box-shadow: var(--to-shadow-md); }
 
 
-/* -------------------------------------------------------------
-   Create Post Card
-   ------------------------------------------------------------- */
+/* Create Post Card */
 
 .create-post-card {
     margin-bottom: 22px;
     padding: 22px 24px;
+    overflow: visible;
 }
 
 .create-post-card .card-label {
@@ -128,9 +123,7 @@
 .btn-post:hover { opacity: 0.9; transform: translateY(-1px); }
 
 
-/* -------------------------------------------------------------
-   Feed Tabs
-   ------------------------------------------------------------- */
+/* Feed Tabs */
 
 .feed-tabs {
     display: flex;
@@ -164,9 +157,7 @@
 }
 
 
-/* -------------------------------------------------------------
-   Empty State
-   ------------------------------------------------------------- */
+/* Empty State */
 
 .empty-state {
     text-align: center;
@@ -182,9 +173,7 @@
 .empty-state .icon { font-size: 36px; margin-bottom: 10px; }
 
 
-/* -------------------------------------------------------------
-   Messaging Sidebar
-   ------------------------------------------------------------- */
+/* Messaging Sidebar */
 
 .messages-sidebar { position: sticky; top: 84px; }
 
@@ -281,9 +270,7 @@
 .msg-empty .icon { font-size: 28px; margin-bottom: 8px; }
 
 
-/* -------------------------------------------------------------
-   Post Card
-   ------------------------------------------------------------- */
+/* Post Card */
 
 .post-card {
     background: var(--to-surface);
@@ -403,9 +390,7 @@
 .action-btn-bookmark.bookmarked { background: rgba(78, 205, 196, 0.10); border-color: var(--to-teal); }
 
 
-/* -------------------------------------------------------------
-   Comments
-   ------------------------------------------------------------- */
+/* Comments */
 
 .comments-section {
     margin-top: 16px;
@@ -471,10 +456,89 @@
 .comment-time  { font-size: 11px; color: var(--to-muted); margin-left: 6px; }
 .comment-text  { font-size: 13px; color: var(--to-text); margin-top: 2px; }
 
+/* Custom Event Dropdown (scrollable) */
 
-/* -------------------------------------------------------------
-   Responsive
-   ------------------------------------------------------------- */
+.custom-event-select {
+    position: relative;
+    width: 100%;
+}
+
+.custom-event-trigger {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border: 1.5px solid var(--to-border);
+    border-radius: var(--to-radius-sm);
+    padding: 9px 12px;
+    font-family: 'Nunito', sans-serif;
+    font-size: 13px;
+    color: var(--to-text);
+    background: rgba(240, 244, 255, 0.6);
+    width: 100%;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+    user-select: none;
+}
+
+.custom-event-trigger:hover,
+.custom-event-trigger.open {
+    border-color: var(--to-blue);
+    background: #fff;
+}
+
+.custom-event-trigger::after {
+    content: '';
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-right: 2px solid var(--to-muted);
+    border-bottom: 2px solid var(--to-muted);
+    transform: rotate(45deg) translateY(-2px);
+    transition: transform 0.2s;
+    flex-shrink: 0;
+    margin-left: 8px;
+}
+
+.custom-event-trigger.open::after {
+    transform: rotate(-135deg) translateY(-2px);
+}
+
+.custom-event-dropdown {
+    background: #fff;
+    border: 1.5px solid var(--to-border);
+    border-radius: var(--to-radius-sm);
+    box-shadow: var(--to-shadow-md);
+    max-height: 260px;
+    overflow-y: auto;
+    z-index: 200;
+    display: none;
+}
+
+.custom-event-dropdown.open {
+    display: block;
+}
+
+.custom-event-option {
+    padding: 9px 12px;
+    font-family: 'Nunito', sans-serif;
+    font-size: 13px;
+    color: var(--to-text);
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.custom-event-option:hover {
+    background: var(--to-bg);
+    color: var(--to-blue);
+}
+
+.custom-event-option.selected {
+    background: rgba(91, 115, 232, 0.08);
+    color: var(--to-blue);
+    font-weight: 700;
+}
+
+/* Responsive */
 
 @media (max-width: 768px) {
     .post-selects     { flex-direction: column; gap: 8px; }
@@ -483,9 +547,7 @@
 }
 
 
-/* -------------------------------------------------------------
-   Inbox Page
-   ------------------------------------------------------------- */
+/* Inbox Page */
 
 .inbox-header {
     display: flex;
@@ -527,9 +589,7 @@
 }
 
 
-/* -------------------------------------------------------------
-   Conversation Page
-   ------------------------------------------------------------- */
+/* Conversation Page */
 
 .convo-wrapper {
     max-width: 740px;
@@ -706,9 +766,7 @@
 
 .btn-send:hover { opacity: 0.9; transform: translateY(-1px); }
 
-/* -------------------------------------------------------------
-   User Search Card
-   ------------------------------------------------------------- */
+/* User Search Card */
 
 .user-search-card {
     padding: 18px 20px;

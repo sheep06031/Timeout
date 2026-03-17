@@ -504,7 +504,7 @@ body.nt-focus-active main {
 
 /* Notes Card Styles*/
 
-/* ── Card shell  */
+/* Card shell  */
 .nt-card {
   background: #ffffff;
   border-radius: 12px;
@@ -694,7 +694,7 @@ body.nt-focus-active main {
 .submit-btn:hover { background: #3f54ba; color: #fff; }
 
 
-/* ═══ Urgency Indicators ═══ */
+/* Urgency Indicators */
 
 .nt-urgency {
   display: inline-flex;
@@ -765,7 +765,7 @@ body.nt-focus-active main {
 }
 
 
-/* ═══ Pomodoro Note Linking ═══ */
+/* Pomodoro Note Linking */
 
 .nt-pomo-link {
   margin-bottom: 14px;
@@ -800,7 +800,7 @@ body.nt-focus-active main {
 }
 
 
-/* ═══ Time Spent Badge (Edit page) ═══ */
+/* Time Spent Badge (Edit page) */
 
 .nt-time-spent-badge {
   display: inline-flex;
@@ -815,7 +815,7 @@ body.nt-focus-active main {
 }
 
 
-/* ═══ Daily Goals Widget ═══ */
+/* Daily Goals Widget */
 
 .nt-goals-bar {
   background: #fff;
@@ -974,7 +974,7 @@ body.nt-focus-active main {
 }
 
 
-/* ═══ Study Heatmap ═══ */
+/* Study Heatmap */
 
 .nt-heatmap-card {
   background: #fff;

@@ -105,7 +105,7 @@ canvas {
   flex-shrink: 0;
 }
 
-/* ── Focus session pill ── */
+/*  Focus session pill  */
 .focus-session-pill {
   background: rgba(229, 62, 62, 0.10);
   color: #e53e3e;
@@ -116,7 +116,7 @@ canvas {
   border-radius: 999px;
 }
 
-/* ── Focus daily grid ── */
+/*  Focus daily grid  */
 .focus-days-grid {
   display: flex;
   gap: 4px;
@@ -195,7 +195,7 @@ canvas {
   color: #dee2e6;
 }
 
-/* ── Friends leaderboard ── */
+/*  Friends leaderboard  */
 .lb-list {
   flex: 1;
   min-height: 0;

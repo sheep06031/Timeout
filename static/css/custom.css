@@ -2,9 +2,7 @@
 /* Google Font */
 @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&display=swap');
 
-/* -------------------------------------------------------------
-   CSS Custom Properties (Light = default)
-   ------------------------------------------------------------- */
+/* CSS Custom Properties (Light = default) */
 
 :root {
     --bg-primary: #ffffff;
@@ -829,9 +827,7 @@
     filter: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg'><filter id='t'><feColorMatrix type='matrix' values='0.95,0.05,0,0,0 0,0.433,0.567,0,0 0,0.475,0.525,0,0 0,0,0,1,0'/></filter></svg>#t");
 }
 
-/* -------------------------------------------------------------
-   Footer
-   ------------------------------------------------------------- */
+/* Footer */
 
 .timeout-footer {
     background: var(--bg-secondary);
@@ -844,9 +840,7 @@
     color: var(--text-muted);
 }
 
-/* -------------------------------------------------------------
-   Global Base
-   ------------------------------------------------------------- */
+/* Global Base */
 
 body {
     font-family: 'Nunito', sans-serif;
@@ -855,9 +849,7 @@ body {
 }
 
 
-/* -------------------------------------------------------------
-   Auth Page Layout
-   ------------------------------------------------------------- */
+/* Auth Page Layout */
 
 .auth-container {
     min-height: 100vh;
@@ -898,9 +890,7 @@ body {
 .auth-body      { padding: 2rem; }
 
 
-/* -------------------------------------------------------------
-   Form Controls
-   ------------------------------------------------------------- */
+/* Form Controls */
 
 .form-label { font-weight: 500; color: #2d3748; margin-bottom: 0.5rem; }
 
@@ -938,9 +928,7 @@ body {
 .alert              { border-radius: 8px; border: none; }
 
 
-/* -------------------------------------------------------------
-   Auth Button
-   ------------------------------------------------------------- */
+/* Auth Button */
 
 .btn-auth {
     background: linear-gradient(135deg, #6D8BC0 0%, #525AFF 100%);
@@ -962,9 +950,7 @@ body {
 }
 
 
-/* -------------------------------------------------------------
-   Password Toggle
-   ------------------------------------------------------------- */
+/* Password Toggle */
 
 .password-toggle { position: relative; }
 
@@ -987,9 +973,7 @@ body {
 .password-toggle-btn svg   { width: 20px; height: 20px; }
 
 
-/* -------------------------------------------------------------
-   Divider
-   ------------------------------------------------------------- */
+/* Divider */
 
 .divider { display: flex; align-items: center; text-align: center; margin: 1.5rem 0; }
 .divider::before,
@@ -997,9 +981,7 @@ body {
 .divider span   { padding: 0 1rem; color: #718096; font-size: 0.875rem; font-weight: 500; }
 
 
-/* -------------------------------------------------------------
-   Google Button
-   ------------------------------------------------------------- */
+/* Google Button */
 
 .btn-google {
     display: flex;
@@ -1035,9 +1017,7 @@ body {
 .btn-google svg           { flex-shrink: 0; }
 
 
-/* -------------------------------------------------------------
-   Auth Links
-   ------------------------------------------------------------- */
+/* Auth Links */
 
 .auth-link { text-align: center; margin-top: 1.5rem; color: #718096; }
 .auth-link a { color: #525AFF; font-weight: 600; text-decoration: none; }
@@ -1047,9 +1027,7 @@ body {
 .forgot-password-link:hover { text-decoration: underline; }
 
 
-/* -------------------------------------------------------------
-   University "Other" field
-   ------------------------------------------------------------- */
+/* University "Other" field */
 
 .uni-other-field { display: none; overflow: hidden; }
 
@@ -1064,9 +1042,7 @@ body {
 }
 
 
-/* -------------------------------------------------------------
-   Navbar
-   ------------------------------------------------------------- */
+/* Navbar */
 
 .timeout-nav {
     background: rgba(255, 255, 255, 0.92) !important;
@@ -1289,9 +1265,7 @@ body {
     .nav-topbar-user { order: 10; }
 }
 
-/* -------------------------------------------------------------
-   Status Dots & Badges (used app-wide)
-   ------------------------------------------------------------- */
+/* Status Dots & Badges (used app-wide) */
 
 .status-dot {
     display: inline-block;

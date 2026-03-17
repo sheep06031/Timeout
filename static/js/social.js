@@ -18,6 +18,70 @@ function getCookie(name) {
 
 const csrftoken = getCookie('csrftoken');
 
+function initEventDropdown() {
+    const nativeSelect = document.getElementById('id_event');
+    if (!nativeSelect) return;
+
+    nativeSelect.style.display = 'none';
+
+    const wrapper = document.createElement('div');
+    wrapper.className = 'custom-event-select';
+
+    const trigger = document.createElement('div');
+    trigger.className = 'custom-event-trigger';
+    trigger.textContent = nativeSelect.options[nativeSelect.selectedIndex]?.text || 'No event';
+
+    const dropdown = document.createElement('div');
+    dropdown.className = 'custom-event-dropdown';
+    document.body.appendChild(dropdown); // attach to body so it's never clipped
+
+    function positionDropdown() {
+        const rect = trigger.getBoundingClientRect();
+        dropdown.style.position = 'fixed';
+        dropdown.style.top = (rect.bottom + 4) + 'px';
+        dropdown.style.left = rect.left + 'px';
+        dropdown.style.width = rect.width + 'px';
+    }
+
+    Array.from(nativeSelect.options).forEach((opt) => {
+        const item = document.createElement('div');
+        item.className = 'custom-event-option' + (opt.selected ? ' selected' : '');
+        item.textContent = opt.text;
+        item.dataset.value = opt.value;
+
+        item.addEventListener('click', () => {
+            nativeSelect.value = opt.value;
+            trigger.textContent = opt.text;
+            dropdown.querySelectorAll('.custom-event-option').forEach(o => o.classList.remove('selected'));
+            item.classList.add('selected');
+            dropdown.classList.remove('open');
+            trigger.classList.remove('open');
+        });
+
+        dropdown.appendChild(item);
+    });
+
+    trigger.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const isOpen = dropdown.classList.contains('open');
+        if (!isOpen) positionDropdown();
+        dropdown.classList.toggle('open', !isOpen);
+        trigger.classList.toggle('open', !isOpen);
+    });
+
+    document.addEventListener('click', () => {
+        dropdown.classList.remove('open');
+        trigger.classList.remove('open');
+    });
+
+    window.addEventListener('scroll', () => {
+        if (dropdown.classList.contains('open')) positionDropdown();
+    }, { passive: true });
+
+    wrapper.appendChild(trigger);
+    nativeSelect.insertAdjacentElement('afterend', wrapper);
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     const input = document.getElementById('userSearchInput');
     const results = document.getElementById('userSearchResults');
@@ -176,6 +240,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
 document.addEventListener('DOMContentLoaded', function() {
 
+    initEventDropdown();
+
     document.querySelectorAll('.like-btn').forEach(button => {
         button.addEventListener('click', function() {
             const postId = this.dataset.postId;
@@ -282,4 +348,3 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
 });
-

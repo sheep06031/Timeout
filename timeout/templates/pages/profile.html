@@ -61,7 +61,7 @@
                 <div class="mt-3">
                   <span class="badge bg-light text-dark me-2">{{ posts|length }} Posts</span>
                   <span class="badge bg-light text-dark me-2" style="cursor:pointer;" data-bs-toggle="modal" data-bs-target="#followersModal">{{ user.follower_count }} Followers</span>
-                  <span class="badge bg-light text-dark me-2" style="cursor:pointer;" data-bs-toggle="modal" data-bs-target="#followingModal">{{ user.following_count }} Following</span>
+                  <span id="following-count-badge" class="badge bg-light text-dark me-2" style="cursor:pointer;" data-bs-toggle="modal" data-bs-target="#followingModal">{{ user.following_count }} Following</span>
                   <span class="badge bg-light text-dark me-2" style="cursor:pointer;" data-bs-toggle="modal" data-bs-target="#friendsModal">{{ friends_count }} Friends</span>
                 </div>
               </div>

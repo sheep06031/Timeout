@@ -1,8 +1,6 @@
-/* ============================================
-   Dashboard Redesigned Command Center
-   ============================================ */
+/* Dashboard Redesigned Command Center */
 
-/* --- Layout --- */
+/* Layout */
 .dashboard-bg {
     background: #f8f9fc;
     min-height: 100vh;
@@ -14,7 +12,7 @@
     padding: 32px 24px 60px;
 }
 
-/* --- Header: Greeting + Quick Actions --- */
+/* Header: Greeting + Quick Actions */
 .dashboard-header {
     display: flex;
     align-items: flex-start;
@@ -97,7 +95,7 @@
     text-decoration: none;
 }
 
-/* --- Focus Stats Strip --- */
+/* Focus Stats Strip */
 .dash-focus-strip {
     display: flex;
     align-items: center;
@@ -193,14 +191,14 @@
     color: #4a63d8;
 }
 
-/* --- Card Grid --- */
+/* Card Grid */
 .dash-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: 20px;
 }
 
-/* --- Card Base --- */
+/* Card Base */
 .dash-card {
     background: #fff;
     border: 1px solid rgba(91, 115, 232, 0.10);
@@ -259,7 +257,7 @@
     padding: 8px 0;
 }
 
-/* --- Events Card --- */
+/* Events Card */
 .dash-event-item {
     display: flex;
     align-items: center;
@@ -308,7 +306,7 @@
     font-weight: 500;
 }
 
-/* --- Deadlines Card --- */
+/* Deadlines Card */
 .dash-deadline-item {
     display: flex;
     align-items: center;
@@ -353,7 +351,7 @@
 .dash-deadline-badge--urgent  { background: rgba(245, 158, 11, 0.12); color: #d97706; }
 .dash-deadline-badge--overdue { background: rgba(239, 68, 68, 0.10); color: #ef4444; }
 
-/* --- Notes Card --- */
+/* Notes Card */
 .dash-note-item {
     display: flex;
     align-items: center;
@@ -413,7 +411,7 @@
     flex-shrink: 0;
 }
 
-/* --- Social Card --- */
+/* Social Card */
 .dash-post-item {
     display: flex;
     gap: 10px;
@@ -464,7 +462,7 @@
     margin-top: 2px;
 }
 
-/* --- Messages Card --- */
+/* Messages Card */
 .dash-unread-badge {
     background: #ef4444;
     color: #fff;
@@ -499,7 +497,7 @@
     color: #4a63d8;
 }
 
-/* --- Quick Links Card --- */
+/* Quick Links Card */
 .dash-links-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -533,10 +531,9 @@
 .dash-link-icon {
     font-size: 20px;
 }
-/*lines 536-606 added for weekly briefing card*/
-/* ============================================
-   AI Weekly Insight Hero Card
-   ============================================ */
+
+/* AI Weekly Insight Hero Card */
+
 .dash-ai-briefing {
     background: linear-gradient(135deg, rgba(91, 115, 232, 0.10) 0%, rgba(91, 93, 223, 0.04) 100%);
     border: 1px solid rgba(91, 115, 232, 0.18);
@@ -605,7 +602,7 @@
     color: #5B73E8;
 }
 
-/* --- Responsive --- */
+/* Responsive */
 
 /* Tablet: 2 columns */
 @media (max-width: 991.98px) {
@@ -668,7 +665,6 @@
     .dash-links-grid {
         grid-template-columns: repeat(3, 1fr);
     }
-/*lines 671-686 added for weekly briefing card*/
     /* AI briefing mobile adjustments */
     .dash-ai-briefing {
         padding: 16px 18px;

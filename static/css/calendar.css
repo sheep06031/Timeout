@@ -278,7 +278,7 @@ td.cal-today .cal-day-num {
   100% { transform: scale(1);    box-shadow: 0 0 0px rgba(91,115,232,0); }
 }
 
-/* ───────── Day Events Modal ───────── */
+/* Day Events Modal */
 .day-modal-event-item {
   margin-bottom: 0.5rem;
   cursor: pointer;
@@ -362,7 +362,7 @@ td.cal-today .cal-day-num {
   display: none;
 }
 
-/* ── Ongoing event glow ── */
+/* Ongoing event glow */
 .cal-chip--ongoing {
   animation: ongoingGlow 2s ease-in-out infinite;
   position: relative;
