@@ -13,6 +13,7 @@ class StudyLog(models.Model):
     date = models.DateField()
     pomodoros = models.PositiveSmallIntegerField(default=0)
     notes_created = models.PositiveSmallIntegerField(default=0)
+    notes_edited = models.PositiveSmallIntegerField(default=0)
     focus_minutes = models.PositiveSmallIntegerField(default=0)
 
     class Meta:
@@ -31,7 +32,7 @@ class StudyLog(models.Model):
     @property
     def activity_level(self):
         """Return 0-4 intensity for heatmap cell."""
-        score = self.pomodoros * 2 + self.notes_created + self.focus_minutes // 30
+        score = self.pomodoros * 2 + self.notes_created + self.notes_edited + self.focus_minutes // 30
         if score == 0:
             return 0
         if score <= 2:

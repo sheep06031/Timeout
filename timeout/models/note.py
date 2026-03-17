@@ -13,6 +13,10 @@ class Note(models.Model):
         PERSONAL = 'personal', 'Personal'
         OTHER = 'other', 'Other'
 
+    class PageMode(models.TextChoices):
+        PAGELESS = 'pageless', 'Pageless'
+        PAGED = 'paged', 'Paged'
+
     CATEGORY_COLORS = {
         'lecture': 'primary',
         'todo': 'danger',
@@ -40,6 +44,11 @@ class Note(models.Model):
         blank=True,
         related_name='notes',
         help_text='Optional calendar event linked to this note',
+    )
+    page_mode = models.CharField(
+        max_length=10,
+        choices=PageMode.choices,
+        default=PageMode.PAGELESS,
     )
     is_pinned = models.BooleanField(default=False)
     due_date = models.DateTimeField(

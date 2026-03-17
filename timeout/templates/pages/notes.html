@@ -96,8 +96,8 @@
             <span class="nt-goal-ring-icon">&#128221;</span>
           </div>
           <div class="nt-goal-info">
-            <span class="nt-goal-progress" id="goalNotesText">{{ daily_progress.notes_created }} / {{ daily_progress.notes_goal }}</span>
-            <span class="nt-goal-label">Notes Created</span>
+            <span class="nt-goal-progress" id="goalNotesText">{{ daily_progress.notes_edited }} / {{ daily_progress.notes_goal }}</span>
+            <span class="nt-goal-label">Notes Edited</span>
           </div>
         </div>
 
@@ -162,7 +162,7 @@
           </div>
         </div>
 
-        <!-- Search & Filter -->
+        <!-- Search, Filter & Sort -->
         <form method="get" action="{% url 'notes' %}" class="nt-filter">
           <input
             type="text"
@@ -179,9 +179,13 @@
               </option>
             {% endfor %}
           </select>
-          <a href="{% url 'notes' %}?filter=due_soon" class="nt-due-filter {% if active_filter == 'due_soon' %}nt-due-filter--active{% endif %}">
-            &#9203; Due Soon
-          </a>
+          <select name="sort" class="nt-select nt-sort-select" onchange="this.form.submit()">
+            {% for value, label in sort_options %}
+              <option value="{{ value }}" {% if active_sort == value %}selected{% endif %}>
+                {{ label }}
+              </option>
+            {% endfor %}
+          </select>
           {% if search_query %}
             <button type="submit" class="nt-search-btn">Search</button>
           {% endif %}
@@ -191,7 +195,7 @@
         <div class="nt-list">
           {% if notes %}
             {% for note in notes %}
-              <div class="nt-item nt-item--{{ note.category }}" id="note-{{ note.id }}" data-note-id="{{ note.id }}">
+              <a href="{% url 'note_edit' note.id %}" class="nt-item nt-item--{{ note.category }}" id="note-{{ note.id }}" data-note-id="{{ note.id }}">
 
                 <div class="nt-item__body">
                   <div class="nt-item__header">
@@ -202,26 +206,12 @@
                     <span class="nt-cat-tag nt-cat-tag--{{ note.category }}">
                       {{ note.get_category_display }}
                     </span>
-                    {% if note.urgency %}
-                      <span class="nt-urgency nt-urgency--{{ note.urgency }}" title="{{ note.urgency|title }}">
-                        {% if note.urgency == 'overdue' %}&#128680; Overdue
-                        {% elif note.urgency == 'urgent' %}&#9888;&#65039; Due Today
-                        {% elif note.urgency == 'soon' %}&#128337; Due Soon
-                        {% else %}&#128197; Upcoming
-                        {% endif %}
-                      </span>
-                    {% endif %}
                   </div>
 
                   <p class="nt-item__preview">{{ note.content|striptags|truncatewords:20 }}</p>
 
                   <div class="nt-item__meta">
                     <span class="nt-meta">{{ note.updated_at|timesince }} ago</span>
-                    {% if note.due_date %}
-                      <span class="nt-meta nt-meta--due {% if note.urgency == 'overdue' %}nt-meta--overdue{% endif %}">
-                        &#128197; Due {{ note.due_date|date:"M j, g:i A" }}
-                      </span>
-                    {% endif %}
                     {% if note.time_spent_display %}
                       <span class="nt-meta nt-meta--time">&#9201; {{ note.time_spent_display }} studied</span>
                     {% endif %}
@@ -231,7 +221,7 @@
                   </div>
                 </div>
 
-                <div class="nt-item__actions">
+                <div class="nt-item__actions" onclick="event.preventDefault(); event.stopPropagation();">
                   <button
                     class="nt-action-btn"
                     onclick="togglePin({{ note.id }}, this)"
@@ -239,7 +229,6 @@
                   >
                     {{ note.is_pinned|yesno:"Unpin,Pin" }}
                   </button>
-                  <a href="{% url 'note_edit' note.id %}" class="nt-action-btn">Edit</a>
                   <form method="post" action="{% url 'note_delete' note.id %}" class="nt-delete-form">
                     {% csrf_token %}
                     <button
@@ -250,7 +239,7 @@
                   </form>
                 </div>
 
-              </div>
+              </a>
             {% endfor %}
           {% else %}
             <div class="nt-empty">
@@ -356,7 +345,7 @@
           <input type="number" class="form-control" id="goalInputPomo" min="1" max="20" value="{{ daily_progress.pomo_goal }}">
         </div>
         <div class="mb-3">
-          <label class="form-label">Notes to create per day</label>
+          <label class="form-label">Notes to edit per day</label>
           <input type="number" class="form-control" id="goalInputNotes" min="1" max="20" value="{{ daily_progress.notes_goal }}">
         </div>
         <div class="mb-3">

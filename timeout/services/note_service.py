@@ -109,6 +109,14 @@ class NoteService:
         log.save(update_fields=['notes_created'])
 
     @staticmethod
+    def log_note_edited(user):
+        """Increment today's notes_edited counter."""
+        today = timezone.localtime(timezone.now()).date()
+        log, _ = StudyLog.objects.get_or_create(user=user, date=today)
+        log.notes_edited += 1
+        log.save(update_fields=['notes_edited'])
+
+    @staticmethod
     def log_pomodoro(user, minutes):
         """Increment today's pomodoro counter and focus minutes."""
         today = timezone.localtime(timezone.now()).date()
@@ -149,13 +157,13 @@ class NoteService:
         return {
             'pomodoros': log.pomodoros,
             'pomo_goal': user.daily_pomo_goal,
-            'notes_created': log.notes_created,
+            'notes_edited': log.notes_edited,
             'notes_goal': user.daily_notes_goal,
             'focus_minutes': log.focus_minutes,
             'focus_goal': user.daily_focus_goal,
             'all_complete': (
                 log.pomodoros >= user.daily_pomo_goal
-                and log.notes_created >= user.daily_notes_goal
+                and log.notes_edited >= user.daily_notes_goal
                 and log.focus_minutes >= user.daily_focus_goal
             ),
         }

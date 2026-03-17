@@ -225,3 +225,147 @@ class NoteViewsTest(TestCase):
         post = Post.objects.get(author=self.user)
         self.assertIn('[Lecture]', post.content)
         self.assertIn('Test Note', post.content)
+
+    # --- Create: redirects to editor ---
+
+    def test_create_note_redirects_to_editor(self):
+        self.login(self.user)
+        resp = self.client.post(reverse('note_create'), {
+            'title': 'Editor Note',
+            'category': Note.Category.LECTURE,
+        })
+        note = Note.objects.get(title='Editor Note')
+        self.assertRedirects(resp, reverse('note_edit', args=[note.id]))
+
+    def test_create_note_with_event(self):
+        self.login(self.user)
+        self.client.post(reverse('note_create'), {
+            'title': 'Linked Note',
+            'category': Note.Category.STUDY_PLAN,
+            'event': self.event.id,
+        })
+        note = Note.objects.get(title='Linked Note')
+        self.assertEqual(note.event, self.event)
+
+    def test_create_note_empty_title_rejected(self):
+        self.login(self.user)
+        count_before = Note.objects.count()
+        self.client.post(reverse('note_create'), {
+            'title': '   ',
+            'category': Note.Category.OTHER,
+        })
+        self.assertEqual(Note.objects.count(), count_before)
+
+    def test_create_note_other_users_event_ignored(self):
+        other_event = Event.objects.create(
+            creator=self.other,
+            title='Other Event',
+            event_type=Event.EventType.EXAM,
+            start_datetime=timezone.now(),
+            end_datetime=timezone.now() + timezone.timedelta(hours=2),
+        )
+        self.login(self.user)
+        self.client.post(reverse('note_create'), {
+            'title': 'Sneaky Note',
+            'category': Note.Category.OTHER,
+            'event': other_event.id,
+        })
+        note = Note.objects.get(title='Sneaky Note')
+        self.assertIsNone(note.event)
+
+    def test_create_note_get_redirects(self):
+        self.login(self.user)
+        resp = self.client.get(reverse('note_create'))
+        self.assertRedirects(resp, reverse('notes'))
+
+    # --- Page mode ---
+
+    def test_note_default_page_mode_is_pageless(self):
+        self.login(self.user)
+        self.client.post(reverse('note_create'), {
+            'title': 'Default Mode Note',
+            'category': Note.Category.OTHER,
+        })
+        note = Note.objects.get(title='Default Mode Note')
+        self.assertEqual(note.page_mode, 'pageless')
+
+    def test_edit_note_saves_page_mode(self):
+        self.login(self.user)
+        self.client.post(
+            reverse('note_edit', args=[self.note.id]), {
+                'title': self.note.title,
+                'content': self.note.content,
+                'category': self.note.category,
+                'page_mode': 'paged',
+            }
+        )
+        self.note.refresh_from_db()
+        self.assertEqual(self.note.page_mode, 'paged')
+
+    # --- Autosave ---
+
+    def test_autosave_updates_content(self):
+        self.login(self.user)
+        resp = self.client.post(
+            reverse('note_autosave', args=[self.note.id]), {
+                'content': '<p>Autosaved content</p>',
+                'title': 'Updated Title',
+            }
+        )
+        self.assertEqual(resp.status_code, 200)
+        data = json.loads(resp.content)
+        self.assertEqual(data['status'], 'ok')
+        self.note.refresh_from_db()
+        self.assertEqual(self.note.content, '<p>Autosaved content</p>')
+        self.assertEqual(self.note.title, 'Updated Title')
+
+    def test_autosave_persists_page_mode(self):
+        self.login(self.user)
+        self.client.post(
+            reverse('note_autosave', args=[self.note.id]), {
+                'content': 'content',
+                'title': self.note.title,
+                'page_mode': 'paged',
+            }
+        )
+        self.note.refresh_from_db()
+        self.assertEqual(self.note.page_mode, 'paged')
+
+    def test_autosave_rejects_invalid_page_mode(self):
+        self.login(self.user)
+        self.client.post(
+            reverse('note_autosave', args=[self.note.id]), {
+                'content': 'content',
+                'title': self.note.title,
+                'page_mode': 'evil_value',
+            }
+        )
+        self.note.refresh_from_db()
+        self.assertEqual(self.note.page_mode, 'pageless')
+
+    def test_autosave_other_user_404(self):
+        self.login(self.other)
+        resp = self.client.post(
+            reverse('note_autosave', args=[self.note.id]), {
+                'content': 'hacked',
+                'title': 'hacked',
+            }
+        )
+        self.assertEqual(resp.status_code, 404)
+
+    # --- Sorting ---
+
+    def test_sort_alphabetical(self):
+        self.login(self.user)
+        Note.objects.create(owner=self.user, title='Alpha', content='', category='other')
+        Note.objects.create(owner=self.user, title='Zeta', content='', category='other')
+        resp = self.client.get(reverse('notes') + '?sort=alpha_asc')
+        notes = list(resp.context['notes'])
+        unpinned = [n for n in notes if not n.is_pinned]
+        titles = [n.title for n in unpinned]
+        self.assertEqual(titles, sorted(titles))
+
+    def test_sort_default_is_recently_edited(self):
+        self.login(self.user)
+        resp = self.client.get(reverse('notes'))
+        self.assertEqual(resp.context['active_sort'], 'recently_edited')

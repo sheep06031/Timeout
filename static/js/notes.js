@@ -125,14 +125,14 @@ var DailyGoals = (function() {
   function render(data) {
     if (!data) return;
     updateRing('goalRingPomo', data.pomodoros, data.pomo_goal);
-    updateRing('goalRingNotes', data.notes_created, data.notes_goal);
+    updateRing('goalRingNotes', data.notes_edited, data.notes_goal);
     updateRing('goalRingFocus', data.focus_minutes, data.focus_goal);
 
     var pomoText = document.getElementById('goalPomoText');
     var notesText = document.getElementById('goalNotesText');
     var focusText = document.getElementById('goalFocusText');
     if (pomoText) pomoText.textContent = data.pomodoros + ' / ' + data.pomo_goal;
-    if (notesText) notesText.textContent = data.notes_created + ' / ' + data.notes_goal;
+    if (notesText) notesText.textContent = data.notes_edited + ' / ' + data.notes_goal;
     if (focusText) focusText.textContent = data.focus_minutes + ' / ' + data.focus_goal + 'm';
   }
 
@@ -492,11 +492,21 @@ var FocusMode = (function() {
   var INACTIVITY_MS = 2 * 60 * 1000;
   var warningShown = false;
 
+  function setServerStatus(status) {
+    fetch('/social/status/update/', {
+      method: 'POST',
+      headers: { 'X-CSRFToken': getCsrfToken(), 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: 'status=' + encodeURIComponent(status),
+    }).catch(function() {});
+  }
+
   function enter() {
     active = true;
     startTime = Date.now();
     lastActivity = Date.now();
     warningShown = false;
+
+    setServerStatus('focus');
 
     var overlay = document.getElementById('focusOverlay');
     if (overlay) overlay.style.display = 'flex';
@@ -521,6 +531,8 @@ var FocusMode = (function() {
     clearInterval(elapsedInterval);
     clearInterval(inactivityInterval);
 
+    setServerStatus('social');
+
     var overlay = document.getElementById('focusOverlay');
     if (overlay) overlay.style.display = 'none';
 
@@ -541,6 +553,11 @@ var FocusMode = (function() {
 
   function onBeforeUnload(e) {
     if (!active) return;
+    // End focus session on server via beacon so FocusSession is recorded
+    var data = new FormData();
+    data.append('status', 'social');
+    data.append('csrfmiddlewaretoken', getCsrfToken());
+    navigator.sendBeacon('/social/status/update/', data);
     e.preventDefault();
     e.returnValue = 'Focus mode is active. Are you sure you want to leave?';
     return e.returnValue;

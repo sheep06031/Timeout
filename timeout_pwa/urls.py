@@ -19,8 +19,16 @@ from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 
+from allauth.socialaccount.views import SignupView
+
 urlpatterns = [
     path('admin/', admin.site.urls),
+    # Override allauth's socialaccount signup to use our custom template
+    path(
+        'accounts/social/signup/',
+        SignupView.as_view(template_name='auth/google_signin.html'),
+        name='socialaccount_signup',
+    ),
     path('accounts/', include('allauth.urls')),
     path('', include('timeout.urls')),
 ]

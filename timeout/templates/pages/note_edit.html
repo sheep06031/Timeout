@@ -55,21 +55,43 @@
   .autosave-indicator.saving { color: #f59e0b; }
   .autosave-indicator.saved { color: #22c55e; }
 
-  /* ── Spacing control ── */
-  .spacing-control {
+  /* ── Spacing & page-mode controls ── */
+  .spacing-control, .pagemode-control {
     display: flex;
     align-items: center;
     gap: 6px;
     font-size: 0.8rem;
     color: var(--text-secondary, #718096);
   }
-  .spacing-control select {
+  .spacing-control select, .pagemode-control select {
     padding: 2px 6px;
     border-radius: 4px;
     border: 1px solid var(--border-color, #e2e8f0);
     background: var(--bg-primary, #fff);
     color: var(--text-primary, #1a202c);
     font-size: 0.8rem;
+  }
+
+  /* ── Paged mode — only adds break lines + page labels ── */
+  .page-break-line {
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: 0;
+    border-top: 1px dashed var(--text-secondary, #cbd5e0);
+    pointer-events: none;
+    z-index: 5;
+  }
+  .page-number-label {
+    position: absolute;
+    right: 12px;
+    font-size: 0.68rem;
+    color: var(--text-secondary, #a0aec0);
+    pointer-events: none;
+    z-index: 5;
+    background: var(--bg-primary, #fff);
+    padding: 0 6px;
+    border-radius: 3px;
   }
 
   /* ── Quill editor ── */
@@ -95,6 +117,8 @@
   .ql-editor.ql-blank::before {
     color: var(--text-secondary, #a0aec0);
     font-style: normal;
+    left: 28px;
+    right: 28px;
   }
 
   /* ── Dark mode ── */
@@ -104,10 +128,14 @@
   [data-theme="dark"] .note-editor-title:focus {
     background: var(--bg-secondary, #2a2a3e);
   }
-  [data-theme="dark"] .spacing-control select {
+  [data-theme="dark"] .spacing-control select,
+  [data-theme="dark"] .pagemode-control select {
     background: var(--bg-secondary, #2a2a3e);
     border-color: var(--border-color, #3a3a4e);
     color: var(--text-primary, #e2e8f0);
+  }
+  [data-theme="dark"] .page-number-label {
+    background: var(--bg-primary, #1e1e2e);
   }
   [data-theme="dark"] .ql-toolbar.ql-snow {
     background: var(--bg-secondary, #2a2a3e);
@@ -175,6 +203,7 @@
         {{ form.content }}
         <input type="hidden" name="title" id="hiddenTitle" value="{{ note.title }}">
         <input type="hidden" name="category" value="{{ note.category }}">
+        <input type="hidden" name="page_mode" id="hiddenPageMode" value="{{ note.page_mode }}">
         {% if note.event_id %}
           <input type="hidden" name="event" value="{{ note.event_id }}">
         {% endif %}
@@ -200,6 +229,13 @@
         <option value="1.7" selected>Normal</option>
         <option value="2.0">Relaxed</option>
         <option value="2.5">Double</option>
+      </select>
+    </div>
+    <div class="pagemode-control">
+      <label for="pageMode">Layout:</label>
+      <select id="pageMode">
+        <option value="pageless" {% if note.page_mode == 'pageless' %}selected{% endif %}>Pageless</option>
+        <option value="paged" {% if note.page_mode == 'paged' %}selected{% endif %}>Paged</option>
       </select>
     </div>
     <div class="nt-word-count" id="wordCount" style="margin-left:auto;">0 words</div>
@@ -288,6 +324,64 @@
   const spacingSelect = document.getElementById('lineSpacing');
   spacingSelect.addEventListener('change', function() {
     quill.root.style.lineHeight = this.value;
+    if (pageModeActive) requestAnimationFrame(paginateContent);
+  });
+
+  /* ── Page mode ── */
+  const pageModeSelect = document.getElementById('pageMode');
+  const qlContainer = document.querySelector('.ql-container');
+  let pageModeActive = '{{ note.page_mode }}' === 'paged';
+  let lastSavedPageMode = '{{ note.page_mode }}';
+
+  /* Page height = editor visible height per "page" (px).
+     Uses the editor's own padding & line-height — nothing changes visually. */
+  const PAGE_HEIGHT = 1056;
+
+  function clearPageMarkers() {
+    qlContainer.querySelectorAll('.page-break-line, .page-number-label').forEach(function(el) { el.remove(); });
+  }
+
+  function paginateContent() {
+    clearPageMarkers();
+    if (!pageModeActive) return;
+
+    /* ql-container must be position:relative for overlays */
+    qlContainer.style.position = 'relative';
+
+    var contentHeight = quill.root.scrollHeight;
+    var totalPages = Math.max(1, Math.ceil(contentHeight / PAGE_HEIGHT));
+
+    for (var i = 1; i < totalPages; i++) {
+      /* Dashed break line */
+      var line = document.createElement('div');
+      line.className = 'page-break-line';
+      line.style.top = (i * PAGE_HEIGHT) + 'px';
+      qlContainer.appendChild(line);
+    }
+
+    /* Page number labels — placed just above each break (and at bottom of last page) */
+    for (var i = 0; i < totalPages; i++) {
+      var label = document.createElement('div');
+      label.className = 'page-number-label';
+      label.textContent = (i + 1) + ' / ' + totalPages;
+      label.style.top = ((i + 1) * PAGE_HEIGHT - 22) + 'px';
+      qlContainer.appendChild(label);
+    }
+  }
+
+  pageModeSelect.addEventListener('change', function() {
+    pageModeActive = this.value === 'paged';
+    requestAnimationFrame(paginateContent);
+  });
+
+  /* Initialize on load */
+  if (pageModeActive) {
+    requestAnimationFrame(paginateContent);
+  }
+
+  /* Re-paginate when content changes */
+  quill.on('text-change', function() {
+    if (pageModeActive) requestAnimationFrame(paginateContent);
   });
 
   /* ── Sync to hidden input on manual save ── */
@@ -295,6 +389,7 @@
   editForm.addEventListener('submit', function() {
     hiddenInput.value = quill.root.innerHTML;
     document.getElementById('hiddenTitle').value = document.getElementById('noteTitleInput').value;
+    document.getElementById('hiddenPageMode').value = pageModeSelect.value;
   });
 
   /* ── Autosave ── */
@@ -304,12 +399,14 @@
   let autosaveTimer = null;
   let lastSavedContent = hiddenInput.value || '';
   let lastSavedTitle = '{{ note.title|escapejs }}';
+  let editCounted = false;
 
   function doAutosave() {
     const currentContent = quill.root.innerHTML;
     const currentTitle = document.getElementById('noteTitleInput').value;
+    const currentPageMode = pageModeSelect.value;
 
-    if (currentContent === lastSavedContent && currentTitle === lastSavedTitle) return;
+    if (currentContent === lastSavedContent && currentTitle === lastSavedTitle && currentPageMode === lastSavedPageMode) return;
 
     statusEl.textContent = 'Saving...';
     statusEl.className = 'autosave-indicator saving';
@@ -317,7 +414,12 @@
     const formData = new FormData();
     formData.append('content', currentContent);
     formData.append('title', currentTitle);
+    formData.append('page_mode', pageModeSelect.value);
     formData.append('csrfmiddlewaretoken', csrfToken);
+    if (!editCounted) {
+      formData.append('count_edit', '1');
+      editCounted = true;
+    }
 
     fetch(autosaveUrl, { method: 'POST', body: formData })
       .then(function(res) { return res.json(); })
@@ -325,6 +427,7 @@
         if (data.status === 'ok') {
           lastSavedContent = currentContent;
           lastSavedTitle = currentTitle;
+          lastSavedPageMode = currentPageMode;
           statusEl.textContent = 'Saved';
           statusEl.className = 'autosave-indicator saved';
           setTimeout(function() {
@@ -347,15 +450,17 @@
 
   quill.on('text-change', scheduleAutosave);
   document.getElementById('noteTitleInput').addEventListener('input', scheduleAutosave);
+  pageModeSelect.addEventListener('change', scheduleAutosave);
 
   /* ── Save on page leave ── */
   window.addEventListener('beforeunload', function() {
     const currentContent = quill.root.innerHTML;
     const currentTitle = document.getElementById('noteTitleInput').value;
-    if (currentContent !== lastSavedContent || currentTitle !== lastSavedTitle) {
+    if (currentContent !== lastSavedContent || currentTitle !== lastSavedTitle || pageModeSelect.value !== lastSavedPageMode) {
       const formData = new FormData();
       formData.append('content', currentContent);
       formData.append('title', currentTitle);
+      formData.append('page_mode', pageModeSelect.value);
       formData.append('csrfmiddlewaretoken', csrfToken);
       navigator.sendBeacon(autosaveUrl, formData);
     }

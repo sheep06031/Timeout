@@ -8,7 +8,7 @@ class NoteForm(forms.ModelForm):
 
     class Meta:
         model = Note
-        fields = ['title', 'content', 'category', 'event']
+        fields = ['title', 'content', 'category', 'event', 'page_mode']
         widgets = {
             'title': forms.TextInput(attrs={
                 'class': 'form-control',
@@ -24,6 +24,7 @@ class NoteForm(forms.ModelForm):
             'event': forms.Select(attrs={
                 'class': 'form-select',
             }),
+            'page_mode': forms.HiddenInput(),
         }
 
     def __init__(self, *args, user=None, **kwargs):
@@ -33,3 +34,4 @@ class NoteForm(forms.ModelForm):
         self.fields['event'].empty_label = 'No event'
         self.fields['event'].required = False
         self.fields['content'].required = False
+        self.fields['page_mode'].required = False

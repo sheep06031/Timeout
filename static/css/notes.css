@@ -598,7 +598,9 @@ body.nt-focus-active main {
   border-bottom: 1px solid #eef1f6;
   border-left: 3px solid transparent;
   transition: background .18s;
-  transition: background .18s;
+  text-decoration: none;
+  color: inherit;
+  cursor: pointer;
 }
 
 .nt-item:last-child { border-bottom: none; }
@@ -738,30 +740,8 @@ body.nt-focus-active main {
 .nt-meta--overdue { color: #dc2626 !important; }
 .nt-meta--time { color: #5b5ddf; font-weight: 600; }
 
-.nt-due-filter {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 6px 12px;
-  border: 1px solid #dde3ee;
-  border-radius: 6px;
-  font-size: 0.78rem;
-  font-weight: 600;
-  color: #5a6a85;
-  text-decoration: none;
-  white-space: nowrap;
-  transition: all 0.18s;
-}
-
-.nt-due-filter:hover {
-  border-color: #5b5ddf;
-  color: #5b5ddf;
-}
-
-.nt-due-filter--active {
-  background: rgba(91, 93, 223, 0.08);
-  border-color: #5b5ddf;
-  color: #5b5ddf;
+.nt-sort-select {
+  min-width: 140px;
 }
 
 

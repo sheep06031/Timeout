@@ -59,6 +59,7 @@
       </ul>
     </div>
 
+    {% if user.is_authenticated %}
     <!-- AI Suggestions -->
     <button
       class="nav-ai-btn me-2"
@@ -79,6 +80,7 @@
     >
       <span class = "nav-ai-icon">&#128161;</span>
     </button>
+    {% endif %}
 
     {% if user.is_authenticated %}
       <!-- Always-visible: status pill + user dropdown -->

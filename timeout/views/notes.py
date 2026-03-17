@@ -13,12 +13,23 @@ from timeout.models import Note, Post
 from timeout.services import NoteService
 
 
+SORT_OPTIONS = {
+    'newest': ('-created_at', 'Newest First'),
+    'oldest': ('created_at', 'Oldest First'),
+    'alpha_asc': ('title', 'A - Z'),
+    'alpha_desc': ('-title', 'Z - A'),
+    'recently_edited': ('-updated_at', 'Recently Edited'),
+    'category': ('category', 'Category'),
+}
+DEFAULT_SORT = 'recently_edited'
+
+
 @login_required
 def note_list(request):
-    """List all notes with search and category filter."""
+    """List all notes with search, category filter, and sorting."""
     category = request.GET.get('category', '')
     query = request.GET.get('q', '')
-    filter_mode = request.GET.get('filter', '')
+    sort = request.GET.get('sort', DEFAULT_SORT)
 
     if query:
         notes = NoteService.search_notes(request.user, query)
@@ -27,13 +38,10 @@ def note_list(request):
     else:
         notes = NoteService.get_user_notes(request.user)
 
-    # Due Soon filter: only notes with due dates, ordered by soonest
-    if filter_mode == 'due_soon':
-        from django.utils import timezone
-        notes = notes.filter(
-            due_date__isnull=False,
-            due_date__gte=timezone.now(),
-        ).order_by('due_date')
+    # Apply sorting (pinned notes always stay on top)
+    if sort in SORT_OPTIONS:
+        order_field = SORT_OPTIONS[sort][0]
+        notes = notes.order_by('-is_pinned', order_field)
 
     user = request.user
 
@@ -50,7 +58,8 @@ def note_list(request):
         'categories': Note.Category.choices,
         'active_category': category,
         'search_query': query,
-        'active_filter': filter_mode,
+        'active_sort': sort,
+        'sort_options': [(k, v[1]) for k, v in SORT_OPTIONS.items()],
         # Gamification
         'xp': user.xp,
         'level': user.level,
@@ -116,6 +125,7 @@ def note_edit(request, note_id):
             NoteService.update_streak_and_xp(
                 request.user, NoteService.XP_NOTE_EDIT,
             )
+            NoteService.log_note_edited(request.user)
             messages.success(request, 'Note saved successfully!')
             return redirect('notes')
         messages.error(request, 'Error updating note.')
@@ -146,10 +156,23 @@ def note_autosave(request, note_id):
     content = request.POST.get('content', '')
     title = request.POST.get('title', '').strip()
 
+    update_fields = ['content', 'title', 'updated_at']
+
     if title:
         note.title = title
     note.content = content
-    note.save(update_fields=['content', 'title', 'updated_at'])
+
+    # Persist page mode if sent
+    page_mode = request.POST.get('page_mode', '').strip()
+    if page_mode in ('pageless', 'paged'):
+        note.page_mode = page_mode
+        update_fields.append('page_mode')
+
+    note.save(update_fields=update_fields)
+
+    # Track daily edit (once per note per session via flag from client)
+    if request.POST.get('count_edit') == '1':
+        NoteService.log_note_edited(request.user)
 
     return JsonResponse({'status': 'ok', 'updated_at': note.updated_at.isoformat()})
 
