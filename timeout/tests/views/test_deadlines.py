@@ -1,7 +1,8 @@
 """
 Tests for deadline_list_view and deadline_mark_complete AJAX endpoint.
 Covers: context counts (total, overdue, urgent), successful completion,
-404 on missing deadline, authentication guards, and HTTP method restrictions.
+404 on missing deadline, authentication guards, HTTP method restrictions,
+and filter/sort/type validation branches.
 """
 
 from datetime import datetime, timedelta
@@ -24,7 +25,7 @@ class DeadlineListViewTests(TestCase):
         self.client = Client()
         self.user = User.objects.create_user(username="dluser", password="pass1234")
         self.client.login(username="dluser", password="pass1234")
-        self.url = reverse("deadline_list")  # adjust name to match your urls.py
+        self.url = reverse("deadline_list")
 
     # ------------------------------------------------------------------
     # Context data
@@ -161,7 +162,7 @@ class DeadlineMarkCompleteViewTests(TestCase):
         self.assertEqual(resp.status_code, 404)
 
     def test_mark_complete_non_deadline_event(self):
-        """Completing a non-deadline event type returns 404."""
+        """Completing a non-deadline event type succeeds."""
         event = Event.objects.create(
             creator=self.user,
             title="Meeting",
@@ -170,7 +171,7 @@ class DeadlineMarkCompleteViewTests(TestCase):
             end_datetime=timezone.now() + timedelta(hours=1),
         )
         resp = self.client.post(self._url(event.pk))
-        self.assertEqual(resp.status_code, 200) #changed 404 t0 200 elif as marking non deadline complete should be allowed
+        self.assertEqual(resp.status_code, 200)
 
     # ------------------------------------------------------------------
     # HTTP method / auth guards
@@ -184,3 +185,84 @@ class DeadlineMarkCompleteViewTests(TestCase):
         resp = self.client.post(self._url(self.deadline.pk))
         self.assertEqual(resp.status_code, 302)
         self.assertIn("login", resp.url)
+
+
+# ======================================================================
+# Filter / Sort / Type validation tests
+# ======================================================================
+
+
+class DeadlineListViewFilterSortTests(TestCase):
+    """Test the filter/sort/type validation branches in deadline_list_view."""
+
+    def setUp(self):
+        self.client = Client()
+        self.user = User.objects.create_user(username="filterviewuser", password="pass1234")
+        self.client.login(username="filterviewuser", password="pass1234")
+        self.url = reverse("deadline_list")
+
+    # -- Invalid status falls back to 'active' -----------------------
+    def test_invalid_status_defaults_to_active(self):
+        resp = self.client.get(self.url, {"status": "bogus"})
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.context["status_filter"], "active")
+
+    # -- Invalid sort falls back to 'asc' ----------------------------
+    def test_invalid_sort_defaults_to_asc(self):
+        resp = self.client.get(self.url, {"sort": "bogus"})
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.context["sort_order"], "asc")
+
+    # -- Invalid event_type falls back to '' -------------------------
+    def test_invalid_event_type_defaults_to_empty(self):
+        resp = self.client.get(self.url, {"type": "bogus_type"})
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.context["event_type"], "")
+
+    # -- Valid filters pass through ----------------------------------
+    def test_valid_completed_filter(self):
+        resp = self.client.get(self.url, {"status": "completed"})
+        self.assertEqual(resp.context["status_filter"], "completed")
+
+    def test_valid_all_filter(self):
+        resp = self.client.get(self.url, {"status": "all"})
+        self.assertEqual(resp.context["status_filter"], "all")
+
+    def test_valid_desc_sort(self):
+        resp = self.client.get(self.url, {"sort": "desc"})
+        self.assertEqual(resp.context["sort_order"], "desc")
+
+    def test_valid_event_type(self):
+        resp = self.client.get(self.url, {"type": "exam"})
+        self.assertEqual(resp.context["event_type"], "exam")
+
+    # -- Combined filters --------------------------------------------
+    def test_combined_filters(self):
+        now = timezone.now()
+        Event.objects.create(
+            creator=self.user, title="Exam DL",
+            event_type="exam",
+            start_datetime=now - timedelta(days=1),
+            end_datetime=now + timedelta(days=3),
+            is_completed=False,
+        )
+        Event.objects.create(
+            creator=self.user, title="Deadline DL",
+            event_type="deadline",
+            start_datetime=now - timedelta(days=1),
+            end_datetime=now + timedelta(days=3),
+            is_completed=False,
+        )
+        resp = self.client.get(self.url, {"status": "active", "sort": "desc", "type": "exam"})
+        self.assertEqual(resp.status_code, 200)
+        titles = [d['event'].title for d in resp.context['deadlines']]
+        self.assertIn("Exam DL", titles)
+        self.assertNotIn("Deadline DL", titles)
+
+    # -- Context includes expected keys ------------------------------
+    def test_context_has_all_keys(self):
+        resp = self.client.get(self.url)
+        for key in ('deadlines', 'total_count', 'overdue_count', 'urgent_count',
+                     'completed_count', 'status_filter', 'sort_order', 'event_type',
+                     'event_types'):
+            self.assertIn(key, resp.context, f"Missing context key: {key}")
