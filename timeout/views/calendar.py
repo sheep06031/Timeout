@@ -191,6 +191,7 @@ def calendar_view(request):
         event_type=Event.EventType.STUDY_SESSION,
         status=Event.EventStatus.UPCOMING,
         end_datetime__lt=now,
+        is_completed=False,
     )
     reschedule_prompts = [
         {

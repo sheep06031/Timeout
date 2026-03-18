@@ -229,51 +229,21 @@
   <script id="stats-data"
     data-type-labels="{% for label, count in type_counts.items %}
       {{ label }},
-
-
-
-
-
     {% endfor %}"
     data-type-counts="{% for label, count in type_counts.items %}
       {{ count }},
-
-
-
-
-
     {% endfor %}"
     data-weekly-labels="{% for w in weekly_data %}
       {{ w.label }},
-
-
-
-
-
     {% endfor %}"
     data-weekly-counts="{% for w in weekly_data %}
       {{ w.count }},
-
-
-
-
-
     {% endfor %}"
     data-monthly-labels="{% for m in monthly_data %}
       {{ m.label }},
-
-
-
-
-
     {% endfor %}"
     data-monthly-counts="{% for m in monthly_data %}
       {{ m.count }},
-
-
-
-
-
     {% endfor %}"></script>
   <script src="{% static 'js/statistics.js' %}"></script>
 {% endblock %}

@@ -114,7 +114,6 @@ class DeadlineService:
             event = Event.objects.get(
                 pk=event_id,
                 creator=user,
-                event_type=Event.EventType.DEADLINE,
                 is_completed=False,
             )
             event.is_completed = True

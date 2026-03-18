@@ -1,3 +1,8 @@
+const _cfg = document.getElementById('profile-status-config');
+const FOLLOWERS_URL = _cfg?.dataset.followersUrl ?? '';
+const FOLLOWING_URL = _cfg?.dataset.followingUrl ?? '';
+const FRIENDS_URL   = _cfg?.dataset.friendsUrl   ?? '';
+
 (() => {
   const cfg = document.getElementById('profile-status-config');
   if (!cfg) return;
