@@ -767,7 +767,7 @@ class Command(BaseCommand):
             return
 
         other_users = list(User.objects.exclude(username=SUPERUSER_USERNAME))
-        targets = random.sample(other_users, min(8, len(other_users)))
+        targets = random.sample(other_users, min(24, len(other_users)))
 
         MESSAGE_PAIRS = [
             ("Hey! Are you going to the study session tomorrow?", "Yeah, planning to! What time works for you?"),
@@ -824,7 +824,7 @@ class Command(BaseCommand):
         self.stdout.write(self.style.SUCCESS(
             f'  Created {conv_count} conversations, {msg_count} messages.'
         ))
-        
+
     def _set_gamification_stats(self, users):
         """Set XP, streaks, and daily goals for all users."""
         all_users = list(User.objects.all())
