@@ -161,12 +161,12 @@
 {% endblock %}
 
 {% block extra_js %}
-  <script>
-    const FOLLOWERS_URL = "{% url 'followers_api' %}"
-    const FOLLOWING_URL = "{% url 'following_api' %}"
-    const FRIENDS_URL = "{% url 'friends_api' %}"
-  </script>
   <script src="{% static 'js/social.js' %}"></script>
-  <div id="profile-status-config" data-update-url="{% url 'update_status' %}" data-csrf-token="{{ csrf_token }}"></div>
+  <div id="profile-status-config"
+       data-update-url="{% url 'update_status' %}"
+       data-csrf-token="{{ csrf_token }}"
+       data-followers-url="{% url 'followers_api' %}"
+       data-following-url="{% url 'following_api' %}"
+       data-friends-url="{% url 'friends_api' %}"></div>
   <script src="{% static 'js/profile.js' %}"></script>
 {% endblock %}
