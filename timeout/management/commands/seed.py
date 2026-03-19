@@ -20,7 +20,7 @@ from django.utils import timezone
 from faker import Faker
 
 from allauth.socialaccount.models import SocialApp
-from timeout.models import Event, Post, Comment, Like, Bookmark, FocusSession, Note, StudyLog
+from timeout.models import Event, Post, Comment, Like, Bookmark, FocusSession, Note, StudyLog, Conversation, Message
 
 User = get_user_model()
 fake = Faker()
@@ -185,6 +185,9 @@ class Command(BaseCommand):
 
         self.stdout.write('\n[14] Setting gamification stats...')
         self._set_gamification_stats(users)
+
+        self.stdout.write('\n[15] Creating messages for johndoe...')
+        self._create_messages()
 
         total_users = User.objects.count()
         total_posts = Post.objects.count()
@@ -756,6 +759,72 @@ class Command(BaseCommand):
             f'  Created {log_count} study log entries.'
         ))
 
+    def _create_messages(self):
+        """Seed conversations and messages between johndoe and random users."""
+        johndoe = User.objects.filter(username=SUPERUSER_USERNAME).first()
+        if not johndoe:
+            self.stdout.write(self.style.WARNING('  johndoe not found, skipping.'))
+            return
+
+        other_users = list(User.objects.exclude(username=SUPERUSER_USERNAME))
+        targets = random.sample(other_users, min(8, len(other_users)))
+
+        MESSAGE_PAIRS = [
+            ("Hey! Are you going to the study session tomorrow?", "Yeah, planning to! What time works for you?"),
+            ("Did you get the notes from today's lecture?", "I did, want me to send them over?"),
+            ("Struggling with the algorithms assignment, any tips?", "Start with the dynamic programming section, that's the key part."),
+            ("Are you joining the group project meeting?", "Yes, see you there at 3!"),
+            ("Have you started the ML coursework yet?", "Just started, it's quite involved. You?"),
+            ("Library is packed today, found a spot?", "Yeah grab the third floor, it's quieter up there."),
+            ("Did the professor extend the deadline?", "Yes, one extra week apparently!"),
+            ("Want to grab coffee before the lecture?", "Sounds good, meet at the usual spot?"),
+        ]
+
+        conv_count = 0
+        msg_count = 0
+        now = timezone.now()
+
+        for i, other_user in enumerate(targets):
+            conv = Conversation.objects.create()
+            conv.participants.add(johndoe, other_user)
+
+            opening, reply = MESSAGE_PAIRS[i % len(MESSAGE_PAIRS)]
+            offset_minutes = random.randint(5, 60)
+
+            # Opening message from the other user
+            Message.objects.create(
+                conversation=conv,
+                sender=other_user,
+                content=opening,
+                is_read=random.choice([True, False]),
+            )
+
+            # Optional reply from johndoe
+            if random.random() < 0.7:
+                Message.objects.create(
+                    conversation=conv,
+                    sender=johndoe,
+                    content=reply,
+                    is_read=True,
+                )
+
+            # Occasionally add a follow-up from the other user (unread)
+            if random.random() < 0.4:
+                Message.objects.create(
+                    conversation=conv,
+                    sender=other_user,
+                    content=fake.sentence(nb_words=random.randint(6, 12)),
+                    is_read=False,
+                )
+
+            conv_count += 1
+            msg_count += conv.messages.count()
+            self.stdout.write(f'  Conversation with @{other_user.username}')
+
+        self.stdout.write(self.style.SUCCESS(
+            f'  Created {conv_count} conversations, {msg_count} messages.'
+        ))
+        
     def _set_gamification_stats(self, users):
         """Set XP, streaks, and daily goals for all users."""
         all_users = list(User.objects.all())
