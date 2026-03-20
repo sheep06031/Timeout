@@ -140,5 +140,5 @@ def _call_openai_for_briefing(stats):
         )
         return response.choices[0].message.content.strip()
     except Exception as exc:
-        logger.exception('OpenAI briefing call failed: %s', exc)
+        logger.warning('OpenAI briefing call failed: %s', exc)
         return None
