@@ -1,5 +1,6 @@
 """
 Tests for DeadlineService.get_active_deadlines, DeadlineService.mark_complete,
+DeadlineService.get_filtered_deadlines, DeadlineService.get_all_active_events,
 and the helper functions _format_timedelta and _format_elapsed.
 
 All time-dependent tests mock timezone.now() for deterministic results.
@@ -9,6 +10,7 @@ from datetime import datetime, timedelta
 from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
+from django.contrib.auth.models import AnonymousUser
 from django.test import TestCase
 from django.utils import timezone
 
@@ -138,7 +140,6 @@ class GetActiveDeadlinesTests(TestCase):
     # Unauthenticated user → empty list
     # ------------------------------------------------------------------
     def test_unauthenticated_returns_empty(self):
-        from django.contrib.auth.models import AnonymousUser
         result = DeadlineService.get_active_deadlines(AnonymousUser())
         self.assertEqual(result, [])
 
@@ -257,7 +258,7 @@ class MarkCompleteServiceTests(TestCase):
         result = DeadlineService.mark_complete(other, self.deadline.pk)
         self.assertIsNone(result)
 
-    def test_non_deadline_event_type_returns_none(self):
+    def test_non_deadline_event_type_completes(self):
         event = Event.objects.create(
             creator=self.user,
             title="Meeting",
@@ -266,4 +267,223 @@ class MarkCompleteServiceTests(TestCase):
             end_datetime=MOCK_NOW + timedelta(hours=1),
         )
         result = DeadlineService.mark_complete(self.user, event.pk)
-        self.assertIsNone(result)
+        self.assertIsNotNone(result)
+        self.assertTrue(result.is_completed)
+
+
+# ======================================================================
+# DeadlineService.get_filtered_deadlines tests
+# ======================================================================
+
+
+class GetFilteredDeadlinesTests(TestCase):
+    """Cover every branch in get_filtered_deadlines."""
+
+    def setUp(self):
+        self.user = User.objects.create_user(username="filteruser", password="pass1234")
+
+    def _create_event(self, title, event_type="deadline", end_offset=timedelta(days=3),
+                      completed=False, start_offset=timedelta(days=-1)):
+        return Event.objects.create(
+            creator=self.user,
+            title=title,
+            event_type=event_type,
+            start_datetime=MOCK_NOW + start_offset,
+            end_datetime=MOCK_NOW + end_offset,
+            is_completed=completed,
+        )
+
+    # -- Unauthenticated user ----------------------------------------
+    def test_unauthenticated_returns_empty(self):
+        result = DeadlineService.get_filtered_deadlines(AnonymousUser())
+        self.assertEqual(result, [])
+
+    # -- Status filters ----------------------------------------------
+    @_patch_now()
+    def test_active_filter_excludes_completed(self, _m):
+        self._create_event("Active", completed=False)
+        self._create_event("Done", completed=True)
+        results = DeadlineService.get_filtered_deadlines(self.user, status_filter='active')
+        titles = [r['event'].title for r in results]
+        self.assertIn("Active", titles)
+        self.assertNotIn("Done", titles)
+
+    @_patch_now()
+    def test_completed_filter_shows_only_completed(self, _m):
+        self._create_event("Active", completed=False)
+        self._create_event("Done", completed=True)
+        results = DeadlineService.get_filtered_deadlines(self.user, status_filter='completed')
+        titles = [r['event'].title for r in results]
+        self.assertNotIn("Active", titles)
+        self.assertIn("Done", titles)
+
+    @_patch_now()
+    def test_all_filter_shows_everything(self, _m):
+        self._create_event("Active", completed=False)
+        self._create_event("Done", completed=True)
+        results = DeadlineService.get_filtered_deadlines(self.user, status_filter='all')
+        self.assertEqual(len(results), 2)
+
+    # -- Event type filter -------------------------------------------
+    @_patch_now()
+    def test_event_type_filter(self, _m):
+        self._create_event("Deadline", event_type="deadline")
+        self._create_event("Exam", event_type="exam")
+        results = DeadlineService.get_filtered_deadlines(self.user, status_filter='all', event_type='exam')
+        self.assertEqual(len(results), 1)
+        self.assertEqual(results[0]['event'].title, "Exam")
+
+    @_patch_now()
+    def test_no_event_type_filter_shows_all_types(self, _m):
+        self._create_event("Deadline", event_type="deadline")
+        self._create_event("Exam", event_type="exam")
+        results = DeadlineService.get_filtered_deadlines(self.user, status_filter='all', event_type=None)
+        self.assertEqual(len(results), 2)
+
+    # -- Sort order --------------------------------------------------
+    @_patch_now()
+    def test_sort_asc(self, _m):
+        self._create_event("Later", end_offset=timedelta(days=5))
+        self._create_event("Sooner", end_offset=timedelta(days=1))
+        results = DeadlineService.get_filtered_deadlines(self.user, sort_order='asc')
+        self.assertEqual(results[0]['event'].title, "Sooner")
+        self.assertEqual(results[1]['event'].title, "Later")
+
+    @_patch_now()
+    def test_sort_desc(self, _m):
+        self._create_event("Later", end_offset=timedelta(days=5))
+        self._create_event("Sooner", end_offset=timedelta(days=1))
+        results = DeadlineService.get_filtered_deadlines(self.user, sort_order='desc')
+        self.assertEqual(results[0]['event'].title, "Later")
+        self.assertEqual(results[1]['event'].title, "Sooner")
+
+    # -- Urgency classification --------------------------------------
+    @_patch_now()
+    def test_completed_urgency_status(self, _m):
+        self._create_event("Done", completed=True)
+        results = DeadlineService.get_filtered_deadlines(self.user, status_filter='completed')
+        self.assertEqual(results[0]['urgency_status'], 'completed')
+
+    @_patch_now()
+    def test_overdue_urgency_status(self, _m):
+        self._create_event("Overdue", end_offset=timedelta(hours=-1))
+        results = DeadlineService.get_filtered_deadlines(self.user, status_filter='active')
+        self.assertEqual(results[0]['urgency_status'], 'overdue')
+
+    @_patch_now()
+    def test_urgent_urgency_status(self, _m):
+        self._create_event("Urgent", end_offset=timedelta(hours=6))
+        results = DeadlineService.get_filtered_deadlines(self.user, status_filter='active')
+        self.assertEqual(results[0]['urgency_status'], 'urgent')
+
+    @_patch_now()
+    def test_normal_urgency_status(self, _m):
+        self._create_event("Normal", end_offset=timedelta(days=5))
+        results = DeadlineService.get_filtered_deadlines(self.user, status_filter='active')
+        self.assertEqual(results[0]['urgency_status'], 'normal')
+
+
+# ======================================================================
+# DeadlineService.get_all_active_events tests
+# ======================================================================
+
+
+class GetAllActiveEventsTests(TestCase):
+    """Cover get_all_active_events including type-specific logic."""
+
+    def setUp(self):
+        self.user = User.objects.create_user(username="alluser", password="pass1234")
+
+    def _create_event(self, title, event_type="deadline", end_offset=timedelta(days=3),
+                      completed=False, start_offset=timedelta(days=-1), status="upcoming"):
+        return Event.objects.create(
+            creator=self.user,
+            title=title,
+            event_type=event_type,
+            start_datetime=MOCK_NOW + start_offset,
+            end_datetime=MOCK_NOW + end_offset,
+            is_completed=completed,
+            status=status,
+        )
+
+    # -- Unauthenticated ---------------------------------------------
+    def test_unauthenticated_returns_empty_dict(self):
+        result = DeadlineService.get_all_active_events(AnonymousUser())
+        self.assertEqual(result, {})
+
+    # -- Deadline urgency branches -----------------------------------
+    @_patch_now()
+    def test_deadline_overdue(self, _m):
+        self._create_event("Overdue DL", event_type="deadline", end_offset=timedelta(hours=-2))
+        result = DeadlineService.get_all_active_events(self.user)
+        items = result.get('deadline', [])
+        self.assertEqual(len(items), 1)
+        self.assertEqual(items[0]['urgency_status'], 'overdue')
+
+    @_patch_now()
+    def test_deadline_urgent(self, _m):
+        self._create_event("Urgent DL", event_type="deadline", end_offset=timedelta(hours=6))
+        result = DeadlineService.get_all_active_events(self.user)
+        items = result.get('deadline', [])
+        self.assertEqual(items[0]['urgency_status'], 'urgent')
+
+    @_patch_now()
+    def test_deadline_normal(self, _m):
+        self._create_event("Normal DL", event_type="deadline", end_offset=timedelta(days=5))
+        result = DeadlineService.get_all_active_events(self.user)
+        items = result.get('deadline', [])
+        self.assertEqual(items[0]['urgency_status'], 'normal')
+
+    # -- Non-deadline: missed vs upcoming ----------------------------
+    @_patch_now()
+    def test_study_session_missed(self, _m):
+        self._create_event("Missed SS", event_type="study_session", end_offset=timedelta(hours=-1))
+        result = DeadlineService.get_all_active_events(self.user)
+        items = result.get('study_session', [])
+        self.assertEqual(len(items), 1)
+        self.assertEqual(items[0]['urgency_status'], 'missed')
+
+    @_patch_now()
+    def test_study_session_upcoming(self, _m):
+        self._create_event("Future SS", event_type="study_session",
+                           start_offset=timedelta(days=1), end_offset=timedelta(days=1, hours=2))
+        result = DeadlineService.get_all_active_events(self.user)
+        items = result.get('study_session', [])
+        self.assertEqual(items[0]['urgency_status'], 'upcoming')
+
+    # -- Completed and cancelled excluded ----------------------------
+    @_patch_now()
+    def test_completed_excluded(self, _m):
+        self._create_event("Completed", completed=True)
+        result = DeadlineService.get_all_active_events(self.user)
+        self.assertEqual(result, {})
+
+    @_patch_now()
+    def test_cancelled_excluded(self, _m):
+        self._create_event("Cancelled", status="cancelled")
+        result = DeadlineService.get_all_active_events(self.user)
+        self.assertEqual(result, {})
+
+    # -- Past non-deadline/non-study-session excluded ----------------
+    @_patch_now()
+    def test_past_exam_excluded(self, _m):
+        self._create_event("Past Exam", event_type="exam", end_offset=timedelta(hours=-1))
+        result = DeadlineService.get_all_active_events(self.user)
+        self.assertNotIn('exam', result)
+
+    @_patch_now()
+    def test_upcoming_exam_included(self, _m):
+        self._create_event("Future Exam", event_type="exam",
+                           start_offset=timedelta(days=1), end_offset=timedelta(days=1, hours=2))
+        result = DeadlineService.get_all_active_events(self.user)
+        self.assertIn('exam', result)
+
+    # -- Grouping by type --------------------------------------------
+    @_patch_now()
+    def test_grouped_by_type(self, _m):
+        self._create_event("DL", event_type="deadline", end_offset=timedelta(days=3))
+        self._create_event("SS", event_type="study_session",
+                           start_offset=timedelta(days=1), end_offset=timedelta(days=1, hours=2))
+        result = DeadlineService.get_all_active_events(self.user)
+        self.assertIn('deadline', result)
+        self.assertIn('study_session', result)

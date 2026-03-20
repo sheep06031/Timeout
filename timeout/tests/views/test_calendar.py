@@ -1,10 +1,12 @@
 """
-Tests for calendar_view and event_create views.
+Tests for calendar_view, event_create, apply_session_schedule, and subscribe_event views.
 Covers: month navigation (Jan/Dec edge cases), all-day event forcing,
-recurring event expansion (daily/weekly/monthly/yearly), and validation errors.
+recurring event expansion (daily/weekly/monthly/yearly), validation errors,
+session schedule bulk updates, and event subscription.
 """
 
 import calendar as cal
+import json
 from datetime import date, datetime, time, timedelta
 from unittest.mock import patch
 
@@ -167,11 +169,8 @@ class CalendarViewRecurringEventTests(TestCase):
     def test_daily_recurrence_expands_within_month(self):
         self._make_event(recurrence="daily")
         resp = self.client.get(self.url, {"year": 2025, "month": 3})
-        # The original event is on March 3; daily expansion should place
-        # pseudo-events on March 4, 5, 6 … through end of visible grid.
         all_days = [d for week in resp.context["weeks"] for d in week]
         days_with_events = [d for d in all_days if d["events"]]
-        # Should have events on many days (>= 10 at minimum)
         self.assertGreaterEqual(len(days_with_events), 10)
 
     def test_weekly_recurrence_expands(self):
@@ -183,12 +182,10 @@ class CalendarViewRecurringEventTests(TestCase):
         resp = self.client.get(self.url, {"year": 2025, "month": 3})
         all_days = [d for week in resp.context["weeks"] for d in week]
         days_with_events = [d["date"] for d in all_days if d["events"]]
-        # Weekly from March 3 → March 10, 17, 24, 31
         for expected_day in [3, 10, 17, 24, 31]:
             self.assertIn(date(2025, 3, expected_day), days_with_events)
 
     def test_monthly_recurrence_expands(self):
-        # Event on Jan 31 recurring monthly – should clamp to Feb 28.
         self._make_event(
             start_datetime=timezone.make_aware(datetime(2025, 1, 31, 9, 0)),
             end_datetime=timezone.make_aware(datetime(2025, 1, 31, 10, 0)),
@@ -200,23 +197,14 @@ class CalendarViewRecurringEventTests(TestCase):
         self.assertTrue(any(feb28_days[0]["events"]))
 
     def test_monthly_recurrence_crosses_year_boundary(self):
-        """
-        Monthly event starting in December, viewed in January.
-        The expansion loop goes: start Dec 15 → month_num=13 → triggers
-        the `if month_num > 12: month_num=1; year_num+=1` branch (lines 112-113).
-        """
         ev = self._make_event(
             title="Dec Monthly",
             start_datetime=timezone.make_aware(datetime(2024, 12, 15, 9, 0)),
             end_datetime=timezone.make_aware(datetime(2024, 12, 15, 10, 0)),
             recurrence="monthly",
         )
-        # Sanity: the event exists and is for the right user
         self.assertEqual(Event.objects.filter(title="Dec Monthly", creator=self.user).count(), 1)
 
-        # View January 2025 – the grid's last_visible will be ~Feb 2, 2025.
-        # Expansion: current_date starts at Dec 15.  month+1 = 13 → Jan 15.
-        # Jan 15 <= last_visible → pseudo-event created.
         resp = self.client.get(self.url, {"year": 2025, "month": 1})
         self.assertEqual(resp.status_code, 200)
 
@@ -224,7 +212,6 @@ class CalendarViewRecurringEventTests(TestCase):
         jan15_cells = [d for d in all_days if d["date"] == date(2025, 1, 15)]
         self.assertEqual(len(jan15_cells), 1, "Jan 15 should appear exactly once in the grid")
 
-        # The pseudo-event for the monthly recurrence should be on Jan 15
         jan15_events = jan15_cells[0]["events"]
         self.assertGreaterEqual(
             len(jan15_events), 1,
@@ -233,7 +220,6 @@ class CalendarViewRecurringEventTests(TestCase):
         )
 
     def test_yearly_global_event_shown_in_current_year(self):
-        """Yearly global events get their year replaced to the visible year."""
         self._make_event(
             title="New Year Holiday",
             start_datetime=timezone.make_aware(datetime(2020, 1, 1, 0, 0)),
@@ -242,8 +228,6 @@ class CalendarViewRecurringEventTests(TestCase):
             is_global=True,
         )
         resp = self.client.get(self.url, {"year": 2025, "month": 1})
-        # The calendar_events list is built but the events_by_date uses events_qs
-        # directly; at minimum the original event should appear.
         self.assertEqual(resp.status_code, 200)
 
     def test_non_recurring_event_appears_on_start_date_only(self):
@@ -257,13 +241,11 @@ class CalendarViewRecurringEventTests(TestCase):
         all_days = [d for week in resp.context["weeks"] for d in week]
         days_with_events = [d["date"] for d in all_days if d["events"]]
         self.assertIn(date(2025, 3, 15), days_with_events)
-        # Ensure it does NOT appear on the next day
         march_16 = [d for d in all_days if d["date"] == date(2025, 3, 16)]
         self.assertEqual(len(march_16[0]["events"]), 0)
 
     def test_unknown_recurrence_breaks_loop(self):
-        """An unrecognised recurrence value should hit the else→break branch."""
-        self._make_event(recurrence="biweekly")  # not handled
+        self._make_event(recurrence="biweekly")
         resp = self.client.get(self.url, {"year": 2025, "month": 3})
         self.assertEqual(resp.status_code, 200)
 
@@ -312,11 +294,10 @@ class EventCreateTests(TestCase):
     # All-day event logic
     # ------------------------------------------------------------------
     def test_all_day_event_forces_midnight_times(self):
-        """is_all_day=on should set times to 00:00 and 23:59."""
         resp = self.client.post(self.url, {
             "title": "Holiday",
             "event_type": "other",
-            "start_datetime": "2025-04-10T14:30",  # time portion ignored
+            "start_datetime": "2025-04-10T14:30",
             "is_all_day": "on",
         })
         self.assertRedirects(resp, reverse("calendar"), fetch_redirect_response=False)
@@ -327,12 +308,10 @@ class EventCreateTests(TestCase):
         self.assertEqual(event.end_datetime.minute, 59)
 
     def test_all_day_event_missing_start_datetime_shows_error(self):
-        """All-day with no start_datetime → error message & redirect."""
         resp = self.client.post(self.url, {
             "title": "Bad All-Day",
             "event_type": "other",
             "is_all_day": "on",
-            # start_datetime deliberately omitted
         })
         self.assertRedirects(resp, reverse("calendar"), fetch_redirect_response=False)
         self.assertFalse(Event.objects.filter(title="Bad All-Day").exists())
@@ -362,7 +341,6 @@ class EventCreateTests(TestCase):
     # Validation error on save
     # ------------------------------------------------------------------
     def test_validation_error_shows_message(self):
-        """If full_clean raises ValidationError, an error message is set."""
         with patch.object(Event, "full_clean", side_effect=__import__("django.core.exceptions", fromlist=["ValidationError"]).ValidationError("bad")):
             resp = self.client.post(self.url, {
                 "title": "Invalid",
@@ -376,7 +354,6 @@ class EventCreateTests(TestCase):
     # Defaults
     # ------------------------------------------------------------------
     def test_defaults_for_optional_fields(self):
-        """location, description, recurrence, visibility all have defaults."""
         resp = self.client.post(self.url, {
             "title": "Minimal",
             "start_datetime": "2025-04-10T09:00",
@@ -409,6 +386,179 @@ class EventCreateTests(TestCase):
         self.assertIn("login", resp.url)
 
     def test_get_request_not_allowed(self):
-        """event_create only accepts POST."""
         resp = self.client.get(self.url)
         self.assertEqual(resp.status_code, 405)
+
+
+# ======================================================================
+# apply_session_schedule view tests
+# ======================================================================
+
+
+class ApplySessionScheduleTests(TestCase):
+    """Tests for the apply_session_schedule AJAX endpoint."""
+
+    def setUp(self):
+        self.client = Client()
+        self.user = User.objects.create_user(username="scheduser", password="pass1234")
+        self.client.login(username="scheduser", password="pass1234")
+        self.url = reverse("apply_session_schedule")
+
+    def _create_session(self, title="Study", start_offset=timedelta(days=1), duration_hours=2):
+        now = timezone.now()
+        return Event.objects.create(
+            creator=self.user,
+            title=title,
+            event_type=Event.EventType.STUDY_SESSION,
+            start_datetime=now + start_offset,
+            end_datetime=now + start_offset + timedelta(hours=duration_hours),
+        )
+
+    # -- Success path ------------------------------------------------
+    def test_update_sessions_success(self):
+        session = self._create_session()
+        new_start = "2025-05-01T10:00"
+        new_end = "2025-05-01T12:00"
+        resp = self.client.post(self.url, {
+            "sessions": json.dumps([{"id": session.pk, "start": new_start, "end": new_end}])
+        })
+        self.assertEqual(resp.status_code, 200)
+        data = resp.json()
+        self.assertTrue(data["success"])
+        self.assertEqual(data["count"], 1)
+
+    # -- Invalid JSON ------------------------------------------------
+    def test_invalid_json_returns_400(self):
+        resp = self.client.post(self.url, {"sessions": "not-valid-json"})
+        self.assertEqual(resp.status_code, 400)
+        self.assertFalse(resp.json()["success"])
+
+    # -- Nonexistent event skipped -----------------------------------
+    def test_nonexistent_event_skipped(self):
+        resp = self.client.post(self.url, {
+            "sessions": json.dumps([{"id": 99999, "start": "2025-05-01T10:00", "end": "2025-05-01T12:00"}])
+        })
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.json()["count"], 0)
+
+    # -- Wrong event type skipped ------------------------------------
+    def test_wrong_event_type_skipped(self):
+        event = Event.objects.create(
+            creator=self.user,
+            title="Not a session",
+            event_type=Event.EventType.DEADLINE,
+            start_datetime=timezone.now(),
+            end_datetime=timezone.now() + timedelta(hours=1),
+        )
+        resp = self.client.post(self.url, {
+            "sessions": json.dumps([{"id": event.pk, "start": "2025-05-01T10:00", "end": "2025-05-01T12:00"}])
+        })
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.json()["count"], 0)
+
+    # -- Missing key in session dict ---------------------------------
+    def test_missing_key_skipped(self):
+        session = self._create_session()
+        resp = self.client.post(self.url, {
+            "sessions": json.dumps([{"id": session.pk}])
+        })
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.json()["count"], 0)
+
+    # -- Empty sessions list -----------------------------------------
+    def test_empty_sessions_list(self):
+        resp = self.client.post(self.url, {"sessions": json.dumps([])})
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.json()["count"], 0)
+
+    # -- Auth guards -------------------------------------------------
+    def test_unauthenticated_redirects(self):
+        self.client.logout()
+        resp = self.client.post(self.url, {"sessions": "[]"})
+        self.assertEqual(resp.status_code, 302)
+        self.assertIn("login", resp.url)
+
+    def test_get_not_allowed(self):
+        resp = self.client.get(self.url)
+        self.assertEqual(resp.status_code, 405)
+
+
+# ======================================================================
+# subscribe_event view tests
+# ======================================================================
+
+
+class SubscribeEventTests(TestCase):
+    """Tests for the subscribe_event AJAX endpoint."""
+
+    def setUp(self):
+        self.client = Client()
+        self.owner = User.objects.create_user(username="owner", password="pass1234")
+        self.subscriber = User.objects.create_user(username="subscriber", password="pass1234")
+        self.client.login(username="subscriber", password="pass1234")
+        now = timezone.now()
+        self.public_event = Event.objects.create(
+            creator=self.owner,
+            title="Public Lecture",
+            event_type=Event.EventType.CLASS,
+            start_datetime=now + timedelta(days=1),
+            end_datetime=now + timedelta(days=1, hours=2),
+            visibility=Event.Visibility.PUBLIC,
+        )
+
+    def _url(self, pk):
+        return reverse("subscribe_event", kwargs={"pk": pk})
+
+    # -- Success path ------------------------------------------------
+    def test_subscribe_success(self):
+        resp = self.client.post(self._url(self.public_event.pk))
+        self.assertEqual(resp.status_code, 200)
+        self.assertTrue(resp.json()["success"])
+        self.assertTrue(
+            Event.objects.filter(creator=self.subscriber, title="Public Lecture").exists()
+        )
+
+    # -- Owner cannot subscribe to own event -------------------------
+    def test_owner_cannot_subscribe(self):
+        self.client.login(username="owner", password="pass1234")
+        resp = self.client.post(self._url(self.public_event.pk))
+        self.assertEqual(resp.status_code, 400)
+        self.assertFalse(resp.json()["success"])
+
+    # -- Duplicate subscription --------------------------------------
+    def test_already_subscribed(self):
+        self.client.post(self._url(self.public_event.pk))
+        resp = self.client.post(self._url(self.public_event.pk))
+        self.assertEqual(resp.status_code, 400)
+        self.assertIn("Already", resp.json()["error"])
+
+    # -- Private event returns 404 -----------------------------------
+    def test_private_event_404(self):
+        private_event = Event.objects.create(
+            creator=self.owner,
+            title="Private Meeting",
+            event_type=Event.EventType.MEETING,
+            start_datetime=timezone.now() + timedelta(days=1),
+            end_datetime=timezone.now() + timedelta(days=1, hours=1),
+            visibility=Event.Visibility.PRIVATE,
+        )
+        resp = self.client.post(self._url(private_event.pk))
+        self.assertEqual(resp.status_code, 404)
+
+    # -- Nonexistent event returns 404 -------------------------------
+    def test_nonexistent_event_404(self):
+        resp = self.client.post(self._url(99999))
+        self.assertEqual(resp.status_code, 404)
+
+    # -- Auth guards -------------------------------------------------
+    def test_unauthenticated_redirects(self):
+        self.client.logout()
+        resp = self.client.post(self._url(self.public_event.pk))
+        self.assertEqual(resp.status_code, 302)
+        self.assertIn("login", resp.url)
+
+    def test_get_not_allowed(self):
+        resp = self.client.get(self._url(self.public_event.pk))
+        self.assertEqual(resp.status_code, 405)
+
+    

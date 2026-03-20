@@ -1,14 +1,10 @@
 document.addEventListener("DOMContentLoaded", function () {
 
-  /* -----------------------------
-     Bootstrap tooltips
-  ----------------------------- */
+  /* Bootstrap tooltips */
   const tooltips = document.querySelectorAll('[data-bs-toggle="tooltip"]');
   tooltips.forEach(el => new bootstrap.Tooltip(el, { html: true }));
 
-  /* -----------------------------
-     Notification badge & tooltip
-  ----------------------------- */
+  /* Notification badge & tooltip */
   const badge = document.getElementById("nav-notif-badge");
   const _nav = document.querySelector('nav.timeout-nav');
 
@@ -58,11 +54,11 @@ document.addEventListener("DOMContentLoaded", function () {
     }, 3000);
   }
 
-  /* -----------------------------
+  /* 
      Real-time polling for new notifications
      Start lastNotifId from latest known ID so first
      poll only catches genuinely new notifications
-  ----------------------------- */
+  */
   let lastNotifId = parseInt(_nav?.dataset.latestNotifId) || 0;
 
   function pollNotifications() {

@@ -201,14 +201,14 @@ class Event(models.Model):
         from django.utils import timezone
         return self.start_datetime > timezone.now()
     
-    def mark_completed(self):
+    def mark_completed(self): #for deadline list page, events can be marked as completed and calculate the duration from creation of the event until clicked complete
         """Mark event as completed and calculate actual duration."""
         from django.utils import timezone
         self.is_completed = True
         self.completed_at = timezone.now()
         # Calculate duration in hours from creation to completion
         delta = self.completed_at - self.created_at
-        self.actual_duration_hours = round(delta.total_seconds() / 3600, 2)
+        self.actual_duration_hours = round(delta.total_seconds() / 3600, 2) # calculate the duration in hours and round to 2 decimals
         self.save(update_fields=[
             'is_completed', 'completed_at', 'actual_duration_hours', 'updated_at',
         ])

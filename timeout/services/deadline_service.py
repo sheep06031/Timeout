@@ -3,15 +3,15 @@ from timeout.models import Event
 
 
 class DeadlineService:
-    """Service for deadline list view query logic."""
+    """Service to help for deadline list view
+    Provides calculations for time remainig, time elapsed and urgency for the deadlines
+    Gets them in a human readabke format from time delta function"""
 
     @staticmethod
     def get_active_deadlines(user):
         """
-        Get all incomplete deadline events for a user
-        Sort the upcoming deadline first
-        Return a list of dicts with the event with fields: how urgent, time left and how much time has passed since beginning
-        urgency_status, time_remaining, time_elapsed.
+        Gets all active deadline events to do for a user and sorts the upcoming deadline first
+        Checks if the user is authenicated ifrst, then gets the uncompleted deadlines, order them by end date and then calculates the remaining time
         """
         if not user.is_authenticated:
             return []
@@ -23,8 +23,8 @@ class DeadlineService:
             is_completed=False,
         ).order_by('start_datetime')
 
-        now = timezone.now()
-        results = []
+        now = timezone.now() # get current time
+        results = [] # list to store calculated results
 
         #Calculate the remaining time for a deadline and time passed
         for event in deadlines:
@@ -54,16 +54,14 @@ class DeadlineService:
     @staticmethod
     def get_filtered_deadlines(user, status_filter='active', sort_order='asc', event_type=None):
         """
-        Get deadlines with filtering and sorting options.
-
-        status_filter: 'active' (default) | 'completed' | 'all'
-        sort_order:    'asc' (oldest first, default) | 'desc' (newest first)
-        event_type:    None (all types) | 'deadline' | 'exam' | 'class' | etc.
+        Get deadlines with filtering and sorting.
+        Allows user to filter by active/completed/all and by event types
+        Also allows to sort from old to new or new to old
         """
         if not user.is_authenticated:
             return []
 
-        qs = Event.objects.filter(
+        qs = Event.objects.filter( # Query to get all event for the user
             creator=user,
         )
 
@@ -75,14 +73,14 @@ class DeadlineService:
             qs = qs.filter(is_completed=False)
         elif status_filter == 'completed':
             qs = qs.filter(is_completed=True)
-        # 'all' → no extra filter
+        # if all is selected for the query no need to filter
 
-        ordering = 'end_datetime' if sort_order == 'asc' else '-end_datetime'
+        ordering = 'end_datetime' if sort_order == 'asc' else '-end_datetime' # Order by end date upon user pereference
         qs = qs.order_by(ordering)
 
-        now = timezone.now()
+        now = timezone.now() # get current time
         results = []
-
+        # Again calculation for the remaining time of the queried events and passed time
         for event in qs:
             time_remaining = event.end_datetime - now
             time_elapsed = now - event.created_at
@@ -92,7 +90,7 @@ class DeadlineService:
                 urgency_status = 'completed'
             elif remaining_seconds < 0:
                 urgency_status = 'overdue'
-            elif remaining_seconds <= 86400:
+            elif remaining_seconds <= 86400: # 24 hours or less is urgent
                 urgency_status = 'urgent'
             else:
                 urgency_status = 'normal'
@@ -109,20 +107,20 @@ class DeadlineService:
 
     @staticmethod
     def mark_complete(user, event_id):
-        """Mark any event as completed (not just deadlines)."""
-        try:
+        """Mark event as completed """
+        try: # Get event by id, check if completed
             event = Event.objects.get(
                 pk=event_id,
                 creator=user,
                 is_completed=False,
             )
-            event.is_completed = True
+            event.is_completed = True # Mark as completed and save
             event.save(update_fields=['is_completed', 'updated_at'])
             return event
         except Event.DoesNotExist:
             return None
 
-    @staticmethod
+    @staticmethod #To-do is this needed?
     def get_all_active_events(user):
         """
         Return all non-completed, non-cancelled user events grouped by type.

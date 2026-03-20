@@ -3,7 +3,10 @@ from timeout.models import User
 
 
 class AppearanceForm(forms.ModelForm):
+    """Form for managing appearance, notification, and study preferences."""
+
     class Meta:
+        """Defines the model and fields exposed by this form."""
         model = User
         fields = [
             'theme', 'colorblind_mode', 'font_size',

@@ -33,7 +33,7 @@ function initEventDropdown() {
 
     const dropdown = document.createElement('div');
     dropdown.className = 'custom-event-dropdown';
-    document.body.appendChild(dropdown); // attach to body so it's never clipped
+    document.body.appendChild(dropdown); 
 
     function positionDropdown() {
         const rect = trigger.getBoundingClientRect();

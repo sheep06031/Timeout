@@ -2,19 +2,17 @@ import json
 import logging
 from collections import Counter
 from datetime import timedelta
-
 from django.conf import settings
 from django.core.cache import cache
 from django.db.models import Sum, F
 from django.utils import timezone
-
 from timeout.models import Event
 
 logger = logging.getLogger(__name__)
 
 
 class AIService:
-    """Service for AI-powered dashboard insights using OpenAI."""
+    """Service for AI-powered dashboard insights using OpenAI. Gives out a weekly briefing based on user stats"""
 
     CACHE_TIMEOUT = 60 * 60 * 24  # 24 hours in seconds
 

@@ -1,6 +1,6 @@
 /* Notes Page: Pomodoro, Focus Mode, Streaks, Heatmap, Daily Goals */
 
-/* ═══ Helpers ═══ */
+/* Helpers */
 
 function getCsrfToken() {
   for (var c of document.cookie.split(';')) {
@@ -41,7 +41,7 @@ function togglePin(noteId, btn) {
 }
 
 
-/* ═══ Audio Utility ═══ */
+/* Audio Utility */
 
 function playBeep(freq, duration, volume) {
   try {
@@ -76,7 +76,7 @@ function playWarning() {
 }
 
 
-/* ═══ XP Toast ═══ */
+/* XP Toast */
 
 function showXpToast(amount) {
   var toast = document.getElementById('xpToast');
@@ -105,10 +105,10 @@ function updateStatsUI(data) {
 }
 
 
-/* ═══ Daily Goals ═══ */
+/* Daily Goals */
 
 var DailyGoals = (function() {
-  var CIRCUMFERENCE = 2 * Math.PI * 16; // 100.531
+  var CIRCUMFERENCE = 2 * Math.PI * 16;
 
   function updateRing(id, current, goal) {
     var ring = document.getElementById(id);
@@ -152,16 +152,16 @@ var DailyGoals = (function() {
     // Restore collapsed state
     if (localStorage.getItem('goals_collapsed') === '1') {
       body.style.display = 'none';
-      toggle.textContent = '\u25BC'; // ▼
+      toggle.textContent = '\u25BC';
     }
     toggle.addEventListener('click', function() {
       if (body.style.display === 'none') {
         body.style.display = '';
-        toggle.textContent = '\u25B2'; // ▲
+        toggle.textContent = '\u25B2';
         localStorage.removeItem('goals_collapsed');
       } else {
         body.style.display = 'none';
-        toggle.textContent = '\u25BC'; // ▼
+        toggle.textContent = '\u25BC';
         localStorage.setItem('goals_collapsed', '1');
       }
     });
@@ -209,7 +209,7 @@ var DailyGoals = (function() {
 })();
 
 
-/* ═══ Study Heatmap ═══ */
+/* Study Heatmap */
 
 var Heatmap = (function() {
   function render(days) {
@@ -217,17 +217,13 @@ var Heatmap = (function() {
     if (!grid || !days) return;
     grid.innerHTML = '';
 
-    // Build 7-row grid (Mon-Sun)
-    // First, organize by weeks
     var weeks = [];
     var week = [];
     for (var i = 0; i < days.length; i++) {
       var d = new Date(days[i].date + 'T00:00:00');
-      var dow = d.getDay(); // 0=Sun
-      // Convert to Mon=0
+      var dow = d.getDay();
       var mdow = dow === 0 ? 6 : dow - 1;
 
-      // If first entry, pad leading days
       if (i === 0 && mdow > 0) {
         for (var p = 0; p < mdow; p++) week.push(null);
       }
@@ -239,7 +235,6 @@ var Heatmap = (function() {
     }
     if (week.length > 0) weeks.push(week);
 
-    // Render as columns (each week is a column)
     for (var w = 0; w < weeks.length; w++) {
       var col = document.createElement('div');
       col.className = 'nt-heatmap-col';
@@ -277,14 +272,14 @@ var Heatmap = (function() {
 })();
 
 
-/* ═══ Pomodoro Timer ═══ */
+/* Pomodoro Timer */
 
 var Pomodoro = (function() {
   var cfg = window.NOTES_CONFIG || {};
   var WORK = (cfg.pomoWork || 25) * 60;
   var SHORT_BREAK = (cfg.pomoShort || 5) * 60;
   var LONG_BREAK = (cfg.pomoLong || 15) * 60;
-  var CIRCUMFERENCE = 2 * Math.PI * 54; // 339.292
+  var CIRCUMFERENCE = 2 * Math.PI * 54;
 
   var state = {
     phase: 'work',
@@ -396,7 +391,6 @@ var Pomodoro = (function() {
         .then(function(data) {
           updateStatsUI(data);
           showXpToast(25);
-          // Update daily goals
           if (data.daily_progress) {
             DailyGoals.render(data.daily_progress);
           }
@@ -481,7 +475,7 @@ var Pomodoro = (function() {
 })();
 
 
-/* ═══ Focus Mode ═══ */
+/* Focus Mode */
 
 var FocusMode = (function() {
   var active = false;
@@ -616,7 +610,7 @@ var FocusMode = (function() {
 })();
 
 
-/* ═══ Word Count (for note_edit) ═══ */
+/* Word Count (for note_edit) */
 
 function initWordCount() {
   var textarea = document.getElementById('id_content');
@@ -634,7 +628,7 @@ function initWordCount() {
 }
 
 
-/* ═══ Init ═══ */
+/* Init */
 
 document.addEventListener('DOMContentLoaded', function() {
   if (document.getElementById('pomoPanel')) Pomodoro.init();
