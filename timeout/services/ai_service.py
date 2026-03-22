@@ -12,127 +12,113 @@ logger = logging.getLogger(__name__)
 
 
 class AIService:
-    """Service for AI-powered dashboard insights using OpenAI. Gives out a weekly briefing based on user stats"""
+    """the service for dashboard summary using OpenAI. 
+    Gives out a weekly summary based on user stats"""
 
-    CACHE_TIMEOUT = 60 * 60 * 24  # 24 hours in seconds
+    CACHE_TIMEOUT = 60 * 60 * 24  # 24 hours in seconds, timed to update once per day
 
     @staticmethod
     def get_dashboard_briefing(user):
-        """
-        Generate a short AI 'Weekly Insight' briefing for the dashboard.
-
-        Queries the user's Event data from the past 7 days, aggregates key
-        stats (study hours, missed deadlines, most productive day), then
-        asks OpenAI for a concise 2-sentence morning briefing.
-
-        Results are cached per-user for 24 hours.
-
-        Returns:
-            str | None: The briefing text, or None on any failure.
-        """
-        if not user.is_authenticated:
+        """Generate a short AI 'Weekly Insight' summary for the dashboard.
+        Results are updated every 24 hours."""
+        if not user.is_authenticated: # check authentication
             return None
-
-        cache_key = f'ai_briefing_{user.id}'
-
-        # Try cache first
+ 
+        cache_key = f'ai_briefing_{user.id}' # cache key with user id
         cached = cache.get(cache_key)
         if cached is not None:
             return cached
-
-        # ── Gather stats from the last 7 days ──────────────────────────
-        now = timezone.now()
-        week_ago = now - timedelta(days=7)
-
-        events_this_week = Event.objects.filter(
-            creator=user,
-            start_datetime__gte=week_ago,
-            start_datetime__lte=now,
-        )
-
-        # Total study hours (study_session events)
-        study_events = events_this_week.filter(
-            event_type=Event.EventType.STUDY_SESSION,
-        )
-        total_study_seconds = 0
-        for ev in study_events:
-            duration = (ev.end_datetime - ev.start_datetime).total_seconds()
-            if duration > 0:
-                total_study_seconds += duration
-        total_study_hours = round(total_study_seconds / 3600, 1)
-
-        # Missed deadlines (deadline type, not completed, end_datetime in the past)
-        missed_deadlines = events_this_week.filter(
-            event_type=Event.EventType.DEADLINE,
-            is_completed=False,
-            end_datetime__lt=now,
-        ).count()
-
-        # Most productive day (day with most is_completed=True events)
-        completed_events = events_this_week.filter(is_completed=True)
-        day_counts = Counter()
-        for ev in completed_events:
-            day_label = ev.start_datetime.strftime('%A')  # e.g. "Monday"
-            day_counts[day_label] += 1
-
-        if day_counts:
-            most_productive_day = day_counts.most_common(1)[0][0]
-        else:
-            most_productive_day = 'None yet'
-
-        # Total events this week for extra context
-        total_events = events_this_week.count()
-
-        stats = {
-            'total_study_hours': total_study_hours,
-            'missed_deadlines': missed_deadlines,
-            'most_productive_day': most_productive_day,
-            'total_events': total_events,
-            'completed_tasks': completed_events.count(),
-        }
-
-        # ── Call OpenAI ─────────────────────────────────────────────────
-        briefing = _call_openai_for_briefing(stats)
-        if briefing is None:
+ 
+        stats = weekly_stats(user)
+        summary = openai_prompt(stats)
+        if summary is None:
             return None
+ 
+        cache.set(cache_key, summary, AIService.CACHE_TIMEOUT)
+        return summary
+ 
+# Gelper functions to calculate the stats for the briefing
+def weekly_stats(user):
+    """Gather user stats from the past week"""
+    now = timezone.now()
+    week_ago = now - timedelta(days=7) # get time from a week ago
+    # Event filter from the past week until now
+    weekly_events = Event.objects.filter( 
+        creator=user,
+        start_datetime__gte=week_ago,
+        start_datetime__lte=now,
+    )
+ 
+    completed_events = weekly_events.filter(is_completed=True) # only get completed events
+ # prompt for openai with stats
+    return { 
+        'total_study_hours': study_hours(weekly_events),
+        'missed_deadlines': missed_deadlines(weekly_events, now),
+        'most_productive_day': most_productive_day(completed_events),
+        'total_events': weekly_events.count(),
+        'completed_tasks': completed_events.count(),
+    }
+ 
+ 
+def study_hours(events_qs):
+    """Calculate the total hours studied from study session type events"""
+    study_events = events_qs.filter(
+        event_type=Event.EventType.STUDY_SESSION,
+    )
+    total_seconds = 0
+    for ev in study_events:
+        duration = ev.end_datetime - ev.start_datetime
+        total_seconds += max(duration.total_seconds(), 0)
+    return round(total_seconds / 3600, 1) # Round the results to 1 decimal place after converting to hours
+ 
+ 
+def missed_deadlines(events_qs, now):
+    """Count deadline events that are past due and not completed."""
+    return events_qs.filter(
+        event_type=Event.EventType.DEADLINE,
+        is_completed=False,
+        end_datetime__lt=now,
+    ).count()
+ 
+ 
+def most_productive_day(completed_qs):
+    """Return the weekday name with the most completed events."""
+    day_counts = Counter(
+        ev.start_datetime.strftime('%A') for ev in completed_qs # Count the days for completed events and get names of the days
+    )
+    if day_counts:
+        return day_counts.most_common(1)[0][0] # Get the most common day name to find most productive day
+    return 'None yet'
 
-        # Cache for 24 hours
-        cache.set(cache_key, briefing, AIService.CACHE_TIMEOUT)
-        return briefing
 
+# Helper functions to call openai and send prompts
 
-def _call_openai_for_briefing(stats):
-    """
-    Send aggregated stats to OpenAI and return a 2-sentence briefing.
-
-    Returns:
-        str | None: The briefing text, or None on failure.
-    """
+def openai_prompt(stats):
+    """Send aggregated stats to OpenAI as prompt
+    Returns a 2 sentence briefing."""
     api_key = getattr(settings, 'OPENAI_API_KEY', None)
     if not api_key:
         logger.warning('OPENAI_API_KEY not configured. Skipping AI briefing.')
         return None
-
+ 
     prompt = (
         f"Review these student stats for the past week: {json.dumps(stats)}. "
         "Write a 2-sentence 'Morning Briefing' that is encouraging and concise. "
         "Mention one specific win. Do not use markdown formatting."
     )
-
+    return api_call(api_key, prompt)
+ 
+ 
+def api_call(api_key, prompt):
+    """Make the api call to ai with the prompt and return the response"""
     try:
         from openai import OpenAI
-
+ 
         client = OpenAI(api_key=api_key)
         response = client.chat.completions.create(
-            model='gpt-4o-mini',
-            messages=[
-                {
-                    'role': 'system',
-                    'content': (
-                        'You are a supportive academic coach. '
-                        'Keep your tone warm, brief, and motivating.'
-                    ),
-                },
+            model='gpt-4o-mini', # model used
+            messages=[ # set the tone and the prompt
+                {'role': 'system', 'content': 'You are a supportive academic coach. Keep your tone warm, brief, and motivating.'},
                 {'role': 'user', 'content': prompt},
             ],
             temperature=0.7,

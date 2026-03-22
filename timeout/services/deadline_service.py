@@ -69,7 +69,7 @@ def filter_events(queryset):
     return [build_event(event, now) for event in queryset]
     
 def build_event(event, now):
-    """Build a single enriched dict for one event."""
+    """Build a single dict for one event."""
     time_remaining = event.end_datetime - now
     time_elapsed = now - event.created_at
 
