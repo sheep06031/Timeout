@@ -82,6 +82,22 @@ function initEventDropdown() {
     nativeSelect.insertAdjacentElement('afterend', wrapper);
 }
 
+function applyFollowState(btn, following, requested) {
+    btn.classList.remove('btn-primary', 'btn-secondary', 'btn-warning');
+    if (following) {
+        btn.textContent = 'Unfollow';
+        btn.classList.add('btn-secondary');
+    } else if (requested) {
+        btn.textContent = 'Requested';
+        btn.classList.add('btn-warning');
+    } else {
+        btn.textContent = 'Follow';
+        btn.classList.add('btn-primary');
+    }
+    btn.dataset.following = following;
+    btn.dataset.requested = requested;
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     const input = document.getElementById('userSearchInput');
     const results = document.getElementById('userSearchResults');
@@ -299,28 +315,12 @@ document.addEventListener('DOMContentLoaded', function() {
     document.querySelectorAll('.follow-btn').forEach(button => {
         button.addEventListener('click', function() {
             const username = this.dataset.username;
-            const url = `/social/user/${username}/follow/`;
-
-            fetch(url, {
+            fetch(`/social/user/${username}/follow/`, {
                 method: 'POST',
-                headers: {
-                    'X-CSRFToken': csrftoken,
-                    'Content-Type': 'application/json'
-                }
+                headers: { 'X-CSRFToken': csrftoken, 'Content-Type': 'application/json' }
             })
-            .then(response => response.json())
-            .then(data => {
-                this.textContent = data.following ? 'Unfollow' : 'Follow';
-                this.dataset.following = data.following;
-
-                if (data.following) {
-                    this.classList.remove('btn-primary');
-                    this.classList.add('btn-secondary');
-                } else {
-                    this.classList.remove('btn-secondary');
-                    this.classList.add('btn-primary');
-                }
-            })
+            .then(r => r.json())
+            .then(data => applyFollowState(this, data.following, data.requested))
             .catch(error => console.error('Error:', error));
         });
     });

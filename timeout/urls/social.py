@@ -20,6 +20,8 @@ urlpatterns = [
     # User profiles and following
     path('user/<str:username>/', social.user_profile, name='user_profile'),
     path('user/<str:username>/follow/', social.follow_user, name='follow_user'),
+    path('user/<str:username>/follow/accept/', social.accept_follow_request, name='accept_follow_request'),
+    path('user/<str:username>/follow/reject/', social.reject_follow_request, name='reject_follow_request'),
     path('status/update/', social.update_status, name='update_status'),
     path('friends/', social.friends_api, name='friends_api'),
     path('user/<str:username>/friends/', social.user_friends_api, name='user_friends_api'),
