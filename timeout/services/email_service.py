@@ -1,13 +1,8 @@
 import logging
-
 from django.conf import settings
-
 logger = logging.getLogger(__name__)
-
-
 class EmailService:
     """Send transactional emails via Twilio SendGrid."""
-
     @staticmethod
     def send_reset_code(to_email, code):
         """Send a 6-digit password reset code to the user's email."""

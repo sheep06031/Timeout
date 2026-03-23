@@ -40,7 +40,7 @@ class AIService:
         if cached is not None:
             return cached
 
-        # ── Gather stats from the last 7 days ──────────────────────────
+        # Gather stats from the last 7 days
         now = timezone.now()
         week_ago = now - timedelta(days=7)
 
@@ -91,7 +91,7 @@ class AIService:
             'completed_tasks': completed_events.count(),
         }
 
-        # ── Call OpenAI ─────────────────────────────────────────────────
+        # Call OpenAI
         briefing = _call_openai_for_briefing(stats)
         if briefing is None:
             return None

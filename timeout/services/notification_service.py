@@ -3,8 +3,8 @@ from timeout.models.notification import Notification
 from timeout.models.event import Event
 
 class NotificationService:
+    """Maps event type to friendly label for notification messages"""
 
-    # Maps event type to friendly label for notification messages
     EVENT_TYPE_LABELS = {
         Event.EventType.DEADLINE:      ("Deadline",      "⏰"),
         Event.EventType.EXAM:          ("Exam",          "📝"),
@@ -99,6 +99,7 @@ class NotificationService:
             deadline=event,
             message=message
         ).exists()
+        
         if not exists:
             label, icon = NotificationService.EVENT_TYPE_LABELS.get(
                 event.event_type, ("Event", "📅")
