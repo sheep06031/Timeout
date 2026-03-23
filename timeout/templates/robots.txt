@@ -1,0 +1,14 @@
+User-agent: *
+Disallow: /admin/
+Disallow: /accounts/
+Disallow: /dashboard/
+Disallow: /calendar/
+Disallow: /profile/
+Disallow: /settings/
+Disallow: /statistics/
+Disallow: /social/
+Disallow: /messaging/
+Disallow: /notes/
+Disallow: /study-planner/
+
+Sitemap: {{ request.scheme }}://{{ request.get_host }}/sitemap.xml
