@@ -6,6 +6,7 @@
 {% endblock %}
 
 {% block extra_css %}
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
   <link rel="stylesheet" href="{% static 'css/profile.css' %}" />
 {% endblock %}
 
@@ -42,16 +43,20 @@
                   </div>
                   {% if user != profile_user %}
                     <div class="d-flex gap-2 flex-shrink-0">
-                      <button class="btn btn-sm {% if is_following %}
-                          btn-secondary
-                        {% else %}
-                          btn-primary
-                        {% endif %} follow-btn"
-                        data-username="{{ profile_user.username }}"
-                        data-following="{{ is_following|yesno:'true,false' }}">
-                        {{ is_following|yesno:'Unfollow,Follow' }}
-                      </button>
-                      <a href="{% url 'start_conversation' profile_user.username %}" class="btn btn-sm btn-outline-secondary">💬 Message</a>
+                      {% if is_following %}
+                        <button class="btn btn-sm btn-secondary follow-btn"
+                                data-username="{{ profile_user.username }}"
+                                data-following="true" data-requested="false">Unfollow</button>
+                      {% elif has_pending_request %}
+                        <button class="btn btn-sm btn-warning follow-btn"
+                                data-username="{{ profile_user.username }}"
+                                data-following="false" data-requested="true">Requested</button>
+                      {% else %}
+                        <button class="btn btn-sm btn-primary follow-btn"
+                                data-username="{{ profile_user.username }}"
+                                data-following="false" data-requested="false">Follow</button>
+                      {% endif %}
+                      <a href="{% url 'start_conversation' profile_user.username %}" class="btn btn-sm btn-outline-secondary">Message</a>
                     </div>
                   {% endif %}
                 </div>
@@ -130,6 +135,28 @@
           {% include 'partials/modals/friends_modal.html' %}
         {% endif %}
 
+        <!-- Incoming Follow Requests (own profile only) -->
+        {% if incoming_requests %}
+          <div class="post-card mb-4">
+            <div class="post-card-body">
+              <h5 class="mb-3">Follow Requests</h5>
+              {% for fr in incoming_requests %}
+                <div class="follow-request-row d-flex align-items-center justify-content-between mb-2">
+                  <a href="{% url 'user_profile' fr.from_user.username %}" class="fw-semibold text-decoration-none">
+                    @{{ fr.from_user.username }}
+                  </a>
+                  <div class="d-flex gap-2">
+                    <button class="btn btn-sm btn-primary accept-request-btn"
+                            data-username="{{ fr.from_user.username }}">Accept</button>
+                    <button class="btn btn-sm btn-outline-secondary reject-request-btn"
+                            data-username="{{ fr.from_user.username }}">Reject</button>
+                  </div>
+                </div>
+              {% endfor %}
+            </div>
+          </div>
+        {% endif %}
+
         <!-- Posts -->
         {% if can_view %}
           <h4 class="mb-3">Posts</h4>
@@ -168,4 +195,5 @@
   </script>
   <script src="{% static 'js/social.js' %}"></script>
   <script src="{% static 'js/user_profile.js' %}"></script>
+  <script src="{% static 'js/follow_requests.js' %}"></script>
 {% endblock %}

@@ -4,6 +4,7 @@
 {% block title %}Social Feed - Timeout{% endblock %}
 
 {% block extra_css %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
 <link rel="stylesheet" href="{% static 'css/social.css' %}">
 {% endblock %}
 
@@ -11,72 +12,8 @@
 <div class="feed-wrapper">
   <div class="row g-4">
 
-    <!-- ── Left: Feed ── -->
-    <div class="col-lg-8">
-
-      <!-- Create Post -->
-      <div class="glass-card create-post-card">
-        <div class="card-label">✏️ Create Post</div>
-        <form method="post" action="{% url 'create_post' %}">
-          {% csrf_token %}
-          {{ post_form.content }}
-          <div class="post-selects">
-            <div>{{ post_form.event }}</div>
-            <div>{{ post_form.privacy }}</div>
-          </div>
-          <div class="post-footer">
-            <button type="submit" class="btn-post">Post</button>
-          </div>
-        </form>
-      </div>
-
-      <!-- Feed Tabs -->
-      <div class="feed-tabs">
-        <a href="?tab=following"
-           class="feed-tab {% if active_tab == 'following' %}active{% endif %}">
-          Following
-        </a>
-        <a href="?tab=discover"
-           class="feed-tab {% if active_tab == 'discover' %}active{% endif %}">
-          Discover
-        </a>
-        <a href="?tab=bookmarks"
-          class="feed-tab {% if active_tab == 'bookmarks' %}active{% endif %}">
-          Bookmarks
-        </a>
-      </div>
-
-      <!-- Posts -->
-      {% if posts %}
-        {% for post in posts %}
-          {% include 'social/_post_card.html' with post=post %}
-        {% endfor %}
-      {% else %}
-        <div class="empty-state">
-          <div class="icon">🌱</div>
-          {% if active_tab == 'following' %}
-            No posts yet, follow some people to see their posts here!
-          {% elif active_tab == 'bookmarks' %}
-            You haven't bookmarked any posts yet. 
-          {% else %}
-            Nothing to discover yet. Check back soon!
-          {% endif %}
-        </div>
-      {% endif %}
-
-    </div>
-
-    <!-- ── Right: Sidebar ── -->
-    <div class="col-lg-4">
-
-      <!-- User Search -->
-      <div class="glass-card user-search-card">
-        <div class="card-label">🔍 Find People</div>
-        <div class="search-input-wrap">
-          <input type="text" id="userSearchInput" class="search-input" placeholder="Search by name or username…" autocomplete="off">
-          <div id="userSearchResults" class="search-results" hidden></div>
-        </div>
-      </div>
+    <!-- ── Left: Messages ── -->
+    <div class="col-lg-3">
 
       <div class="messages-sidebar">
         <div class="glass-card">
@@ -108,28 +45,91 @@
             {% endif %}
           </div>
         </div>
-      </div><!-- /.messages-sidebar -->
-    </div><!-- /.col-lg-4 -->
+      </div>
+    </div>
+
+    <!-- ── Middle: Feed ── -->
+    <div class="col-lg-7">
+
+      <!-- User Search -->
+      <div class="glass-card user-search-card">
+        <div class="card-label">🔍 Find People</div>
+        <div class="search-input-wrap">
+          <input type="text" id="userSearchInput" class="search-input" placeholder="Search by name or username…" autocomplete="off">
+          <div id="userSearchResults" class="search-results" hidden></div>
+        </div>
+      </div>
+
+      <!-- Feed Tabs -->
+      <div class="feed-tabs">
+        <a href="?tab=following"
+           class="feed-tab {% if active_tab == 'following' %}active{% endif %}">
+          Following
+        </a>
+        <a href="?tab=discover"
+           class="feed-tab {% if active_tab == 'discover' %}active{% endif %}">
+          Discover
+        </a>
+        <a href="?tab=bookmarks"
+          class="feed-tab {% if active_tab == 'bookmarks' %}active{% endif %}">
+          Bookmarks
+        </a>
+      </div>
+
+      <!-- Posts -->
+      {% if posts %}
+        {% for post in posts %}
+          {% include 'social/_post_card.html' with post=post %}
+        {% endfor %}
+      {% else %}
+        <div class="empty-state">
+          <div class="icon">🌱</div>
+          {% if active_tab == 'following' %}
+            No posts yet, follow some people to see their posts here!
+          {% elif active_tab == 'bookmarks' %}
+            You haven't bookmarked any posts yet.
+          {% else %}
+            Nothing to discover yet. Check back soon!
+          {% endif %}
+        </div>
+      {% endif %}
+
+    </div>
+
+    <!-- ── Right: Spacer (balances messages to keep feed centered) ── -->
+    <div class="col-lg-2"></div>
 
   </div>
 </div>
+
+<!-- Floating Action Button -->
+<button class="fab" id="fabBtn" aria-label="Create post">
+  <span class="fab-icon">+</span>
+</button>
+
+<!-- Create Post Modal -->
+<div class="cp-overlay" id="cpOverlay">
+  <div class="cp-modal">
+    <div class="cp-modal-header">
+      <span class="card-label">✏️ Create Post</span>
+      <button class="cp-close" id="cpClose" aria-label="Close">&times;</button>
+    </div>
+    <form method="post" action="{% url 'create_post' %}">
+      {% csrf_token %}
+      {{ post_form.content }}
+      <div class="post-selects">
+        <div>{{ post_form.event }}</div>
+        <div>{{ post_form.privacy }}</div>
+      </div>
+      <div class="post-footer">
+        <button type="submit" class="btn-post">Post</button>
+      </div>
+    </form>
+  </div>
+</div>
+
 {% endblock %}
 
 {% block extra_js %}
 <script src="{% static 'js/social.js' %}"></script>
-<script>
-document.addEventListener("DOMContentLoaded", () => {
-    const params = new URLSearchParams(window.location.search);
-    const highlightId = params.get("highlight_post");
-    if (highlightId) {
-        const postEl = document.querySelector(`.post-card[data-post-id="${highlightId}"]`);
-        if (postEl) {
-            postEl.scrollIntoView({ behavior: "smooth", block: "center" });
-            postEl.style.transition = "box-shadow 0.4s ease";
-            postEl.style.boxShadow = "0 0 0 3px #5b73e8";
-            setTimeout(() => postEl.style.boxShadow = "", 2500);
-        }
-    }
-});
-</script>
 {% endblock %}

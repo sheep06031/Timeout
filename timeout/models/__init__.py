@@ -8,5 +8,6 @@ from .note import Note
 from .message import Message, Conversation
 from .focus_session import FocusSession
 from .study_log import StudyLog
+from .follow_request import FollowRequest
 
-__all__ = ['User', 'Event', 'Post', 'Comment', 'Like', 'Bookmark', 'Conversation', 'Message', 'Note', 'FocusSession', 'StudyLog']
+__all__ = ['User', 'Event', 'Post', 'Comment', 'Like', 'Bookmark', 'Conversation', 'Message', 'Note', 'FocusSession', 'StudyLog', 'FollowRequest']

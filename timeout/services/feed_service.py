@@ -1,7 +1,6 @@
 from django.db.models import Q, Count
 from timeout.models import Post
 
-
 class FeedService:
     """Service for managing social feed logic."""
 
@@ -108,7 +107,7 @@ class FeedService:
             'likes', 'comments', 'bookmarks'
         ).order_by('-created_at')[:limit]
 
-        # Filter by privacy
+        
         viewable_posts = [
             post for post in posts if post.can_view(user)
         ]

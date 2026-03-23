@@ -65,19 +65,6 @@
         </div>
       </div>
 
-      <!-- Font Size -->
-      <div class="stg-field">
-        <label class="stg-label">Font Size</label>
-        <div class="stg-slider-wrap">
-          <span class="stg-slider-label">A</span>
-          <input type="range" name="font_size" id="fontSizeSlider"
-                 min="80" max="150" step="5"
-                 value="{{ appearance_form.instance.font_size }}"
-                 class="stg-slider">
-          <span class="stg-slider-label stg-slider-label--large">A</span>
-          <span class="stg-slider-value" id="fontSizeValue">{{ appearance_form.instance.font_size }}%</span>
-        </div>
-      </div>
     </div>
 
     <!-- ═══ Pomodoro ═══ -->
@@ -279,15 +266,6 @@
     }
   });
 
-  // Font size slider live preview
-  var slider = document.getElementById('fontSizeSlider');
-  var display = document.getElementById('fontSizeValue');
-  if (slider) {
-    slider.addEventListener('input', function() {
-      display.textContent = this.value + '%';
-      document.documentElement.style.fontSize = this.value + '%';
-    });
-  }
 
   // Theme card active state + live preview
   document.querySelectorAll('.stg-theme-radio').forEach(function(radio) {

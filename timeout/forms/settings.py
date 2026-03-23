@@ -9,7 +9,7 @@ class AppearanceForm(forms.ModelForm):
         """Defines the model and fields exposed by this form."""
         model = User
         fields = [
-            'theme', 'colorblind_mode', 'font_size',
+            'theme', 'colorblind_mode',
             'notification_sounds',
             'pomo_work_minutes', 'pomo_short_break', 'pomo_long_break',
             'default_note_category', 'daily_study_reminder',
@@ -18,10 +18,6 @@ class AppearanceForm(forms.ModelForm):
         widgets = {
             'theme': forms.RadioSelect(choices=User.Theme.choices),
             'colorblind_mode': forms.RadioSelect(choices=User.ColorblindMode.choices),
-            'font_size': forms.NumberInput(attrs={
-                'type': 'range', 'min': 80, 'max': 150, 'step': 5,
-                'class': 'form-range',
-            }),
             'notification_sounds': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
             'pomo_work_minutes': forms.NumberInput(attrs={
                 'class': 'form-control', 'min': 10, 'max': 60,

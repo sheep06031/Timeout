@@ -23,8 +23,8 @@ class DeadlineService:
             is_completed=False,
         ).order_by('start_datetime')
 
-        now = timezone.now() # get current time
-        results = [] # list to store calculated results
+        now = timezone.now() 
+        results = [] 
 
         #Calculate the remaining time for a deadline and time passed
         for event in deadlines:
@@ -37,10 +37,10 @@ class DeadlineService:
                 urgency_status = 'overdue'
             elif remaining_seconds <= 86400:  # 24 hours or less left is urgent
                 urgency_status = 'urgent'
-            else: # else normal
+            else: 
                 urgency_status = 'normal'
 
-            # Retirn the event as a dict with calculated values
+            # Return the event as a dict with calculated values
             results.append({
                 'event': event,
                 'urgency_status': urgency_status,
@@ -78,7 +78,7 @@ class DeadlineService:
         ordering = 'end_datetime' if sort_order == 'asc' else '-end_datetime' # Order by end date upon user pereference
         qs = qs.order_by(ordering)
 
-        now = timezone.now() # get current time
+        now = timezone.now()
         results = []
         # Again calculation for the remaining time of the queried events and passed time
         for event in qs:
@@ -90,7 +90,7 @@ class DeadlineService:
                 urgency_status = 'completed'
             elif remaining_seconds < 0:
                 urgency_status = 'overdue'
-            elif remaining_seconds <= 86400: # 24 hours or less is urgent
+            elif remaining_seconds <= 86400:
                 urgency_status = 'urgent'
             else:
                 urgency_status = 'normal'
@@ -108,19 +108,19 @@ class DeadlineService:
     @staticmethod
     def mark_complete(user, event_id):
         """Mark event as completed """
-        try: # Get event by id, check if completed
+        try: 
             event = Event.objects.get(
                 pk=event_id,
                 creator=user,
                 is_completed=False,
             )
-            event.is_completed = True # Mark as completed and save
+            event.is_completed = True # Mark as completed
             event.save(update_fields=['is_completed', 'updated_at'])
             return event
         except Event.DoesNotExist:
             return None
 
-    @staticmethod #To-do is this needed?
+    @staticmethod 
     def get_all_active_events(user):
         """
         Return all non-completed, non-cancelled user events grouped by type.
@@ -177,7 +177,7 @@ class DeadlineService:
 
         return events_by_type
 
-# Function to create a human readable string for the reamining time
+
 def _format_timedelta(td):
     """Calculation for time left."""
     """ Formatting to make it human readable for how much time has left in terms of days and hours"""
@@ -185,10 +185,10 @@ def _format_timedelta(td):
 
     # Python calculations to show if an event is overdue, and show how much time passed
     if total_seconds < 0:
-        total_seconds = abs(total_seconds) # Turn number positive to calculate
-        days, remainder = divmod(total_seconds, 86400) # divide by 86400 to find how many days and get remainder
-        hours, remainder = divmod(remainder, 3600) # divide the remainder by 3600 to fund housr and get the remainder for minutes
-        minutes = remainder // 60 # divide the remainder by 60 to find how many minutes
+        total_seconds = abs(total_seconds) 
+        days, remainder = divmod(total_seconds, 86400) 
+        hours, remainder = divmod(remainder, 3600) 
+        minutes = remainder // 60 
         if days > 0:
             return f"{days}d {hours}h overdue"
         if hours > 0:

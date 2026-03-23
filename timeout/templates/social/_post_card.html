@@ -30,7 +30,7 @@
     {% if post.event %}
       <div class="post-event-tag" style="display:flex; align-items:center; justify-content:space-between;">
         <div style="display:flex; align-items:center; gap:8px;">
-          📅
+          <i class="bi bi-calendar-event"></i>
           <div>
             <div>{{ post.event.title }}</div>
             <div class="event-date">{{ post.event.start_datetime|date:"F j, Y g:i A" }}</div>
@@ -49,24 +49,24 @@
     <!-- Divider + Actions -->
     <div class="post-divider"></div>
     <div class="post-actions">
-      <button class="action-btn action-btn-like like-btn"
+      <button class="action-btn action-btn-like like-btn {% if post.id in liked_ids %}liked{% endif %}"
               data-post-id="{{ post.id }}"
-              data-liked="false">
-        <span class="like-icon">🤍</span>
-        <span class="like-count">{{ post.likes.count }}</span> Likes
+              data-liked="{% if post.id in liked_ids %}true{% else %}false{% endif %}">
+        <i class="bi {% if post.id in liked_ids %}bi-heart-fill{% else %}bi-heart{% endif %} like-icon"></i>
+        <span class="like-count">{{ post.likes.count }}</span>
       </button>
 
       <button class="action-btn action-btn-comment"
               data-bs-toggle="collapse"
               data-bs-target="#comments-{{ post.id }}">
-        💬 {{ post.comments.count }} Comments
+        <i class="bi bi-chat"></i>
+        <span>{{ post.comments.count }}</span>
       </button>
 
       <button class="action-btn action-btn-bookmark bookmark-btn"
               data-post-id="{{ post.id }}"
               data-bookmarked="{% if post.id in bookmarked_ids %}true{% else %}false{% endif %}">
-        <span class="bookmark-icon">🏷️</span>
-        Bookmark
+        <i class="bi bi-bookmark bookmark-icon"></i>
       </button>
     </div>
 

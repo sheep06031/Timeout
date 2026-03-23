@@ -397,7 +397,6 @@ class SettingsViewTests(TestCase):
     def test_settings_save_ajax(self):
         resp = self.client.post(reverse('settings_save'), {
             'theme': 'dark',
-            'font_size': 100,
             'colorblind_mode': 'none',
             'notification_sounds': True,
             'pomo_work_minutes': 25,

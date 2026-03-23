@@ -7,7 +7,8 @@ from django.utils import timezone
 from django.views.decorators.http import require_POST
 
 from timeout.forms import PostForm, CommentForm
-from timeout.models import Post, Comment, Like, Bookmark, User, Conversation, FocusSession
+from timeout.models import Post, Comment, Like, Bookmark, User, Conversation, FocusSession, FollowRequest
+from timeout.models.notification import Notification
 from timeout.services import FeedService
 from timeout.views.profile import get_profile_event
 
@@ -39,13 +40,17 @@ def feed(request):
     bookmarked_ids = set(
         Bookmark.objects.filter(user=request.user).values_list('post_id', flat=True)
     )
+    liked_ids = set(
+        Like.objects.filter(user=request.user).values_list('post_id', flat=True)
+    )
 
     context = {
         'posts': posts,
         'active_tab': tab,
         'post_form': PostForm(user=request.user),
         'conversation_data': conversation_data,
-        'bookmarked_ids' : bookmarked_ids,
+        'bookmarked_ids': bookmarked_ids,
+        'liked_ids': liked_ids,
     }
     return render(request, 'social/feed.html', context)
 
@@ -189,6 +194,15 @@ def user_profile(request, username):
 
     event, event_status = get_profile_event(profile_user) if can_view else (None, None)
 
+    has_pending_request = (
+        request.user != profile_user and
+        FollowRequest.objects.filter(from_user=request.user, to_user=profile_user).exists()
+    )
+    incoming_requests = (
+        FollowRequest.objects.filter(to_user=request.user).select_related('from_user')
+        if request.user == profile_user else []
+    )
+
     context = {
         'profile_user': profile_user,
         'posts': posts,
@@ -197,35 +211,68 @@ def user_profile(request, username):
         'event': event,
         'event_status': event_status,
         'friends_count': profile_user.following.filter(followers=profile_user).count() if can_view else 0,
-
+        'has_pending_request': has_pending_request,
+        'incoming_requests': incoming_requests,
     }
     return render(request, 'social/user_profile.html', context)
+
+
+def _handle_private_follow(from_user, to_user):
+    """Toggle a follow request for a private account. Returns True if created."""
+    req, created = FollowRequest.objects.get_or_create(
+        from_user=from_user, to_user=to_user
+    )
+    if not created:
+        req.delete()
+        return False
+    return True
 
 
 @login_required
 @require_POST
 def follow_user(request, username):
-    """Follow or unfollow a user (toggle)."""
+    """Follow/unfollow a user, or send/cancel a request for private accounts."""
     user_to_follow = get_object_or_404(User, username=username)
-
     if user_to_follow == request.user:
-        return JsonResponse(
-            {'error': 'Cannot follow yourself'}, status=400
-        )
+        return JsonResponse({'error': 'Cannot follow yourself'}, status=400)
 
     if request.user.following.filter(id=user_to_follow.id).exists():
-        # Unfollow
         request.user.following.remove(user_to_follow)
-        following = False
-        message = f'Unfollowed {user_to_follow.username}'
-    else:
-        # Follow
-        request.user.following.add(user_to_follow)
-        following = True
-        message = f'Now following {user_to_follow.username}'
+        return JsonResponse({'following': False, 'requested': False})
 
-    messages.success(request, message)
-    return JsonResponse({'following': following})
+    if user_to_follow.privacy_private:
+        requested = _handle_private_follow(request.user, user_to_follow)
+        return JsonResponse({'following': False, 'requested': requested})
+
+    request.user.following.add(user_to_follow)
+    return JsonResponse({'following': True, 'requested': False})
+
+
+@login_required
+@require_POST
+def accept_follow_request(request, username):
+    """Accept an incoming follow request."""
+    from_user = get_object_or_404(User, username=username)
+    fr = get_object_or_404(FollowRequest, from_user=from_user, to_user=request.user)
+    from_user.following.add(request.user)
+    Notification.objects.create(
+        user=from_user,
+        title="Follow Request Accepted",
+        message=f"{request.user.username} accepted your follow request",
+        type=Notification.Type.FOLLOW,
+    )
+    fr.delete()
+    return JsonResponse({'accepted': True})
+
+
+@login_required
+@require_POST
+def reject_follow_request(request, username):
+    """Reject an incoming follow request."""
+    from_user = get_object_or_404(User, username=username)
+    fr = get_object_or_404(FollowRequest, from_user=from_user, to_user=request.user)
+    fr.delete()
+    return JsonResponse({'rejected': True})
 
 @login_required
 @require_POST
