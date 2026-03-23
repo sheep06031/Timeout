@@ -46,6 +46,9 @@ function acceptReschedule() {
   if (!_rescheduleData) return;
   const s = _rescheduleData;
 
+  const banner = document.getElementById('reschedule-banner-' + s._originalEventId);
+  if (banner) banner.remove();
+
   if (s._reason === 'missed' && s._originalEventId) {
     fetch(window.RESCHEDULE_CANCEL_URL_TPL.replace('{id}', s._originalEventId), {
       method: 'POST',
