@@ -68,6 +68,24 @@ def _fmt(s):
     return f"{h}h {m}m" if h else f"{m}m"
 
 
+def _build_daily_focus(sessions, today):
+    """Return a list of daily focus dicts for the last 7 days."""
+    daily = []
+    for i in range(6, -1, -1):
+        day = today - timezone.timedelta(days=i)
+        day_seconds = sessions.filter(
+            started_at__date=day,
+        ).aggregate(total=Sum('duration_seconds'))['total'] or 0
+        daily.append({
+            'label': day.strftime('%a'),
+            'date': day.day,
+            'duration': _fmt(day_seconds) if day_seconds else '—',
+            'seconds': day_seconds,
+            'is_today': i == 0,
+        })
+    return daily
+
+
 def get_focus_stats(user):
     """Return focus session stats for the last 7 days."""
     week_start = timezone.now() - timezone.timedelta(days=7)
@@ -77,20 +95,7 @@ def get_focus_stats(user):
     avg_seconds = total_seconds // days_with_sessions if days_with_sessions else 0
 
     today = timezone.localtime(timezone.now()).date()
-    daily = []
-    for i in range(6, -1, -1):
-        day = today - timezone.timedelta(days=i)
-        day_seconds = sessions.filter(
-            started_at__date=day
-        ).aggregate(total=Sum('duration_seconds'))['total'] or 0
-        daily.append({
-            'label': day.strftime('%a'),
-            'date': day.day,
-            'duration': _fmt(day_seconds) if day_seconds else '—',
-            'seconds': day_seconds,
-            'is_today': i == 0,
-        })
-
+    daily = _build_daily_focus(sessions, today)
     max_seconds = max((d['seconds'] for d in daily), default=0) or 1
 
     return {

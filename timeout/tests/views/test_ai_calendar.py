@@ -125,8 +125,7 @@ class AiCreateEventTests(TestCase):
         self.assertEqual(event.end_datetime.hour, 23)
         self.assertEqual(event.end_datetime.minute, 59)
 
-    # ── Markdown stripping ────────────────────────────────────
-
+    # Markdown stripping
     def test_markdown_fenced_response_is_parsed(self):
         fenced = f'```json\n{VALID_AI_RESPONSE}\n```'
         self.client.login(username='testuser', password='pass1234')
