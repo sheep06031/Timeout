@@ -62,7 +62,9 @@ class Notification(models.Model):
     )
 
     class Meta:
+        """Order notifications by most recent first."""
         ordering = ['-created_at']
 
     def __str__(self):
+        """Return a string representation with user and notification title."""
         return f"Notification for {self.user.username}: {self.title}"

@@ -6,6 +6,7 @@ class PostFlag(models.Model):
     """A flag/report on a post submitted by a user."""
 
     class Reason(models.TextChoices):
+        """Reasons for flagging a post for moderation."""
         SPAM = 'spam', 'Spam'
         HARASSMENT = 'harassment', 'Harassment'
         INAPPROPRIATE = 'inappropriate', 'Inappropriate Content'
@@ -31,8 +32,10 @@ class PostFlag(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
+        """Ensure one flag per post-reporter pair and order by most recent first."""
         unique_together = ('post', 'reporter')
         ordering = ['-created_at']
 
     def __str__(self):
+        """Return a string representation showing who flagged which post and why."""
         return f'{self.reporter.username} flagged post {self.post_id}: {self.reason}'

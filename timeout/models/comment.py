@@ -37,6 +37,7 @@ class Comment(models.Model):
         ]
 
     def __str__(self):
+        """Return a short representation showing author and first 30 chars of content."""
         preview = self.content[:30]
         return f'{self.author.username}: {preview}...'
 
