@@ -1,6 +1,7 @@
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render
 from timeout.models.notification import Notification
+from timeout.models.follow_request import FollowRequest
 from django.http import JsonResponse
 from django.core.paginator import Paginator
 from timeout.services.notification_service import NotificationService
@@ -23,6 +24,17 @@ def notifications_view(request):
     paginator = Paginator(notifications_qs, 10)
     page_number = request.GET.get('page')
     notifications = paginator.get_page(page_number)
+
+    pending_usernames = set(
+        FollowRequest.objects.filter(to_user=request.user)
+        .values_list('from_user__username', flat=True)
+    )
+    for n in notifications:
+        n.follow_request_username = None
+        if n.type == Notification.Type.FOLLOW and 'requested to follow you' in n.message:
+            username = n.message.split(' requested to follow you')[0]
+            if username in pending_usernames:
+                n.follow_request_username = username
 
     return render(request, 'pages/notifications.html', {
         'notifications': notifications,

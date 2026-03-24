@@ -219,12 +219,25 @@ def user_profile(request, username):
 
 def _handle_private_follow(from_user, to_user):
     """Toggle a follow request for a private account. Returns True if created."""
+    notif_filter = Notification.objects.filter(
+        user=to_user,
+        type=Notification.Type.FOLLOW,
+        message=f"{from_user.username} requested to follow you",
+    )
     req, created = FollowRequest.objects.get_or_create(
         from_user=from_user, to_user=to_user
     )
     if not created:
         req.delete()
+        notif_filter.delete()
         return False
+    notif_filter.delete()  # clear any leftover before creating a fresh one
+    Notification.objects.create(
+        user=to_user,
+        title="New Follow Request",
+        message=f"{from_user.username} requested to follow you",
+        type=Notification.Type.FOLLOW,
+    )
     return True
 
 
