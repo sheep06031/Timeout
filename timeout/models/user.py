@@ -89,6 +89,10 @@ class User(AbstractUser):
     longest_note_streak = models.PositiveIntegerField(default=0)
     last_note_date = models.DateField(null=True, blank=True)
 
+    # Moderation
+    is_banned = models.BooleanField(default=False)
+    ban_reason = models.CharField(max_length=300, blank=True)
+
     # Social
     following = models.ManyToManyField(
         'self',

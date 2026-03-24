@@ -79,16 +79,42 @@
         </div>
 
         <a href="{% url 'calendar' %}" class="cal-today-btn">Today</a>
-        <a href="#" class="cal-add-btn" data-bs-toggle="modal" data-bs-target="#studyPlannerModal">
-          <span class="cal-add-label">Plan Study</span>
-        </a>
-        <a href="#" class="cal-add-btn" data-bs-toggle="modal" data-bs-target="#rescheduleSessionsModal">
-          <span class="cal-add-label">Reschedule Sessions</span>
-        </a>
-        <a href="#" class="cal-add-btn" data-bs-toggle="modal" data-bs-target="#aiEventModal">
-          <span class="cal-add-label">AI Add</span>
-        </a>
-        <!-- onclick="openAddEvent(new Date().toISOString().slice(0,10))" used to be: data-bs-toggle="modal" data-bs-target="#addEventModal"-->
+        <!-- AI dropdown -->
+        <div class="dropdown">
+          <button class="cal-add-btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+            ✨ AI
+          </button>
+          <ul class="dropdown-menu dropdown-menu-end cal-ai-dropdown">
+            <li>
+              <a class="dropdown-item ai-plan" href="#" data-bs-toggle="modal" data-bs-target="#studyPlannerModal">
+                <span class="ai-item-icon">📚</span>
+                <span class="ai-item-text">
+                  <span class="ai-item-label">Plan Study</span>
+                  <span class="ai-item-desc">Generate a study schedule</span>
+                </span>
+              </a>
+            </li>
+            <li>
+              <a class="dropdown-item ai-reschedule" href="#" data-bs-toggle="modal" data-bs-target="#rescheduleSessionsModal">
+                <span class="ai-item-icon">🔄</span>
+                <span class="ai-item-text">
+                  <span class="ai-item-label">Reschedule Sessions</span>
+                  <span class="ai-item-desc">Optimise your existing sessions</span>
+                </span>
+              </a>
+            </li>
+            <li>
+              <a class="dropdown-item ai-add" href="#" data-bs-toggle="modal" data-bs-target="#aiEventModal">
+                <span class="ai-item-icon">✨</span>
+                <span class="ai-item-text">
+                  <span class="ai-item-label">AI Add Event</span>
+                  <span class="ai-item-desc">Describe an event in plain text</span>
+                </span>
+              </a>
+            </li>
+          </ul>
+        </div>
+
         <a href="#" class="cal-add-btn" onclick="openAddEvent(new Date().toISOString().slice(0,10))">
           + <span class="cal-add-label">Add Event</span>
         </a>

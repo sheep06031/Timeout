@@ -139,7 +139,13 @@ class NotificationModelTest(TestCase):
             message='New',
             type=Notification.Type.MESSAGE,
         )
-        notifications = list(Notification.objects.filter(user=self.user))
+        # Force distinct timestamps so ordering is deterministic
+        Notification.objects.filter(pk=older.pk).update(
+            created_at=timezone.now() - timezone.timedelta(hours=1)
+        )
+        notifications = list(Notification.objects.filter(
+            user=self.user, pk__in=[older.pk, newer.pk]
+        ))
         self.assertEqual(notifications[0], newer)
         self.assertEqual(notifications[1], older)
 

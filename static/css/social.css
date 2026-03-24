@@ -335,6 +335,32 @@
 
 .btn-delete-post:hover { background: rgba(239, 68, 68, 0.16); }
 
+.btn-flag-post {
+    font-size: 13px;
+    color: var(--to-muted);
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px 6px;
+    border-radius: 4px;
+    transition: color 0.2s, background 0.2s;
+}
+.btn-flag-post:hover { color: #f59e0b; background: rgba(245, 158, 11, 0.10); }
+
+.btn-delete-comment {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--to-muted);
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0 4px;
+    line-height: 1;
+    border-radius: 4px;
+    transition: color 0.2s;
+}
+.btn-delete-comment:hover { color: #ef4444; }
+
 .post-content {
     font-size: 14.5px;
     color: var(--to-text);

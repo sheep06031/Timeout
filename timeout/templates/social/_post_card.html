@@ -14,13 +14,18 @@
           {% endif %}
         </div>
       </div>
-      {% if post.author == user or user.is_staff %}
-        <form method="post" action="{% url 'delete_post' post.id %}"
-              onsubmit="return confirm('Delete this post?');" style="margin:0;">
-          {% csrf_token %}
-          <button type="submit" class="btn-delete-post">Delete</button>
-        </form>
-      {% endif %}
+      <div class="d-flex gap-2 align-items-center">
+        {% if user.is_authenticated and post.author != user %}
+          <button class="btn-flag-post" data-bs-toggle="modal" data-bs-target="#flagModal-{{ post.id }}" title="Flag post">&#9873;</button>
+        {% endif %}
+        {% if post.author == user or user.is_staff %}
+          <form method="post" action="{% url 'delete_post' post.id %}"
+                onsubmit="return confirm('Delete this post?');" style="margin:0;">
+            {% csrf_token %}
+            <button type="submit" class="btn-delete-post">Delete</button>
+          </form>
+        {% endif %}
+      </div>
     </div>
 
     <!-- Content -->
@@ -83,10 +88,21 @@
           <div class="comment-item {% if comment.parent %}reply{% endif %}">
             <div class="comment-avatar">{{ comment.author.username|first|upper }}</div>
             <div class="comment-bubble">
-              <a href="{% url 'user_profile' comment.author.username %}" class="comment-author">
-                {{ comment.author.username }}
-              </a>
-              <span class="comment-time">{{ comment.created_at|timesince }} ago</span>
+              <div class="d-flex align-items-center justify-content-between">
+                <div>
+                  <a href="{% url 'user_profile' comment.author.username %}" class="comment-author">
+                    {{ comment.author.username }}
+                  </a>
+                  <span class="comment-time">{{ comment.created_at|timesince }} ago</span>
+                </div>
+                {% if comment.author == user or user.is_staff %}
+                  <form method="post" action="{% url 'delete_comment' comment.id %}"
+                        onsubmit="return confirm('Delete this comment?');" style="margin:0;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn-delete-comment" title="Delete comment">&times;</button>
+                  </form>
+                {% endif %}
+              </div>
               <div class="comment-text">{{ comment.content }}</div>
             </div>
           </div>
@@ -96,3 +112,33 @@
 
   </div>
 </div>
+
+{% if user.is_authenticated and post.author != user %}
+<div class="modal fade" id="flagModal-{{ post.id }}" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-sm modal-dialog-centered">
+    <div class="modal-content" style="border-radius:14px;">
+      <form method="post" action="{% url 'flag_post' post.id %}">
+        {% csrf_token %}
+        <div class="modal-header" style="border-bottom:1px solid var(--to-border);">
+          <h6 class="modal-title">Flag Post</h6>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <label class="form-label" style="font-size:.85rem;font-weight:600;">Reason</label>
+          <select name="reason" class="form-select form-select-sm mb-2">
+            <option value="spam">Spam</option>
+            <option value="harassment">Harassment</option>
+            <option value="inappropriate">Inappropriate Content</option>
+            <option value="misinformation">Misinformation</option>
+            <option value="other" selected>Other</option>
+          </select>
+          <textarea name="description" class="form-control form-control-sm" rows="2" placeholder="Additional details (optional)"></textarea>
+        </div>
+        <div class="modal-footer" style="border-top:1px solid var(--to-border);">
+          <button type="submit" class="btn btn-sm btn-danger">Submit Flag</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endif %}

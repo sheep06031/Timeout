@@ -1,5 +1,5 @@
 from django.contrib import admin
-from timeout.models import Event, Post, Comment, Like, Bookmark
+from timeout.models import Event, Post, Comment, Like, Bookmark, PostFlag
 
 
 @admin.register(Event)
@@ -177,6 +177,23 @@ class BookmarkAdmin(admin.ModelAdmin):
 
     def post_preview(self, obj):
         """Show preview of the bookmarked post."""
+        content = obj.post.content
+        return content[:40] + '...' if len(content) > 40 else content
+    post_preview.short_description = 'Post'
+
+
+@admin.register(PostFlag)
+class PostFlagAdmin(admin.ModelAdmin):
+    """Admin interface for PostFlag model."""
+    list_display = ('id', 'post_preview', 'reporter', 'reason', 'created_at')
+    list_filter = ('reason', 'created_at')
+    search_fields = ('post__content', 'reporter__username', 'description')
+    readonly_fields = ('created_at',)
+    raw_id_fields = ('post', 'reporter')
+    date_hierarchy = 'created_at'
+
+    def post_preview(self, obj):
+        """Show preview of the flagged post."""
         content = obj.post.content
         return content[:40] + '...' if len(content) > 40 else content
     post_preview.short_description = 'Post'

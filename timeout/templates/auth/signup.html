@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% load socialaccount %}
+{% load oauth_tags %}
 {% load static %}
 {% block title %}
   Sign Up - Timeout
@@ -90,6 +91,8 @@
           <button type="submit" class="btn btn-auth btn-primary w-100">Sign Up</button>
         </form>
 
+        {% google_oauth_available as has_google %}
+        {% if has_google %}
         <div class="divider">
           <span>or register with</span>
         </div>
@@ -102,6 +105,7 @@
             <path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0 5.482 0 2.438 2.017.957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z" />
           </svg>Google
         </a>
+        {% endif %}
 
         <p class="auth-link">
           Already have an account? <a href="{% url 'login' %}">Log in</a>

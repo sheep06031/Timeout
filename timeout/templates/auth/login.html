@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% load socialaccount %}
+{% load oauth_tags %}
 {% load static %}
 {% block title %}Login - Timeout{% endblock %}
 
@@ -74,6 +75,8 @@
         </button>
       </form>
 
+      {% google_oauth_available as has_google %}
+      {% if has_google %}
       <div class="divider">
         <span>or sign in with</span>
       </div>
@@ -87,6 +90,7 @@
         </svg>
         Google
       </a>
+      {% endif %}
 
       <p class="auth-link">
         Don't have an account? <a href="{% url 'signup' %}">Sign up</a>

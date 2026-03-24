@@ -13,6 +13,14 @@ urlpatterns = [
 
     # Comments
     path('post/<int:post_id>/comment/', social.add_comment, name='add_comment'),
+    path('comment/<int:comment_id>/delete/', social.delete_comment, name='delete_comment'),
+
+    # Flagging
+    path('post/<int:post_id>/flag/', social.flag_post, name='flag_post'),
+
+    # Moderation
+    path('user/<str:username>/ban/', social.ban_user, name='ban_user'),
+    path('user/<str:username>/unban/', social.unban_user, name='unban_user'),
 
     # Bookmarks
     path('bookmarks/', social.bookmarks, name='bookmarks'),
