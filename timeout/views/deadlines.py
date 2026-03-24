@@ -16,6 +16,8 @@ _TYPE_META = [
 ]
 
 
+
+
 @login_required
 def deadline_list_view(request):
     """Renders the deadline list view showing deadlines with filter and sort options."""

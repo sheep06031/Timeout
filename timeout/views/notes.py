@@ -24,6 +24,8 @@ SORT_OPTIONS = {
 DEFAULT_SORT = 'recently_edited'
 
 
+
+
 @login_required
 def note_list(request):
     """List all notes with search, category filter, and sorting."""
@@ -75,6 +77,9 @@ def note_list(request):
     return render(request, 'pages/notes.html', context)
 
 
+
+
+
 @login_required
 def note_create(request):
     """Create a new note with title/category/event, then redirect to editor."""
@@ -108,6 +113,8 @@ def note_create(request):
         return redirect('note_edit', note_id=note.id)
 
     return redirect('notes')
+
+
 
 
 @login_required

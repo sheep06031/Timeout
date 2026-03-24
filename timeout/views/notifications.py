@@ -9,6 +9,7 @@ from timeout.services.notification_service import NotificationService
 
 @login_required
 def notifications_view(request):
+    """Display paginated list of user's notifications with optional unread filter."""
     notifications_qs = Notification.objects.filter(
         user=request.user,
         is_dismissed=False
@@ -45,6 +46,7 @@ def notifications_view(request):
 
 @login_required
 def mark_notification_read(request, notification_id):
+    """Mark a notification as read for the authenticated user."""
     try:
         n = Notification.objects.get(id=notification_id, user=request.user)
         n.is_read = True
@@ -55,6 +57,7 @@ def mark_notification_read(request, notification_id):
 
 @login_required
 def delete_notification(request, notification_id):
+    """Dismiss a notification and mark it as read."""
     try:
         n = Notification.objects.get(id=notification_id, user=request.user)
         n.is_dismissed = True
@@ -66,6 +69,7 @@ def delete_notification(request, notification_id):
 
 @login_required
 def poll_notifications(request):
+    """Poll for new notifications created after last_id and return unread count."""
     try:
         last_id = int(request.GET.get('last_id', 0))
     except (ValueError, TypeError):

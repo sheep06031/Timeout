@@ -18,6 +18,8 @@ def landing(request):
     return render(request, 'pages/landing.html')
 
 
+
+
 @login_required
 def dashboard(request):
     """Dashboard page view."""

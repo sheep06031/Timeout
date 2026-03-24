@@ -16,6 +16,7 @@ from timeout.views.profile import get_profile_event
 
 @login_required
 def feed(request):
+    """Display feed with posts from following/discover/bookmarks, recent conversations, and user's liked/bookmarked status."""
     tab = request.GET.get('tab', 'following')
 
     if tab == 'discover':
@@ -325,17 +326,20 @@ def update_status(request):
 
 @login_required
 def followers_api(request):
+    """Return JSON list of user's followers with follow-back status."""
     users = request.user.followers.all()
     following_ids = set(request.user.following.values_list('id', flat=True))
     return JsonResponse({'users': _serialize_users(users, following_ids=following_ids)})
 
 @login_required
 def following_api(request):
+    """Return JSON list of users the authenticated user is following."""
     users = request.user.following.all()
     return JsonResponse({'users': _serialize_users(users)})
 
 @login_required
 def user_followers_api(request, username):
+    """Return JSON list of a user's followers if viewable (respects privacy)."""
     profile_user = get_object_or_404(User, username=username)
     can_view = (
         request.user == profile_user or
@@ -349,6 +353,7 @@ def user_followers_api(request, username):
 
 @login_required
 def user_following_api(request, username):
+    """Return JSON list of users a profile user is following if viewable (respects privacy)."""
     profile_user = get_object_or_404(User, username=username)
     can_view = (
         request.user == profile_user or
@@ -387,11 +392,13 @@ def search_users(request):
 
 @login_required
 def friends_api(request):
+    """Return JSON list of user's mutual friends (both following each other)."""
     friends = request.user.following.filter(followers=request.user)
     return JsonResponse({'users': _serialize_users(friends)})
 
 @login_required
 def user_friends_api(request, username):
+    """Return JSON list of a profile user's mutual friends if viewable (respects privacy)."""
     profile_user = get_object_or_404(User, username=username)
     can_view = (
         request.user == profile_user or
@@ -404,6 +411,7 @@ def user_friends_api(request, username):
     return JsonResponse({'users': _serialize_users(friends)})
 
 def _serialize_users(users, following_ids=None):
+    """Convert user objects to dicts with profile info and optional follow-back status."""
     result = []
     for u in users:
         entry = {
@@ -417,9 +425,7 @@ def _serialize_users(users, following_ids=None):
     return result
 
 
-# ─── Admin / Moderation Views ───────────────────────────────────────
-
-
+# Admin Views
 @login_required
 @require_POST
 def flag_post(request, post_id):

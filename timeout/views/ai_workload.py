@@ -4,6 +4,8 @@ from django.core.cache import cache
 from openai import OpenAI
 
 
+
+
 def get_ai_workload_warning(user, events):
     """
     Takes a list of events and generates a workload warning message using OpenAI.

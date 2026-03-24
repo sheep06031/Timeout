@@ -63,6 +63,7 @@ def get_urgent_events(events):
 
 
 def _fmt(s):
+    """Format seconds into string."""
     h, m = divmod(s, 3600)
     m = m // 60
     return f"{h}h {m}m" if h else f"{m}m"

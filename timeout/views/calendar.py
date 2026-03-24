@@ -16,6 +16,8 @@ from timeout.views.ai_workload import get_ai_workload_warning
 from timeout.views.deadline_warning import get_deadline_study_warnings
 
 
+
+
 @login_required
 def calendar_view(request):
     """Renders a monthly calendar grid with events in day cells, including recurring events."""

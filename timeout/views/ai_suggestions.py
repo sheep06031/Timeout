@@ -4,6 +4,8 @@ from django.conf import settings
 from openai import OpenAI
 from django.core.cache import cache
 
+
+
 def get_ai_suggestions(user, events_today):
     """
     Generate AI suggestions for today's events.

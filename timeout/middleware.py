@@ -7,9 +7,11 @@ class BannedUserMiddleware:
     """Log out banned users and redirect them to the login page."""
 
     def __init__(self, get_response):
+        """Initialize middleware with response handler."""
         self.get_response = get_response
 
     def __call__(self, request):
+        """Check if user is banned and log them out if so."""
         if (
             request.user.is_authenticated
             and getattr(request.user, 'is_banned', False)

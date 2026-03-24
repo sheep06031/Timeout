@@ -10,8 +10,10 @@ from timeout.services.email_service import EmailService
 
 User = get_user_model()
 
-# Code expiry in seconds (10 minutes)
-CODE_EXPIRY = 600
+# Code expiry in seconds (5 minutes)
+CODE_EXPIRY = 300
+
+
 
 
 def forgot_password(request):
@@ -91,12 +93,12 @@ def forgot_password(request):
             messages.error(request, 'Invalid code. Please try again.')
             return render(request, 'auth/forgot_password.html', {'step': 'verify'})
 
-        # Code verified — mark session and redirect to reset page
         request.session['reset_verified'] = True
         return redirect('reset_password')
 
-    # GET request — show step 1
     return render(request, 'auth/forgot_password.html', {'step': 'request'})
+
+
 
 
 def reset_password(request):
