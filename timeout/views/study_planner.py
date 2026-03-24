@@ -1,4 +1,5 @@
 import json
+from datetime import datetime, timedelta
 
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
@@ -30,7 +31,11 @@ def plan_sessions(request):
     candidates = pick_evenly_spaced_slots(free_slots, num_sessions, now, deadline.start_datetime)
 
     title = f'Study for {deadline.title}'
-    sessions = [{**slot, 'title': title} for slot in candidates]
+    sessions = []
+    for slot in candidates:
+        slot_start = datetime.strptime(slot['start'], '%Y-%m-%dT%H:%M')
+        slot_end = slot_start + timedelta(hours=session_length)
+        sessions.append({'title': title, 'start': slot['start'], 'end': slot_end.strftime('%Y-%m-%dT%H:%M')})
     return JsonResponse({'success': True, 'sessions': sessions})
 
 

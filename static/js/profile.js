@@ -158,45 +158,51 @@ function attachUnfollowHandlers(container) {
 
 function attachFollowBackHandlers(container) {
   container.querySelectorAll('.follow-back-btn').forEach(btn => {
-    btn.addEventListener('click', function () {
-      const username = this.dataset.username;
-
-      this.disabled = true;
-      this.textContent = 'Following…';
-
-      fetch(`/social/user/${username}/follow/`, {
-        method: 'POST',
-        headers: {
-          'X-CSRFToken': getCookie('csrftoken'),
-          'Content-Type': 'application/json',
-        },
-      })
-        .then(r => r.json())
-        .then(data => {
-          if (data.following === true) {
-            const label = document.createElement('span');
-            label.className = 'btn btn-sm btn-outline-secondary ms-2 disabled';
-            label.setAttribute('aria-disabled', 'true');
-            label.textContent = 'Following';
-            this.replaceWith(label);
-
-            const badge = document.getElementById('following-count-badge');
-            if (badge) {
-              const current = parseInt(badge.textContent, 10);
-              if (!isNaN(current)) badge.textContent = `${current + 1} Following`;
-            }
-          } else {
-            this.disabled = false;
-            this.textContent = 'Follow Back';
-          }
-        })
-        .catch(err => {
-          console.error('Follow back error:', err);
-          this.disabled = false;
-          this.textContent = 'Follow Back';
-        });
-    });
+    attachFollowToggle(btn);
   });
+}
+
+function attachFollowToggle(btn) {
+  btn.onclick = function () {
+    const username = this.dataset.username;
+    const cancelling = this.classList.contains('cancel-request-btn');
+
+    this.disabled = true;
+    this.textContent = cancelling ? 'Cancelling…' : 'Following…';
+
+    fetch(`/social/user/${username}/follow/`, {
+      method: 'POST',
+      headers: { 'X-CSRFToken': getCookie('csrftoken'), 'Content-Type': 'application/json' },
+    })
+      .then(r => r.json())
+      .then(data => {
+        if (data.following === true) {
+          const label = document.createElement('span');
+          label.className = 'btn btn-sm btn-outline-secondary ms-2 disabled';
+          label.setAttribute('aria-disabled', 'true');
+          label.textContent = 'Following';
+          this.replaceWith(label);
+
+          const badge = document.getElementById('following-count-badge');
+          if (badge) {
+            const current = parseInt(badge.textContent, 10);
+            if (!isNaN(current)) badge.textContent = `${current + 1} Following`;
+          }
+        } else if (data.requested === true) {
+          this.className = 'btn btn-sm btn-warning cancel-request-btn ms-2';
+          this.textContent = 'Requested';
+          this.disabled = false;
+        } else {
+          this.className = 'btn btn-sm btn-outline-primary follow-back-btn ms-2';
+          this.textContent = 'Follow Back';
+          this.disabled = false;
+        }
+      })
+      .catch(() => {
+        this.disabled = false;
+        this.textContent = cancelling ? 'Requested' : 'Follow Back';
+      });
+  };
 }
 
 document.getElementById('followersModal')?.addEventListener('show.bs.modal', () => {
