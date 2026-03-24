@@ -1,10 +1,12 @@
 from django.urls import path
 from timeout.views import social
 
+"""URL patterns for the timeout app's social features."""
+
 urlpatterns = [
     # Feed
     path('feed/', social.feed, name='social_feed'),
-
+    
     # Posts
     path('post/create/', social.create_post, name='create_post'),
     path('post/<int:post_id>/delete/', social.delete_post, name='delete_post'),

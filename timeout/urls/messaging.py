@@ -1,6 +1,7 @@
 from django.urls import path
 from timeout.views import messaging
 
+"""Messaging related URL patterns for the timeout app."""
 urlpatterns = [
     path('inbox/', messaging.inbox, name='inbox'),
     path('conversation/<int:conversation_id>/', messaging.conversation, name='conversation'),

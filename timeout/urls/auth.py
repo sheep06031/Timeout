@@ -2,6 +2,8 @@ from django.urls import path
 from timeout.views import auth
 from timeout.views import password_reset
 
+""" Authentication related URL patterns for the timeout app. """
+
 urlpatterns = [
     path('signup/', auth.signup_view, name='signup'),
     path('login/', auth.login_view, name='login'),
