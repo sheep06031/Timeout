@@ -14,11 +14,29 @@ from timeout.views.profile import get_profile_event
 
 
 
+def _build_feed_context(user, posts, tab):
+    """Assemble context dict for the feed page."""
+    conversations = Conversation.objects.filter(
+        participants=user
+    ).prefetch_related('participants', 'messages').order_by('-updated_at')[:5]
+    conversation_data = [
+        {'conv': conv, 'other': conv.get_other_participant(user), 'last': conv.get_last_message()}
+        for conv in conversations
+    ]
+    return {
+        'posts': posts,
+        'active_tab': tab,
+        'post_form': PostForm(user=user),
+        'conversation_data': conversation_data,
+        'bookmarked_ids': set(Bookmark.objects.filter(user=user).values_list('post_id', flat=True)),
+        'liked_ids': set(Like.objects.filter(user=user).values_list('post_id', flat=True)),
+    }
+
+
 @login_required
 def feed(request):
-    """Display feed with posts from following/discover/bookmarks, recent conversations, and user's liked/bookmarked status."""
+    """Display feed with posts from following/discover/bookmarks tabs."""
     tab = request.GET.get('tab', 'following')
-
     if tab == 'discover':
         posts = FeedService.get_discover_feed(request.user)
     elif tab == 'bookmarks':
@@ -26,33 +44,7 @@ def feed(request):
     else:
         tab = 'following'
         posts = FeedService.get_following_feed(request.user)
-
-    conversations = Conversation.objects.filter(
-        participants=request.user
-    ).prefetch_related('participants', 'messages').order_by('-updated_at')[:5]
-
-    conversation_data = []
-    for conv in conversations:
-        conversation_data.append({
-            'conv': conv,
-            'other': conv.get_other_participant(request.user),
-            'last': conv.get_last_message(),
-        })
-    bookmarked_ids = set(
-        Bookmark.objects.filter(user=request.user).values_list('post_id', flat=True)
-    )
-    liked_ids = set(
-        Like.objects.filter(user=request.user).values_list('post_id', flat=True)
-    )
-
-    context = {
-        'posts': posts,
-        'active_tab': tab,
-        'post_form': PostForm(user=request.user),
-        'conversation_data': conversation_data,
-        'bookmarked_ids': bookmarked_ids,
-        'liked_ids': liked_ids,
-    }
+    context = _build_feed_context(request.user, posts, tab)
     return render(request, 'social/feed.html', context)
 
 @login_required
@@ -177,24 +169,9 @@ def add_comment(request, post_id):
     return redirect('social_feed')
 
 
-@login_required
-def user_profile(request, username):
-    """View a user's profile and their posts."""
-    profile_user = get_object_or_404(User, username=username)
-    posts = FeedService.get_user_posts(profile_user, request.user)
-
-    is_following = request.user.following.filter(
-        id=profile_user.id
-    ).exists() if request.user.is_authenticated else False
-
-    can_view = (
-        request.user == profile_user or
-        not profile_user.privacy_private or
-        is_following
-    )
-
+def _build_user_profile_context(request, profile_user, posts, is_following, can_view):
+    """Assemble context dict for a user's profile page."""
     event, event_status = get_profile_event(profile_user) if can_view else (None, None)
-
     has_pending_request = (
         request.user != profile_user and
         FollowRequest.objects.filter(from_user=request.user, to_user=profile_user).exists()
@@ -203,8 +180,7 @@ def user_profile(request, username):
         FollowRequest.objects.filter(to_user=request.user).select_related('from_user')
         if request.user == profile_user else []
     )
-
-    context = {
+    return {
         'profile_user': profile_user,
         'posts': posts,
         'is_following': is_following,
@@ -215,6 +191,22 @@ def user_profile(request, username):
         'has_pending_request': has_pending_request,
         'incoming_requests': incoming_requests,
     }
+
+
+@login_required
+def user_profile(request, username):
+    """View a user's profile and their posts."""
+    profile_user = get_object_or_404(User, username=username)
+    posts = FeedService.get_user_posts(profile_user, request.user)
+    is_following = request.user.following.filter(
+        id=profile_user.id
+    ).exists() if request.user.is_authenticated else False
+    can_view = (
+        request.user == profile_user or
+        not profile_user.privacy_private or
+        is_following
+    )
+    context = _build_user_profile_context(request, profile_user, posts, is_following, can_view)
     return render(request, 'social/user_profile.html', context)
 
 
@@ -288,6 +280,24 @@ def reject_follow_request(request, username):
     fr.delete()
     return JsonResponse({'rejected': True})
 
+def _save_focus_session_if_leaving(user, new_status):
+    """Save a FocusSession record if the user is leaving focus mode."""
+    if user.status != 'focus' or new_status == 'focus':
+        return
+    if not user.focus_started_at:
+        return
+    ended_at = timezone.now()
+    duration = int((ended_at - user.focus_started_at).total_seconds())
+    if duration > 0:
+        FocusSession.objects.create(
+            user=user,
+            started_at=user.focus_started_at,
+            ended_at=ended_at,
+            duration_seconds=duration,
+        )
+    user.focus_started_at = None
+
+
 @login_required
 @require_POST
 def update_status(request):
@@ -295,28 +305,11 @@ def update_status(request):
     status = request.POST.get('status')
     if status not in [s[0] for s in User.Status.choices]:
         return JsonResponse({'error': 'Invalid status'}, status=400)
-
-    # Save focus session when leaving focus mode
-    if request.user.status == 'focus' and status != 'focus':
-        if request.user.focus_started_at:
-            ended_at = timezone.now()
-            duration = int((ended_at - request.user.focus_started_at).total_seconds())
-            if duration > 0:
-                FocusSession.objects.create(
-                    user=request.user,
-                    started_at=request.user.focus_started_at,
-                    ended_at=ended_at,
-                    duration_seconds=duration,
-                )
-            request.user.focus_started_at = None
-
-    # Set focus start time when entering focus mode
+    _save_focus_session_if_leaving(request.user, status)
     if status == 'focus':
         request.user.focus_started_at = timezone.now()
-
     request.user.status = status
     request.user.save()
-
     return JsonResponse({
         'status': status,
         'status_display': request.user.get_status_display(),
