@@ -20,11 +20,16 @@ from django.core.management.base import BaseCommand
 class Command(BaseCommand):
     help = 'Diagnose Site and Google SocialApp configuration for allauth.'
 
+    
     def handle(self, *args, **options):
+        
+        # ── 1. SITE_ID check ────────────────────────────────────────────
+        # Confirms that settings.SITE_ID matches an actual Site record in the DB.
         self.stdout.write(self.style.MIGRATE_HEADING('\n=== 1. SITE_ID check ==='))
         site_id = getattr(settings, 'SITE_ID', None)
         self.stdout.write(f'  settings.SITE_ID = {site_id}')
 
+        # List every Site in the DB, currently active ones marked
         sites = Site.objects.all().order_by('id')
         if not sites.exists():
             self.stdout.write(self.style.ERROR('  No Site records in the database!'))
@@ -46,6 +51,7 @@ class Command(BaseCommand):
             active_site = None
 
         # ── 2. SocialApp check ──────────────────────────────────────────
+        # Verifies that a Google SocialApp exists, has a client_id, and is linked to the active Site.
         self.stdout.write(self.style.MIGRATE_HEADING('\n=== 2. SocialApp check ==='))
         try:
             from allauth.socialaccount.models import SocialApp
@@ -88,6 +94,9 @@ class Command(BaseCommand):
                         ))
 
         # ── 3. Settings override check ──────────────────────────────────
+        # If SOCIALACCOUNT_PROVIDERS['google']['APP'] is set in settings.py,
+        # it's prioritized over the DB SocialApp entirely, including an
+        # empty client_id, which silently breaks Google login.
         self.stdout.write(self.style.MIGRATE_HEADING(
             '\n=== 3. SOCIALACCOUNT_PROVIDERS override check ==='
         ))

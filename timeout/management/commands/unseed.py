@@ -30,12 +30,12 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         keep_super = options['keep_super']
         total_users_before = User.objects.count()
-
         if total_users_before == 0:
             self.stdout.write(self.style.WARNING('Database is already empty.'))
             return
 
-        # Clear notes and study logs first (cascade would handle it, but be explicit)
+        # Delete notes and logs before users so counts can be captured 
+        # cascade would remove them automatically but wouldn't return the totals.
         if keep_super:
             self.stdout.write('Mode: Removing seeded data (keeping @johndoe)')
             excluded_users = User.objects.filter(username=SUPERUSER_USERNAME)

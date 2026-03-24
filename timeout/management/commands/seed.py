@@ -202,7 +202,7 @@ class Command(BaseCommand):
 
     def _setup_site(self):
         """Ensure Site(id=1) exists with the correct domain."""
-        Site.objects.all().delete()
+        Site.objects.all().delete() # Delete first to avoid a unique constraint clash on domain
         Site.objects.create(id=1, domain=SITE_DOMAIN, name=SITE_NAME)
         self.stdout.write(self.style.SUCCESS(
             f'  Site(id=1, domain="{SITE_DOMAIN}") ready.'
@@ -222,7 +222,8 @@ class Command(BaseCommand):
             ))
             return
 
-        app, created = SocialApp.objects.get_or_create(
+        # get_or_create to avoid duplicate SocialApp records on repeated seeding
+        app, created = SocialApp.objects.get_or_create( 
             provider='google',
             defaults={
                 'name': 'Google',
@@ -231,6 +232,7 @@ class Command(BaseCommand):
             },
         )
 
+        # Sync credentials if env vars changed since last seed
         if not created:
             app.client_id = client_id
             app.secret = secret
@@ -276,6 +278,7 @@ class Command(BaseCommand):
     def _create_users(self, count):
         """Create regular user accounts with randomized Faker data."""
         users = []
+        # Track usernames in a set to avoid DB round-trips when checking for unique usernames
         existing = set(User.objects.values_list('username', flat=True))
 
         for i in range(count):
