@@ -64,7 +64,7 @@ def confirm_sessions(request):
             event.full_clean()
             event.save()
             created += 1
-        except (ValidationError, KeyError):
+        except (ValidationError, KeyError, TypeError, ValueError):
             continue
 
     return JsonResponse({'success': True, 'count': created})

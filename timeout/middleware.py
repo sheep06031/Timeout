@@ -15,12 +15,8 @@ class BannedUserMiddleware:
         if (
             request.user.is_authenticated
             and getattr(request.user, 'is_banned', False)
-            and request.path != '/accounts/login/'
+            and request.path != '/banned/'
         ):
             logout(request)
-            messages.error(
-                request,
-                'Your account has been suspended. Contact support if you believe this is an error.',
-            )
-            return redirect('/accounts/login/')
+            return redirect('/banned/')
         return self.get_response(request)

@@ -183,6 +183,59 @@ class ConversationViewTest(TestCase):
         response = self.client.get(reverse("conversation", args=[self.conv.id]))
         self.assertIn(response.status_code, [403, 404])
 
+
+class DeleteMessageViewTest(TestCase):
+    """Tests for the staff-only delete_message view."""
+
+    def setUp(self):
+        self.staff = make_user("staffuser")
+        self.staff.is_staff = True
+        self.staff.save()
+        self.alice = make_user("alice")
+        self.bob = make_user("bob")
+        self.conv = Conversation.objects.create()
+        self.conv.participants.add(self.alice, self.bob)
+        self.message = Message.objects.create(
+            conversation=self.conv, sender=self.alice, content="hello",
+        )
+
+    def delete_url(self, message_id=None):
+        return reverse("delete_message", args=[message_id or self.message.id])
+
+    # Staff can delete any message
+    def test_staff_can_delete_message(self):
+        self.client.login(username="staffuser", password="testpass123")
+        response = self.client.post(self.delete_url())
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.content)
+        self.assertTrue(data["ok"])
+        self.assertFalse(Message.objects.filter(id=self.message.id).exists())
+
+    # Non-staff user gets 403
+    def test_non_staff_gets_403(self):
+        self.client.login(username="alice", password="testpass123")
+        response = self.client.post(self.delete_url())
+        self.assertEqual(response.status_code, 403)
+        self.assertTrue(Message.objects.filter(id=self.message.id).exists())
+
+    # Unauthenticated user is redirected to login
+    def test_requires_login(self):
+        response = self.client.post(self.delete_url())
+        self.assertEqual(response.status_code, 302)
+        self.assertIn("/login/", response.url)
+
+    # GET request should be rejected (require_POST)
+    def test_rejects_get(self):
+        self.client.login(username="staffuser", password="testpass123")
+        response = self.client.get(self.delete_url())
+        self.assertEqual(response.status_code, 405)
+
+    # Deleting nonexistent message returns 404
+    def test_nonexistent_message_returns_404(self):
+        self.client.login(username="staffuser", password="testpass123")
+        response = self.client.post(self.delete_url(message_id=99999))
+        self.assertEqual(response.status_code, 404)
+
     def test_messages_marked_as_read_on_view(self):
         self.client.login(username="alice", password="testpass123")
         self.client.get(reverse("conversation", args=[self.conv.id]))
@@ -317,4 +370,5 @@ class PollMessagesViewTest(TestCase):
         charlie = make_user("charlie")
         self.client.login(username="charlie", password="testpass123")
         response = self.client.get(self._url(), {"last_id": 0})
+
         self.assertIn(response.status_code, [403, 404])

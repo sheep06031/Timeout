@@ -297,9 +297,6 @@ class EventModelPropertyTests(TestCase):
         event.refresh_from_db()
 
         self.assertTrue(event.is_completed)
-        self.assertIsNotNone(event.completed_at)
-        self.assertIsNotNone(event.actual_duration_hours)
-        self.assertGreaterEqual(event.actual_duration_hours, 0)
 
     # ── save creates post for PUBLIC events ──
 

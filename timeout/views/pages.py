@@ -10,6 +10,10 @@ from timeout.views.profile import get_profile_event
 from timeout.services.ai_service import AIService
 
 
+def banned(request):
+    return render(request, 'banned.html')
+
+
 def landing(request):
     """Landing page view. Authenticated users go straight to the dashboard."""
     if request.user.is_authenticated:
@@ -21,18 +25,23 @@ def _build_dashboard_context(user, greeting):
     """Assemble context dict for the dashboard page."""
     now = timezone.now()
     upcoming_events = Event.objects.filter(
-        creator=user, start_datetime__gte=now, status__in=['upcoming', 'ongoing'],
+        creator=user,
+        start_datetime__gte=now,
+        status__in=['upcoming', 'ongoing'],
     ).order_by('start_datetime')[:5]
+
     user_conversations = Conversation.objects.filter(participants=user)
     unread_count = Message.objects.filter(
-        conversation__in=user_conversations, is_read=False,
+        conversation__in=user_conversations,
+        is_read=False,
     ).exclude(sender=user).count()
+
     return {
         'greeting': greeting,
         'upcoming_events': upcoming_events,
         'recent_notes': Note.objects.filter(owner=user).order_by('-updated_at')[:4],
         'deadlines': DeadlineService.get_active_deadlines(user)[:5],
-        'social_posts': FeedService.get_following_feed(user, limit=4),
+        'social_posts': FeedService.get_following_feed(user)[:4],
         'unread_count': unread_count,
         'ai_briefing': AIService.get_dashboard_briefing(user),
         **get_focus_stats(user),
@@ -69,6 +78,7 @@ def profile(request):
         'friends_count': friends_count,
     }
     return render(request, 'pages/profile.html', context)
+
 
 @login_required
 def calendar(request):

@@ -1,0 +1,40 @@
+<div class="post-card flag-review-card" data-flag-id="{{ flag.id }}">
+  <div class="post-card-body">
+
+    <div class="post-header">
+      <div>
+        <a href="{% url 'user_profile' flag.post.author.username %}" class="post-author-link">
+          {{ flag.post.author.username }}
+        </a>
+        <div class="post-meta">
+          <span class="post-time">{{ flag.post.created_at|timesince }} ago</span>
+        </div>
+      </div>
+      <span class="badge bg-danger">Flagged</span>
+    </div>
+
+    <p class="post-content">{{ flag.post.content|truncatechars:300 }}</p>
+
+    <div class="flag-meta" style="font-size:0.82rem; color:var(--text-muted); margin-bottom:10px;">
+      Reported by <strong>{{ flag.reporter.username }}</strong>
+      &nbsp;·&nbsp;<span>{{ flag.get_reason_display }}</span>
+      {% if flag.description %}&nbsp;·&nbsp;"{{ flag.description }}"{% endif %}
+      &nbsp;·&nbsp;{{ flag.created_at|timesince }} ago
+    </div>
+
+    <div class="post-divider"></div>
+    <div class="post-actions" style="gap:8px;">
+      <button class="btn-approve-flag btn-flag-action-delete"
+              data-flag-id="{{ flag.id }}"
+              data-url="{% url 'approve_flag' flag.id %}">
+        <i class="bi bi-trash"></i> Delete Post
+      </button>
+      <button class="btn-deny-flag btn-dismiss-flag"
+              data-flag-id="{{ flag.id }}"
+              data-url="{% url 'deny_flag' flag.id %}">
+        <i class="bi bi-check-lg"></i> Dismiss
+      </button>
+    </div>
+
+  </div>
+</div>
