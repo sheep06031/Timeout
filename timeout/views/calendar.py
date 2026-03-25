@@ -27,15 +27,12 @@ def calendar_view(request):
     except (ValueError, TypeError):
         year, month = today.year, today.month
 
-    # Get months from 1 to 12 
     if month < 1:
         month, year = 12, year - 1
-    # Handle navigating backwards or forwards when going before january of after december
     elif month > 12:
         month, year = 1, year + 1
 
     # Wrapper to make sure if the months go further than 12 so it skips to the next year
-    # Creates links for before or after the current month and year 
     if month > 1:
         prev_month = month - 1
         prev_year = year
@@ -49,11 +46,9 @@ def calendar_view(request):
         next_month = 1
         next_year = year + 1
 
-    # Build weeks grid starting from Monday
     cal_obj = cal.Calendar(firstweekday=0)
     weeks_raw = cal_obj.monthdatescalendar(year, month)
 
-    # Determine visible range
     first_visible = weeks_raw[0][0]
     last_visible = weeks_raw[-1][-1]
 
@@ -66,7 +61,7 @@ def calendar_view(request):
     }
 
     # Fetch events for visible date range
-    lookahead_days = 365  # how far in the future you want to show recurring events
+    lookahead_days = 365
     last_visible_datetime = timezone.make_aware(
         datetime.combine(last_visible, time.max)
     )
@@ -92,12 +87,10 @@ def calendar_view(request):
         else:
             calendar_events.append(event)
 
-    # Index events by date, including recurrence expansion
     now_dt = timezone.now()
     events_by_date = {}
 
     for ev in events_qs:
-        # Build consistent dict for real event
         event_data = {
             'id': ev.id,
             'title': ev.title,
@@ -114,7 +107,7 @@ def calendar_view(request):
             'color': getattr(ev, 'color', ''),
             'status_display': get_event_status(ev.start_datetime, ev.end_datetime, now_dt),
         }
-        events_by_date.setdefault(ev.start_datetime.date(), []).append(event_data)  # ← event_data not ev
+        events_by_date.setdefault(ev.start_datetime.date(), []).append(event_data)
 
         if ev.recurrence == 'none':
             continue
@@ -160,7 +153,6 @@ def calendar_view(request):
             }
             events_by_date.setdefault(current_date, []).append(pseudo_event)
 
-    # Build weeks structure for template
     weeks = []
     for week in weeks_raw:
         days = []
@@ -202,8 +194,7 @@ def calendar_view(request):
         }
         for e in missed_sessions
     ]
-
-    # Recently cancelled study sessions (stored in session after event_cancel view)
+    
     reschedule_prompts += request.session.pop('reschedule_prompts', [])
 
     context = {
@@ -223,6 +214,7 @@ def calendar_view(request):
     return render(request, "pages/calendar.html", context)
 
 def get_event_status(start_dt, end_dt, now):
+    """Determine if an event is past, ongoing, or upcoming based on current time."""
     if start_dt < now and end_dt > now:
         return 'Ongoing'
     elif end_dt < now:
@@ -260,6 +252,7 @@ def apply_session_schedule(request):
 @login_required
 @require_POST
 def subscribe_event(request, pk):
+    """Subscribe to a public event by creating a private copy for the user."""
     from django.shortcuts import get_object_or_404
     original = get_object_or_404(Event, pk=pk, visibility=Event.Visibility.PUBLIC)
     if original.creator == request.user:
@@ -281,12 +274,13 @@ def subscribe_event(request, pk):
 @login_required
 @require_POST
 def event_create(request):
+    """Handle creation of a new calendar event from the form submission."""
     is_all_day = request.POST.get("is_all_day") == "on"
     allow_conflict = request.POST.get("allow_conflict") == "on"
 
     start_datetime = request.POST.get("start_datetime")
     end_datetime = request.POST.get("end_datetime")
-    recurrence = request.POST.get("recurrence", "none")  # default 'none'
+    recurrence = request.POST.get("recurrence", "none")
 
     if is_all_day:
         if not start_datetime:

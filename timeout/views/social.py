@@ -16,6 +16,7 @@ from timeout.views.profile import get_profile_event
 
 @login_required
 def feed(request):
+    """Main social feed view, with tabs for following, discover, and bookmarks."""
     tab = request.GET.get('tab', 'following')
 
     if tab == 'discover':
@@ -130,7 +131,6 @@ def bookmark_post(request, post_id):
     )
 
     if not created:
-        # Remove bookmark
         bookmark.delete()
         bookmarked = False
     else:
@@ -312,17 +312,20 @@ def update_status(request):
 
 @login_required
 def followers_api(request):
+    """Get a list of followers for the logged-in user, with an indication of whether they follow back."""
     users = request.user.followers.all()
     following_ids = set(request.user.following.values_list('id', flat=True))
     return JsonResponse({'users': _serialize_users(users, following_ids=following_ids)})
 
 @login_required
 def following_api(request):
+    """Get a list of users the logged-in user is following."""
     users = request.user.following.all()
     return JsonResponse({'users': _serialize_users(users)})
 
 @login_required
 def user_followers_api(request, username):
+    """Get a list of followers for a specific user, with privacy checks."""
     profile_user = get_object_or_404(User, username=username)
     can_view = (
         request.user == profile_user or
@@ -336,6 +339,7 @@ def user_followers_api(request, username):
 
 @login_required
 def user_following_api(request, username):
+    """Get a list of users a specific user is following, with privacy checks."""
     profile_user = get_object_or_404(User, username=username)
     can_view = (
         request.user == profile_user or
@@ -374,11 +378,13 @@ def search_users(request):
 
 @login_required
 def friends_api(request):
+    """Get a list of mutual followers (friends) for the logged-in user."""
     friends = request.user.following.filter(followers=request.user)
     return JsonResponse({'users': _serialize_users(friends)})
 
 @login_required
 def user_friends_api(request, username):
+    """Get a list of mutual followers (friends) for a specific user, with privacy checks."""
     profile_user = get_object_or_404(User, username=username)
     can_view = (
         request.user == profile_user or
@@ -391,6 +397,7 @@ def user_friends_api(request, username):
     return JsonResponse({'users': _serialize_users(friends)})
 
 def _serialize_users(users, following_ids=None):
+    """Helper to serialize user lists with optional following back info."""
     result = []
     for u in users:
         entry = {

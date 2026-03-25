@@ -15,16 +15,14 @@ _TYPE_META = [
     ('other',         'Other'),
 ]
 
-
 @login_required
 def deadline_list_view(request):
     """Renders the deadline list view showing deadlines with filter and sort options."""
     # Read filter/sort from query params with sensible defaults
-    status_filter = request.GET.get('status', 'active')   # active | completed | all
-    sort_order = request.GET.get('sort', 'asc')            # asc | desc
-    event_type = request.GET.get('type', '')               # '' (all) | deadline | exam | ...
+    status_filter = request.GET.get('status', 'active')
+    sort_order = request.GET.get('sort', 'asc')
+    event_type = request.GET.get('type', '')
 
-    # Validate inputs to prevent bad values
     if status_filter not in ('active', 'completed', 'all'):
         status_filter = 'active'
     if sort_order not in ('asc', 'desc'):
@@ -49,7 +47,6 @@ def deadline_list_view(request):
         'overdue_count': sum(1 for d in deadlines if d['urgency_status'] == 'overdue'),
         'urgent_count': sum(1 for d in deadlines if d['urgency_status'] == 'urgent'),
         'completed_count': sum(1 for d in deadlines if d['urgency_status'] == 'completed'),
-        # Pass current filter/sort back so the template can highlight active controls
         'status_filter': status_filter,
         'sort_order': sort_order,
         'event_type': event_type,

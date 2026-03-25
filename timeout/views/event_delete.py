@@ -20,7 +20,6 @@ def event_delete(request, pk):
     except Exception:
         pass
 
-    # Disable FK checks for SQLite, delete, re-enable
     with connection.cursor() as cursor:
         cursor.execute('PRAGMA foreign_keys = OFF;')
     

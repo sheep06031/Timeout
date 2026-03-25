@@ -13,15 +13,12 @@ def get_ai_suggestions(user, events_today):
     `events_today` is a list of Event model instances.
     Returns a list of strings.
     """
-
     cache_key = f"ai_suggestions_{user.id}_{datetime.now().date()}"
     cached = cache.get(cache_key)
     if cached:
         return cached
-
     if not events_today:
         return ["No events today. You have free time!"]
-
     try:
         # Prepare safe events list
         events_list = []
@@ -39,7 +36,6 @@ def get_ai_suggestions(user, events_today):
             "\n\nSuggest 2–3 actionable tips to optimize their day, like when to take breaks, "
             "add focus sessions, or avoid overload. Return a JSON list of strings ONLY."
         )
-
         # Call OpenAI
         response = client.chat.completions.create(
             model="gpt-4o-mini",
@@ -63,7 +59,6 @@ def get_ai_suggestions(user, events_today):
         if not isinstance(suggestions, list):
             suggestions = [str(suggestions)]
 
-        # Cache for 1 hour
         cache.set(cache_key, suggestions, timeout=3600)
 
         return suggestions

@@ -42,7 +42,6 @@ def start_conversation(request, username):
         participants=other_user
     ).first()
 
-    # Create one if it doesn't exist
     if not conversation:
         conversation = Conversation.objects.create()
         conversation.participants.add(request.user, other_user)
@@ -59,7 +58,6 @@ def conversation(request, conversation_id):
         participants=request.user
     )
 
-    # Mark messages as read
     conv.messages.exclude(sender=request.user).update(is_read=True)
 
     messages = conv.messages.select_related('sender').order_by('created_at')
@@ -93,7 +91,6 @@ def send_message(request, conversation_id):
         content=content,
     )
 
-    # Update conversation timestamp
     conv.save()
 
     receiver = conv.get_other_participant(request.user)
@@ -131,7 +128,6 @@ def poll_messages(request, conversation_id):
         id__gt=last_id
     ).select_related('sender').order_by('created_at')
 
-    # Mark new messages from the other user as read
     new_messages.exclude(sender=request.user).update(is_read=True)
 
     data = [{

@@ -38,14 +38,12 @@ def note_list(request):
     else:
         notes = NoteService.get_user_notes(request.user)
 
-    # Apply sorting (pinned notes always stay on top)
     if sort in SORT_OPTIONS:
         order_field = SORT_OPTIONS[sort][0]
         notes = notes.order_by('-is_pinned', order_field)
 
     user = request.user
 
-    # Build note list for Pomodoro linking (id + title)
     user_notes_simple = list(
         Note.objects.filter(owner=user)
         .values_list('id', 'title')
@@ -162,7 +160,6 @@ def note_autosave(request, note_id):
         note.title = title
     note.content = content
 
-    # Persist page mode if sent
     page_mode = request.POST.get('page_mode', '').strip()
     if page_mode in ('pageless', 'paged'):
         note.page_mode = page_mode
@@ -170,7 +167,6 @@ def note_autosave(request, note_id):
 
     note.save(update_fields=update_fields)
 
-    # Track daily edit (once per note per session via flag from client)
     if request.POST.get('count_edit') == '1':
         NoteService.log_note_edited(request.user)
 

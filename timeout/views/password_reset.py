@@ -81,7 +81,6 @@ def forgot_password(request):
             return render(request, 'auth/forgot_password.html', {'step': 'request'})
 
         if time.time() - code_time > CODE_EXPIRY:
-            # Clear expired session data
             for key in ('reset_code', 'reset_user_id', 'reset_code_time'):
                 request.session.pop(key, None)
             messages.error(request, 'Code has expired. Please request a new one.')
@@ -138,7 +137,6 @@ def reset_password(request):
         user.set_password(password1)
         user.save()
 
-        # Clear all reset session data
         for key in ('reset_code', 'reset_user_id', 'reset_code_time', 'reset_verified'):
             request.session.pop(key, None)
 

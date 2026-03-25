@@ -29,11 +29,9 @@ def dashboard(request):
     context = {
         "unread_count": unread_count,
     }
-    #return render(request, 'pages/dashboard.html')
     user = request.user
     now = timezone.now()
 
-    # Time-aware greeting
     local_hour = timezone.localtime(now).hour
     if local_hour < 12:
         greeting = 'Good morning'
@@ -42,23 +40,18 @@ def dashboard(request):
     else:
         greeting = 'Good evening'
 
-    # Upcoming events
     upcoming_events = Event.objects.filter(
         creator=user,
         start_datetime__gte=now,
         status__in=['upcoming', 'ongoing'],
     ).order_by('start_datetime')[:5]
 
-    # Recent notes
     recent_notes = Note.objects.filter(owner=user).order_by('-updated_at')[:4]
 
-    # Deadlines
     deadlines = DeadlineService.get_active_deadlines(user)[:5]
 
-    # Social feed (recent posts from followed users)
     social_posts = FeedService.get_following_feed(user, limit=4)
 
-    # Focus stats (last 7 days)
     focus_stats = get_focus_stats(user)
 
     # Unread messages count
@@ -67,8 +60,6 @@ def dashboard(request):
         conversation__in=user_conversations,
         is_read=False,
     ).exclude(sender=user).count()
-    # added 60-62 ai_briefing for weekly brief
-    # AI Weekly Insight — returns None on failure so the template hides the card
     ai_briefing = AIService.get_dashboard_briefing(user)
 
     context = {
@@ -78,7 +69,7 @@ def dashboard(request):
         'deadlines': deadlines,
         'social_posts': social_posts,
         'unread_count': unread_count,
-        'ai_briefing': ai_briefing, # added for weekly briefing
+        'ai_briefing': ai_briefing,
         **focus_stats,
     }
     return render(request, 'pages/dashboard.html', context)
@@ -86,6 +77,7 @@ def dashboard(request):
 
 @login_required
 def profile(request):
+    """Profile page view."""
     posts = FeedService.get_user_posts(request.user, request.user)
     event, event_status = get_profile_event(request.user)
     friends_count = request.user.following.filter(followers=request.user).count()

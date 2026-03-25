@@ -8,6 +8,7 @@ from timeout.services.notification_service import NotificationService
 
 @login_required
 def notifications_view(request):
+    """Display user notifications with pagination and filtering."""
     notifications_qs = Notification.objects.filter(
         user=request.user,
         is_dismissed=False
@@ -33,6 +34,7 @@ def notifications_view(request):
 
 @login_required
 def mark_notification_read(request, notification_id):
+    """Mark a notification as read."""
     try:
         n = Notification.objects.get(id=notification_id, user=request.user)
         n.is_read = True
@@ -43,6 +45,7 @@ def mark_notification_read(request, notification_id):
 
 @login_required
 def delete_notification(request, notification_id):
+    """Dismiss a notification (mark as dismissed and read)."""
     try:
         n = Notification.objects.get(id=notification_id, user=request.user)
         n.is_dismissed = True
@@ -54,13 +57,14 @@ def delete_notification(request, notification_id):
 
 @login_required
 def poll_notifications(request):
+    """AJAX endpoint to poll for new notifications since last_id."""
     try:
         last_id = int(request.GET.get('last_id', 0))
     except (ValueError, TypeError):
         last_id = 0
 
     NotificationService.create_deadline_notifications(request.user)
-    NotificationService.create_event_notifications(request.user)  # ADD THIS
+    NotificationService.create_event_notifications(request.user)
 
     notifications = Notification.objects.filter(
         user=request.user,

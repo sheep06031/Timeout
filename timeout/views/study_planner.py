@@ -15,6 +15,7 @@ from timeout.services.study_planner import get_free_slots, pick_evenly_spaced_sl
 @login_required
 @require_POST
 def plan_sessions(request):
+    """AJAX endpoint to plan study sessions for a given deadline."""
     event_id = request.POST.get('event_id')
     hours_needed = float(request.POST.get('hours_needed', 4))
     session_length = float(request.POST.get('session_length', 2))
@@ -37,6 +38,7 @@ def plan_sessions(request):
 @login_required
 @require_POST
 def confirm_sessions(request):
+    """AJAX endpoint to confirm and create study sessions after GPT scheduling."""
     try:
         sessions = json.loads(request.POST.get('sessions', '[]'))
     except json.JSONDecodeError:
@@ -64,6 +66,7 @@ def confirm_sessions(request):
 
 
 def call_gpt(deadline, hours_needed, session_length, free_slots):
+    """Call GPT to schedule sessions based on the deadline and free slots."""
     prompt = build_prompt(deadline, hours_needed, session_length, free_slots)
     try:
         from openai import OpenAI
@@ -85,6 +88,7 @@ def call_gpt(deadline, hours_needed, session_length, free_slots):
 
 
 def build_prompt(deadline, hours_needed, session_length, candidates):
+    """Build a prompt for GPT to schedule study sessions."""
     now = timezone.now().strftime('%Y-%m-%d %H:%M')
     due = deadline.start_datetime.strftime('%Y-%m-%d %H:%M')
     num_sessions = len(candidates)
