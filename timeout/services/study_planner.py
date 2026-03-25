@@ -3,6 +3,8 @@ from timeout.models import Event
 
 
 def get_busy_slots(user, start, end):
+    """Return a list of (start, end) tuples for all events owned by the user
+    that overlap the given time window [start, end)."""
     events = Event.objects.filter(
         creator=user,
         start_datetime__lt=end,

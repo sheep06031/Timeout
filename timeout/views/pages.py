@@ -8,7 +8,10 @@ from timeout.services import FeedService, DeadlineService
 from timeout.views.statistics import get_focus_stats, build_context
 from timeout.views.profile import get_profile_event
 from timeout.services.ai_service import AIService
-from timeout.models.notification import Notification
+
+
+def banned(request):
+    return render(request, 'banned.html')
 
 
 def landing(request):
@@ -18,74 +21,51 @@ def landing(request):
     return render(request, 'pages/landing.html')
 
 
-@login_required
-def dashboard(request):
-    """Dashboard page view."""
-    unread_count = Notification.objects.filter(
-        user=request.user,
-        is_read=False
-    ).count()
-
-    context = {
-        "unread_count": unread_count,
-    }
-    #return render(request, 'pages/dashboard.html')
-    user = request.user
+def _build_dashboard_context(user, greeting):
+    """Assemble context dict for the dashboard page."""
     now = timezone.now()
-
-    # Time-aware greeting
-    local_hour = timezone.localtime(now).hour
-    if local_hour < 12:
-        greeting = 'Good morning'
-    elif local_hour < 18:
-        greeting = 'Good afternoon'
-    else:
-        greeting = 'Good evening'
-
-    # Upcoming events
     upcoming_events = Event.objects.filter(
         creator=user,
         start_datetime__gte=now,
         status__in=['upcoming', 'ongoing'],
     ).order_by('start_datetime')[:5]
 
-    # Recent notes
-    recent_notes = Note.objects.filter(owner=user).order_by('-updated_at')[:4]
-
-    # Deadlines
-    deadlines = DeadlineService.get_active_deadlines(user)[:5]
-
-    # Social feed (recent posts from followed users)
-    social_posts = FeedService.get_following_feed(user, limit=4)
-
-    # Focus stats (last 7 days)
-    focus_stats = get_focus_stats(user)
-
-    # Unread messages count
     user_conversations = Conversation.objects.filter(participants=user)
     unread_count = Message.objects.filter(
         conversation__in=user_conversations,
         is_read=False,
     ).exclude(sender=user).count()
-    # added 60-62 ai_briefing for weekly brief
-    # AI Weekly Insight — returns None on failure so the template hides the card
-    ai_briefing = AIService.get_dashboard_briefing(user)
 
-    context = {
+    return {
         'greeting': greeting,
         'upcoming_events': upcoming_events,
-        'recent_notes': recent_notes,
-        'deadlines': deadlines,
-        'social_posts': social_posts,
+        'recent_notes': Note.objects.filter(owner=user).order_by('-updated_at')[:4],
+        'deadlines': DeadlineService.get_active_deadlines(user)[:5],
+        'social_posts': FeedService.get_following_feed(user)[:4],
         'unread_count': unread_count,
-        'ai_briefing': ai_briefing, # added for weekly briefing
-        **focus_stats,
+        'ai_briefing': AIService.get_dashboard_briefing(user),
+        **get_focus_stats(user),
     }
+
+
+@login_required
+def dashboard(request):
+    """Dashboard page view."""
+    user = request.user
+    local_hour = timezone.localtime(timezone.now()).hour
+    if local_hour < 12:
+        greeting = 'Good morning'
+    elif local_hour < 18:
+        greeting = 'Good afternoon'
+    else:
+        greeting = 'Good evening'
+    context = _build_dashboard_context(user, greeting)
     return render(request, 'pages/dashboard.html', context)
 
 
 @login_required
 def profile(request):
+    """Profile page view."""
     posts = FeedService.get_user_posts(request.user, request.user)
     event, event_status = get_profile_event(request.user)
     friends_count = request.user.following.filter(followers=request.user).count()
@@ -98,6 +78,7 @@ def profile(request):
         'friends_count': friends_count,
     }
     return render(request, 'pages/profile.html', context)
+
 
 @login_required
 def calendar(request):

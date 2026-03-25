@@ -86,6 +86,40 @@
               </select>
             </div>
 
+            {% if event.event_type == "deadline" %}
+
+            <div class="mb-3">
+              <label for="linkedStudySessions" class="form-label fw-semibold">
+                Linked Study Sessions
+              </label>
+
+              <select class="form-select"
+                      id="linkedStudySessions"
+                      name="linked_study_sessions"
+                      multiple
+                      size="6">
+                {% for session in study_sessions %}
+                  <option value="{{ session.id }}"
+                    {% if session in event.linked_study_sessions.all %}
+                      selected
+                    {% endif %}
+                  >
+                    {{ session.title }} ({{ session.start_datetime|date:"M j H:i" }})
+                  </option>
+                {% endfor %}
+              </select>
+
+              <small class="text-muted d-block mt-1">
+                Hold <kbd>Ctrl</kbd> (or <kbd>Cmd</kbd> on Mac) to select multiple sessions.
+              </small>
+
+              <small class="text-muted">
+                Link study sessions that prepare for this deadline.
+              </small>
+            </div>
+
+            {% endif %}
+
             <!-- Date/Time -->
             <div class="row">
               <div class="col-md-6 mb-3">

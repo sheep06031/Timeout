@@ -21,6 +21,7 @@ class Like(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
+        """Order by newest first, ensure one like per user-post pair, and index for post queries."""
         ordering = ['-created_at']
         unique_together = ('user', 'post')
         indexes = [
@@ -28,6 +29,7 @@ class Like(models.Model):
         ]
 
     def __str__(self):
+        """Return a string representation showing which user liked which post."""
         return f'{self.user.username} likes {self.post.id}'
 
 @receiver(models.signals.post_save, sender=Like)

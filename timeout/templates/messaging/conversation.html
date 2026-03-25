@@ -35,6 +35,13 @@
           <div class="msg-text">{{ message.content }}</div>
           <div class="msg-time">{{ message.created_at|date:"H:i" }}</div>
         </div>
+        {% if user.is_staff %}
+        <button class="btn-delete-msg"
+                data-message-id="{{ message.id }}"
+                data-url="{% url 'delete_message' message.id %}"
+                title="Delete message"
+                style="background:none;border:none;color:#dc3545;cursor:pointer;font-size:0.75rem;padding:2px 5px;opacity:0.6;">✕</button>
+        {% endif %}
       </div>
     {% empty %}
       <div class="convo-empty">
@@ -56,6 +63,7 @@
 
 {% block extra_js %}
 <script src="{% static 'js/social.js' %}"></script>
+{% if user.is_staff %}<script src="{% static 'js/moderation.js' %}"></script>{% endif %}
 <script>
   window.CONVO_CONFIG = {
     conversationId: {{ conversation.id }},

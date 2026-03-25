@@ -79,79 +79,41 @@
     margin-bottom: 18px;
 }
 
-/* Post css */
+
+/* Post CSS — synced from social.css */
+
 :root {
     --to-blue:      #5B73E8;
+    --to-blue-dark: #4A5FD4;
     --to-teal:      #4ECDC4;
+    --to-teal-dark: #38B2AA;
     --to-gradient:  linear-gradient(135deg, #5B73E8 0%, #4ECDC4 100%);
-    --to-surface:   rgba(255, 255, 255, 0.95);
+    --to-bg:        #F0F4FF;
+    --to-surface:   rgba(255, 255, 255, 0.85);
     --to-border:    rgba(91, 115, 232, 0.12);
     --to-text:      #1A1F36;
     --to-muted:     #8892B0;
     --to-shadow-sm: 0 2px 12px rgba(91, 115, 232, 0.10);
     --to-shadow-md: 0 6px 24px rgba(91, 115, 232, 0.14);
     --to-radius:    16px;
+    --to-radius-sm: 10px;
 }
 
 .post-card {
     background: var(--to-surface);
     border: 1px solid var(--to-border);
     border-radius: var(--to-radius);
-    box-shadow: var(--to-shadow-sm);
-    margin-bottom: 20px;
+    box-shadow: 0 2px 12px rgba(91, 115, 232, 0.08);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    margin-bottom: 18px;
     transition: box-shadow 0.2s, transform 0.2s;
     overflow: hidden;
 }
 
-.post-card:hover {
-    box-shadow: var(--to-shadow-md);
-    transform: translateY(-2px);
-}
+.post-card:hover { box-shadow: var(--to-shadow-md); transform: translateY(-1px); }
 
-.post-card-body {
-    padding: 20px 22px;
-}
-
-.status-btn {
-    display: inline-block;
-    padding: 0.25rem 0.75rem;
-    border-radius: 999px;
-    font-size: 0.8rem;
-    font-weight: 500;
-    cursor: pointer;
-    border: 1px solid transparent;
-    background: none;
-    font-family: inherit;
-    transition: all 0.18s;
-}
-
-.status-btn-idle {
-    background-color: #f0f2f5;
-    color: #a0aec0;
-    border-color: #e2e8f0;
-}
-
-/* Active state: solid fill for better visibility */
-.status-btn.status-badge-focus {
-    background-color: #e53e3e;
-    color: #fff;
-    border-color: #e53e3e;
-    font-weight: 600;
-}
-
-.status-btn.status-badge-social {
-    background-color: #38a169;
-    color: #fff;
-    border-color: #38a169;
-    font-weight: 600;
-}
-
-.status-btn.status-badge-inactive {
-    background-color: #718096;
-    color: #fff;
-    border-color: #718096;
-    font-weight: 600;
-}
+.post-card-body { padding: 20px 22px; }
 
 .post-header {
     display: flex;
@@ -167,95 +129,20 @@
     text-decoration: none;
 }
 
-.post-author-link:hover {
-    text-decoration: underline;
-}
+.post-author-link:hover { text-decoration: underline; }
 
-.post-meta {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-top: 3px;
-}
+.post-meta { display: flex; align-items: center; gap: 8px; margin-top: 3px; }
 
-.post-time {
-    font-size: 12px;
-    color: var(--to-muted);
-}
+.post-time { font-size: 12px; color: var(--to-muted); font-weight: 500; }
 
-.post-content {
-    font-size: 14.5px;
-    color: var(--to-text);
-    line-height: 1.6;
-}
-
-.post-actions {
-    display: flex;
-    gap: 8px;
-    flex-wrap: wrap;
-    margin-top: 14px;
-}
-
-.action-btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 7px 16px;
-    border-radius: 50px;
-    font-size: 13px;
-    font-weight: 600;
-    border: 1.5px solid;
-    cursor: pointer;
-    background: transparent;
-    transition: all 0.18s;
-}
-
-.action-btn-like {
-    color: var(--to-blue);
-    border-color: rgba(91, 115, 232, 0.25);
-}
-
-.action-btn-like:hover {
-    background: rgba(91, 115, 232, 0.10);
-}
-
-.action-btn-bookmark {
-    color: var(--to-teal);
-    border-color: rgba(78, 205, 196, 0.25);
-}
-
-.action-btn-bookmark:hover {
-    background: rgba(78, 205, 196, 0.10);
-}
-
-.comments-section {
-    margin-top: 16px;
-    padding-top: 16px;
-    border-top: 1px solid var(--to-border);
-}
-
-.comment-item {
-    display: flex;
-    gap: 10px;
-    margin-bottom: 12px;
-}
-
-.comment-bubble {
-    background: rgba(240, 244, 255, 0.7);
-    border-radius: 10px;
-    padding: 8px 12px;
-    flex: 1;
-}
-
-.comment-author {
+.badge-followers {
+    font-size: 11px;
     font-weight: 700;
-    font-size: 12px;
+    background: rgba(91, 115, 232, 0.10);
     color: var(--to-blue);
-}
-
-.comment-text {
-    font-size: 13px;
-    color: var(--to-text);
+    padding: 3px 9px;
+    border-radius: 50px;
+    border: 1px solid rgba(91, 115, 232, 0.20);
 }
 
 .btn-delete-post {
@@ -272,9 +159,66 @@
 
 .btn-delete-post:hover { background: rgba(239, 68, 68, 0.16); }
 
-/* -------------------------------------------------------------
-   Comments
-   ------------------------------------------------------------- */
+.post-content {
+    font-size: 14.5px;
+    color: var(--to-text);
+    line-height: 1.65;
+    margin-bottom: 0;
+}
+
+.post-event-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    margin-top: 12px;
+    padding: 9px 14px;
+    background: linear-gradient(135deg, rgba(91,115,232,0.08), rgba(78,205,196,0.10));
+    border: 1px solid rgba(91, 115, 232, 0.15);
+    border-radius: 10px;
+    font-size: 13px;
+    color: var(--to-text);
+    font-weight: 600;
+}
+
+.post-event-tag .event-date { font-size: 12px; color: var(--to-muted); font-weight: 500; }
+
+.post-divider { height: 1px; background: rgba(91, 115, 232, 0.10); margin: 14px 0; }
+
+/* Action Buttons */
+.post-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+.action-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 16px;
+    border-radius: 50px;
+    font-size: 13px;
+    font-weight: 600;
+    font-family: 'Nunito', sans-serif;
+    border: 1.5px solid;
+    cursor: pointer;
+    transition: all 0.18s;
+    background: transparent;
+}
+
+.action-btn-like { color: var(--to-blue); border-color: rgba(91, 115, 232, 0.25); }
+.action-btn-like:hover,
+.action-btn-like.liked { background: rgba(91, 115, 232, 0.10); border-color: var(--to-blue); }
+
+.action-btn-comment { color: var(--to-muted); border-color: rgba(136, 146, 176, 0.25); }
+.action-btn-comment:hover {
+    color: var(--to-blue);
+    border-color: rgba(91, 115, 232, 0.25);
+    background: rgba(91, 115, 232, 0.06);
+}
+
+.action-btn-bookmark { color: var(--to-teal); border-color: rgba(78, 205, 196, 0.25); }
+.action-btn-bookmark:hover,
+.action-btn-bookmark.bookmarked { background: rgba(78, 205, 196, 0.10); border-color: var(--to-teal); }
+
+
+/* Comments */
 
 .comments-section {
     margin-top: 16px;
@@ -339,14 +283,53 @@
 .comment-author:hover { text-decoration: underline; }
 .comment-time  { font-size: 11px; color: var(--to-muted); margin-left: 6px; }
 .comment-text  { font-size: 13px; color: var(--to-text); margin-top: 2px; }
-.action-btn-comment { color: var(--to-muted); border-color: rgba(136, 146, 176, 0.25); }
-.action-btn-comment:hover {
-    color: var(--to-blue);
-    border-color: rgba(91, 115, 232, 0.25);
-    background: rgba(91, 115, 232, 0.06);
+
+
+/* Profile-specific: Status Button */
+
+.status-btn {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    border-radius: 999px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    cursor: pointer;
+    border: 1px solid transparent;
+    background: none;
+    font-family: inherit;
+    transition: all 0.18s;
 }
 
-/*  Schedule  */
+.status-btn-idle {
+    background-color: #f0f2f5;
+    color: #a0aec0;
+    border-color: #e2e8f0;
+}
+
+.status-btn.status-badge-focus {
+    background-color: #e53e3e;
+    color: #fff;
+    border-color: #e53e3e;
+    font-weight: 600;
+}
+
+.status-btn.status-badge-social {
+    background-color: #38a169;
+    color: #fff;
+    border-color: #38a169;
+    font-weight: 600;
+}
+
+.status-btn.status-badge-inactive {
+    background-color: #718096;
+    color: #fff;
+    border-color: #718096;
+    font-weight: 600;
+}
+
+
+/* Profile-specific: Schedule */
+
 .schedule-row {
   display: flex;
   align-items: stretch;
@@ -379,23 +362,9 @@
 .badge-upcoming { background: rgba(91, 115, 232, 0.12); color: var(--to-blue); }
 .badge-recent   { background: #f1f5f9; color: #64748b; }
 
-.post-event-tag {
-    display: inline-flex;
-    align-items: center;
-    gap: 7px;
-    margin-top: 12px;
-    padding: 9px 14px;
-    background: linear-gradient(135deg, rgba(91,115,232,0.08), rgba(78,205,196,0.10));
-    border: 1px solid rgba(91, 115, 232, 0.15);
-    border-radius: 10px;
-    font-size: 13px;
-    color: var(--to-text);
-    font-weight: 600;
-}
 
-.post-event-tag .event-date { font-size: 12px; color: var(--to-muted); font-weight: 500; }
+/* Profile-specific: Focus Stats */
 
-/*  Focus stats  */
 .focus-stat-box {
   background: rgba(229, 62, 62, 0.06);
   border: 1px solid rgba(229, 62, 62, 0.15);
@@ -421,7 +390,6 @@
   margin-top: 2px;
 }
 
-/*  Focus timer badge  */
 .focus-timer-badge {
   display: inline-flex;
   align-items: center;
@@ -437,7 +405,9 @@
   white-space: nowrap;
 }
 
-/*  Mobile  */
+
+/* Mobile */
+
 @media (max-width: 575.98px) {
   .profile-avatar {
     width: 80px;

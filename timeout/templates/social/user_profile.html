@@ -6,6 +6,8 @@
 {% endblock %}
 
 {% block extra_css %}
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+  <link rel="stylesheet" href="{% static 'css/social.css' %}" />
   <link rel="stylesheet" href="{% static 'css/profile.css' %}" />
 {% endblock %}
 
@@ -29,6 +31,9 @@
                 <div class="d-flex align-items-start justify-content-between gap-2 flex-wrap">
                   <div class="d-flex align-items-center gap-2 flex-wrap">
                     <h3 class="m-0">@{{ profile_user.username }}</h3>
+                    {% if profile_user.is_banned %}
+                      <span class="badge bg-danger">Banned</span>
+                    {% endif %}
                     <span class="status-dot status-{{ profile_user.status }}"></span>
                     {% if profile_user.management_style %}
                       <span class="badge bg-light text-dark">
@@ -40,18 +45,35 @@
                       </span>
                     {% endif %}
                   </div>
-                  {% if user != profile_user %}
+                  {% if user != profile_user and not is_suspended %}
                     <div class="d-flex gap-2 flex-shrink-0">
-                      <button class="btn btn-sm {% if is_following %}
-                          btn-secondary
+                      {% if is_following %}
+                        <button class="btn btn-sm btn-secondary follow-btn"
+                                data-username="{{ profile_user.username }}"
+                                data-following="true" data-requested="false">Unfollow</button>
+                      {% elif has_pending_request %}
+                        <button class="btn btn-sm btn-warning follow-btn"
+                                data-username="{{ profile_user.username }}"
+                                data-following="false" data-requested="true">Requested</button>
+                      {% else %}
+                        <button class="btn btn-sm btn-primary follow-btn"
+                                data-username="{{ profile_user.username }}"
+                                data-following="false" data-requested="false">Follow</button>
+                      {% endif %}
+                      <a href="{% url 'start_conversation' profile_user.username %}" class="btn btn-sm btn-outline-secondary">Message</a>
+                      {% if user.is_staff and not profile_user.is_staff %}
+                        {% if profile_user.is_banned %}
+                          <form method="post" action="{% url 'unban_user' profile_user.username %}" style="margin:0;">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-sm btn-success" onclick="return confirm('Unban this user?');">Unban</button>
+                          </form>
                         {% else %}
-                          btn-primary
-                        {% endif %} follow-btn"
-                        data-username="{{ profile_user.username }}"
-                        data-following="{{ is_following|yesno:'true,false' }}">
-                        {{ is_following|yesno:'Unfollow,Follow' }}
-                      </button>
-                      <a href="{% url 'start_conversation' profile_user.username %}" class="btn btn-sm btn-outline-secondary">💬 Message</a>
+                          <form method="post" action="{% url 'ban_user' profile_user.username %}" style="margin:0;">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Ban @{{ profile_user.username }}?');">Ban</button>
+                          </form>
+                        {% endif %}
+                      {% endif %}
                     </div>
                   {% endif %}
                 </div>
@@ -88,7 +110,7 @@
         </div>
 
         <!-- Schedule -->
-        {% if can_view %}
+        {% if can_view and not is_suspended %}
           <div class="post-card mb-4">
             <div class="post-card-body">
               <div class="post-header">
@@ -130,8 +152,37 @@
           {% include 'partials/modals/friends_modal.html' %}
         {% endif %}
 
+        <!-- Incoming Follow Requests (own profile only) -->
+        {% if incoming_requests %}
+          <div class="post-card mb-4">
+            <div class="post-card-body">
+              <h5 class="mb-3">Follow Requests</h5>
+              {% for fr in incoming_requests %}
+                <div class="follow-request-row d-flex align-items-center justify-content-between mb-2">
+                  <a href="{% url 'user_profile' fr.from_user.username %}" class="fw-semibold text-decoration-none">
+                    @{{ fr.from_user.username }}
+                  </a>
+                  <div class="d-flex gap-2">
+                    <button class="btn btn-sm btn-primary accept-request-btn"
+                            data-username="{{ fr.from_user.username }}">Accept</button>
+                    <button class="btn btn-sm btn-outline-secondary reject-request-btn"
+                            data-username="{{ fr.from_user.username }}">Reject</button>
+                  </div>
+                </div>
+              {% endfor %}
+            </div>
+          </div>
+        {% endif %}
+
         <!-- Posts -->
-        {% if can_view %}
+        {% if is_suspended %}
+          <div class="post-card mb-4">
+            <div class="post-card-body text-center py-4 text-muted">
+              <p class="mb-1" style="font-size:2rem;">🚫</p>
+              <p class="mb-0 fw-semibold">This account has been suspended.</p>
+            </div>
+          </div>
+        {% elif can_view %}
           <h4 class="mb-3">Posts</h4>
           {% if posts %}
             {% for post in posts %}
@@ -157,6 +208,7 @@
     {% include 'partials/modals/followers_modal.html' %}
     {% include 'partials/modals/following_modal.html' %}
   {% endif %}
+
 {% endblock %}
 
 {% block extra_js %}
@@ -168,4 +220,6 @@
   </script>
   <script src="{% static 'js/social.js' %}"></script>
   <script src="{% static 'js/user_profile.js' %}"></script>
+  <script src="{% static 'js/follow_requests.js' %}"></script>
+  {% if user.is_staff %}<script src="{% static 'js/moderation.js' %}"></script>{% endif %}
 {% endblock %}

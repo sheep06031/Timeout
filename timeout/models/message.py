@@ -13,9 +13,11 @@ class Conversation(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
+        """Order conversations by most recently updated first."""
         ordering = ['-updated_at']
 
     def __str__(self):
+        """Return a string representation with the conversation ID."""
         return f'Conversation {self.id}'
 
     def get_other_participant(self, user):
@@ -44,7 +46,9 @@ class Message(models.Model):
     is_read = models.BooleanField(default=False)
 
     class Meta:
+        """Order messages by creation time (oldest first)."""
         ordering = ['created_at']
 
     def __str__(self):
+        """Return a string representation with sender and first 30 chars of content."""
         return f'{self.sender.username}: {self.content[:30]}'

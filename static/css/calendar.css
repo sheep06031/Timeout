@@ -95,6 +95,59 @@
   box-shadow: 0 3px 12px rgba(91,93,223,0.3);
 }
 
+.cal-add-btn.dropdown-toggle::after { display: none; }
+
+/* AI dropdown menu */
+.cal-ai-dropdown {
+  min-width: 200px;
+  padding: 8px;
+  border: 1px solid rgba(91, 115, 232, 0.15);
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(91, 93, 223, 0.14);
+  background: #fff;
+}
+
+.cal-ai-dropdown .dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #2a3547;
+  transition: background 0.15s, color 0.15s;
+}
+
+.cal-ai-dropdown .dropdown-item:hover {
+  background: rgba(91, 93, 223, 0.08);
+  color: #5b5ddf;
+}
+
+.cal-ai-dropdown .dropdown-item .ai-item-icon {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  flex-shrink: 0;
+}
+
+.cal-ai-dropdown .ai-plan    .ai-item-icon { background: rgba(91, 93, 223, 0.10); }
+.cal-ai-dropdown .ai-reschedule .ai-item-icon { background: rgba(78, 205, 196, 0.12); }
+.cal-ai-dropdown .ai-add     .ai-item-icon { background: rgba(245, 158, 11, 0.10); }
+
+.cal-ai-dropdown .ai-item-text { display: flex; flex-direction: column; }
+.cal-ai-dropdown .ai-item-label { line-height: 1.2; }
+.cal-ai-dropdown .ai-item-desc {
+  font-size: 11px;
+  font-weight: 400;
+  color: #8892b0;
+  margin-top: 1px;
+}
+
 /* Table */
 .cal-table {
   width: 100%;
@@ -268,6 +321,37 @@ td.cal-today .cal-day-num {
   color: #ffffff;
 }
 
+/* timeout/static/css/calendar.css */
+
+/* Container for multi-select */
+.select-multiple-wrapper {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 6px 8px;
+  border: 1px solid #ced4da;
+  border-radius: 0.5rem;
+  min-height: 50px;
+  cursor: text;
+  background-color: #fff;
+  transition: border 0.2s, box-shadow 0.2s;
+}
+
+.select-multiple-wrapper.focused {
+  border-color: #6c63ff; /* highlight color */
+  box-shadow: 0 0 0 0.2rem rgba(108, 99, 255, 0.25);
+}
+
+/* Each selected item */
+.select-multiple-wrapper .selected-item {
+  background-color: #6c63ff;
+  color: white;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 0.875rem;
+}
+
 /* Event highlight animation */
 .event-highlight {
   animation: glowEvent 2.5s ease;
@@ -316,6 +400,62 @@ td.cal-today .cal-day-num {
   gap: 4px;
 }
 
+/* Close button on each selected item */
+.select-multiple-wrapper .selected-item .remove-btn {
+  cursor: pointer;
+  font-weight: bold;
+  line-height: 1;
+}
+
+/* Dropdown options */
+.select-multiple-dropdown {
+  display: none; /* hidden by default */
+  position: absolute;
+  top: 100%; /* place it below wrapper */
+  left: 0;
+  width: 100%;
+  max-height: 200px;
+  overflow-y: auto;
+  border: 1px solid #ced4da;
+  border-radius: 0.5rem;
+  background: #fff;
+  z-index: 999; /* make sure it’s on top */
+}
+
+.select-multiple-dropdown.active {
+  display: block;
+}
+
+.select-multiple-dropdown .option {
+  padding: 8px 10px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.select-multiple-dropdown .option:hover {
+  background-color: #f1f1f1;
+}
+
+.select-multiple-dropdown .option.selected {
+  background-color: #6c63ff;
+  color: white;
+}
+
+.cal-card .select-multiple-wrapper { 
+  border: 2px solid #6c63ff; 
+}
+
+.cal-card .select-multiple-dropdown .option.selected { 
+  background-color: #6c63ff !important; 
+  color: white !important; 
+}
+
+.select-multiple-wrapper .dropdown-arrow {
+  margin-left: auto;
+  font-size: 0.8rem;
+  color: #6c63ff;
+  pointer-events: none;
+}
 .day-modal-event-time::before {
   content: '🕒';
   font-size: 0.65rem;

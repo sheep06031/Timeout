@@ -80,7 +80,7 @@
 </div>
 
 <script>
-  /* ── Colour map per event type ── */
+  /* Colour map per event type */
   const EVENT_TYPE_COLORS = {
     'deadline':      '#5b5ddf',
     'exam':          '#e53935',
@@ -100,26 +100,26 @@
     const eventType = (btn.getAttribute('data-event-type') || '').toLowerCase().replace(' ', '_');
     const color     = EVENT_TYPE_COLORS[eventType] || '#5b5ddf';
 
-    /* ── Declare start/end up here so everything below can use them ── */
+    /* Declare start/end up here so everything below can use them */
     const start = btn.getAttribute('data-event-start') || '';
     const end   = btn.getAttribute('data-event-end')   || '';
 
-    /* ── Colour bar ── */
+    /* Colour bar */
     document.getElementById('eventModalBar').style.background = color;
 
-    /* ── Type badge ── */
+    /* Type badge */
     const typeBadge = document.getElementById('eventBadge');
     typeBadge.textContent = btn.getAttribute('data-event-type') || '';
     typeBadge.style.background = color;
 
-    /* ── Visibility badge ── */
+    /* Visibility badge */
     const vis = btn.getAttribute('data-event-visibility') || 'private';
     const visBadge = document.getElementById('eventVisibilityBadge');
     visBadge.textContent = vis.charAt(0).toUpperCase() + vis.slice(1);
     visBadge.style.background = vis === 'public' ? '#e8f5e9' : '#f0f2f8';
     visBadge.style.color       = vis === 'public' ? '#2e7d32' : '#5a6a85';
 
-    /* ── Status badge ── */
+    /* Status badge */
     const statusBadge = document.getElementById('eventStatusBadge');
     const status = btn.getAttribute('data-event-status') || '';
     statusBadge.textContent = status;
@@ -132,16 +132,16 @@
     statusBadge.style.background = sc.bg;
     statusBadge.style.color = sc.color;
 
-    /* ── Title & time ── */
+    /* Title & time */
     document.getElementById('eventDetailsModalLabel').textContent = btn.getAttribute('data-event-title') || '';
     document.getElementById('eventTime').textContent =
       '🕒 ' + start + ' → ' + end;
 
-    /* ── Grid cells ── */
+    /* Grid cells */
     document.getElementById('eventLocation').textContent   = btn.getAttribute('data-event-location')   || '—';
     document.getElementById('eventRecurrence').textContent = btn.getAttribute('data-event-recurrence') || '—';
 
-    /* ── Duration ── */
+    /* Duration */
     if (start && end) {
       const startD    = new Date(start.replace(' ', 'T'));
       const endD      = new Date(end.replace(' ', 'T'));
@@ -158,7 +158,7 @@
       document.getElementById('eventDuration').textContent = '—';
     }
 
-    /* ── Countdown ── */
+    /* Countdown */
     if (start && end) {
       const now       = new Date();
       const startD    = new Date(start.replace(' ', 'T'));
@@ -192,7 +192,7 @@
       document.getElementById('eventCountdown').textContent = '—';
     }
 
-    /* ── Description ── */
+    /* Description */
     const desc = btn.getAttribute('data-event-description') || '';
     const descWrap = document.getElementById('eventDescriptionWrap');
     if (desc) {
@@ -202,7 +202,7 @@
       descWrap.style.display = 'none';
     }
 
-    /* ── Action links ── */
+    /* Action links */
     document.getElementById('editEventBtn').href      = '/event/' + eventId + '/edit/';
     document.getElementById('deleteEventBtn').href    = '/event/' + eventId + '/delete/';
     document.getElementById('cancelEventForm').action = '/calendar/' + eventId + '/cancel/';

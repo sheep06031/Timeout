@@ -6,6 +6,7 @@ class PostForm(forms.ModelForm):
     """Form for creating and editing posts."""
 
     class Meta:
+        """Defines the model and fields exposed by this form."""
         model = Post
         fields = ['content', 'event', 'privacy']
         widgets = {
@@ -29,11 +30,10 @@ class PostForm(forms.ModelForm):
         }
 
     def __init__(self, *args, user=None, **kwargs):
+        """Scopes the event queryset to events created by the given user."""
         super().__init__(*args, **kwargs)
-        # Only show events created by the user
         if user:
             self.fields['event'].queryset = user.created_events.all()
-        # Make event optional with blank choice
         self.fields['event'].empty_label = 'No event'
         self.fields['event'].required = False
 
@@ -42,6 +42,7 @@ class CommentForm(forms.ModelForm):
     """Form for creating comments on posts."""
 
     class Meta:
+        """Defines the model and fields exposed by this form."""
         model = Comment
         fields = ['content']
         widgets = {

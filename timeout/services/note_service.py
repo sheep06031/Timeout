@@ -10,7 +10,7 @@ from timeout.models import Note, StudyLog
 class NoteService:
     """Service for managing note query logic."""
 
-    # --- Gamification helpers ---
+    #Gamification helpers
 
     XP_NOTE_CREATE = 10
     XP_NOTE_EDIT = 5
@@ -20,6 +20,7 @@ class NoteService:
     @staticmethod
     def update_streak_and_xp(user, xp_base):
         """Update user's note streak and award XP. Call on note create/edit."""
+
         today = timezone.localtime(timezone.now()).date()
         yesterday = today - datetime.timedelta(days=1)
 
@@ -50,6 +51,7 @@ class NoteService:
         user.xp += NoteService.XP_POMODORO
         user.save(update_fields=['xp'])
 
+
     @staticmethod
     def get_user_notes(user):
         """Get all notes for a user, pinned first then newest."""
@@ -60,6 +62,7 @@ class NoteService:
         ).select_related('event').order_by(
             '-is_pinned', '-created_at'
         )
+
 
     @staticmethod
     def get_notes_by_category(user, category):
@@ -85,6 +88,7 @@ class NoteService:
             '-is_pinned', '-created_at'
         )
 
+
     @staticmethod
     def search_notes(user, query):
         """Search notes by title or content."""
@@ -98,7 +102,7 @@ class NoteService:
             '-is_pinned', '-created_at'
         )
 
-    # --- StudyLog helpers ---
+    # StudyLog helpers
 
     @staticmethod
     def log_note_created(user):

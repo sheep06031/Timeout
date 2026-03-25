@@ -1,6 +1,14 @@
+/**
+ * User Profile Modals
+ * Handles user list rendering and search functionality for followers, following, and friends modals.
+ */
+
 (function () {
   if (typeof FOLLOWERS_URL === 'undefined' || typeof FOLLOWING_URL === 'undefined') return;
 
+  /**
+   * Escape HTML special characters to prevent XSS vulnerabilities.
+   */
   function escapeHtml(str) {
     if (str == null) return '';
     return String(str)
@@ -11,70 +19,71 @@
       .replaceAll("'", '&#39;');
   }
 
-  function renderUserList(users) {
-    if (!users || users.length === 0) {
-      return '<p class="text-center text-muted py-3">No users yet.</p>';
-    }
-
-    return users.map(function (u) {
-      const username = u && u.username ? String(u.username) : '';
-      const fullName = u && u.full_name ? String(u.full_name) : '';
-      const pic = u && u.profile_picture ? String(u.profile_picture) : '';
-
-      const href = '/social/user/' + encodeURIComponent(username) + '/';
-
-      const avatarHtml = pic
-        ? '<img src="' + escapeHtml(pic) + '" class="rounded-circle" width="40" height="40" style="object-fit:cover;">'
-        : '<div class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center fw-bold" style="width:40px;height:40px;">' +
-            escapeHtml(username.charAt(0).toUpperCase() || '?') +
-          '</div>';
-
-      const fullNameHtml = fullName
-        ? '<div class="text-muted small">' + escapeHtml(fullName) + '</div>'
-        : '';
-
-      return (
-        '<div class="user-item">' +
-          '<a href="' + href + '" class="d-flex align-items-center gap-3 mb-3 text-decoration-none text-dark">' +
-            avatarHtml +
-            '<div>' +
-              '<div class="fw-semibold">@' + escapeHtml(username) + '</div>' +
-              fullNameHtml +
-            '</div>' +
-          '</a>' +
-        '</div>'
-      );
-    }).join('');
+  /**
+   * Generate avatar HTML - image if available, otherwise initial badge.
+   */
+  function _userAvatar(pic, username) {
+    if (pic) return '<img src="' + escapeHtml(pic) + '" class="rounded-circle" width="40" height="40" style="object-fit:cover;">';
+    return '<div class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center fw-bold" style="width:40px;height:40px;">' +
+      escapeHtml(username.charAt(0).toUpperCase() || '?') + '</div>';
   }
 
+  /**
+   * Generate complete user card HTML with avatar, username, and full name.
+   */
+  function _userCard(u) {
+    var username = u && u.username ? String(u.username) : '';
+    var fullName = u && u.full_name ? String(u.full_name) : '';
+    var pic = u && u.profile_picture ? String(u.profile_picture) : '';
+    var href = '/social/user/' + encodeURIComponent(username) + '/';
+    var fullNameHtml = fullName ? '<div class="text-muted small">' + escapeHtml(fullName) + '</div>' : '';
+    return '<div class="user-item">' +
+      '<a href="' + href + '" class="d-flex align-items-center gap-3 mb-3 text-decoration-none text-dark">' +
+        _userAvatar(pic, username) +
+        '<div><div class="fw-semibold">@' + escapeHtml(username) + '</div>' + fullNameHtml + '</div>' +
+      '</a></div>';
+  }
+
+  /**
+   * Render HTML for complete user list or empty state message.
+   */
+  function renderUserList(users) {
+    if (!users || users.length === 0) return '<p class="text-center text-muted py-3">No users yet.</p>';
+    return users.map(_userCard).join('');
+  }
+
+  /**
+   * Attach real-time search filter to user list input field.
+   */
+  function _attachSearchFilter(input, listEl) {
+    if (!input) return;
+    input.oninput = function () {
+      var query = (this.value || '').toLowerCase().trim();
+      listEl.querySelectorAll('.user-item').forEach(function (item) {
+        var text = item.textContent.replace(/\s+/g, ' ').toLowerCase();
+        item.style.display = text.includes(query) ? '' : 'none';
+      });
+    };
+  }
+
+  /**
+   * Configure modal to fetch and display user list with search functionality on open.
+   */
   function setupModal(modalId, url, listId, searchAttr) {
-    const modalEl = document.getElementById(modalId);
+    var modalEl = document.getElementById(modalId);
     if (!modalEl) return;
 
     modalEl.addEventListener('show.bs.modal', function () {
-      const input = document.querySelector('[data-modal-search="' + searchAttr + '"]');
-      if (input) {
-        input.value = '';
-        input.oninput = null;
-      }
+      var input = document.querySelector('[data-modal-search="' + searchAttr + '"]');
+      if (input) { input.value = ''; input.oninput = null; }
 
       fetch(url)
         .then(function (r) { return r.json(); })
         .then(function (data) {
-          const listEl = document.getElementById(listId);
+          var listEl = document.getElementById(listId);
           if (!listEl) return;
-
           listEl.innerHTML = renderUserList((data && data.users) ? data.users : []);
-
-          if (input) {
-            input.oninput = function () {
-              const query = (this.value || '').toLowerCase().trim();
-              listEl.querySelectorAll('.user-item').forEach(function (item) {
-                const text = item.textContent.replace(/\s+/g, ' ').toLowerCase();
-                item.style.display = text.includes(query) ? '' : 'none';
-              });
-            };
-          }
+          _attachSearchFilter(input, listEl);
         });
     });
   }

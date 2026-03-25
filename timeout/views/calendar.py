@@ -12,6 +12,8 @@ from django.conf import settings
 from timeout.models import Event
 from django.core.exceptions import ValidationError
 from django.db.models import Q
+from timeout.views.ai_workload import get_ai_workload_warning
+from timeout.views.deadline_warning import get_deadline_study_warnings
 
 MONTH_NAMES = [ # months names for calendar display
     "", "January", "February", "March", "April", "May", "June",
@@ -33,7 +35,7 @@ def calendar_view(request):
     events_by_date = index_events(events_qs, last_visible) # index events by date for easy lookup in template
     weeks = build_weeks(weeks_raw, month, today, events_by_date) # build the final weeks structure for the template
     context = calendar_context(year, month, nav, weeks) # build the context dict for the template
-    context.update(get_data(request)) # add data for upcoming deadlines and reschedule prompts
+    context.update(get_data(request, events_by_date)) # add data for upcoming deadlines and reschedule prompts
     return render(request, "pages/calendar.html", context)
 
 
@@ -75,14 +77,11 @@ def check_month_year(year, month):
 def get_months(year, month):
     """Helper function to get previous and next months and years"""
     if month > 1:
-        prev_month = month - 1
-        prev_year = year
+        prev_month, prev_year = month - 1, year
     else:
-        prev_month = 12
-        prev_year = year - 1
+        prev_month, prev_year = 12, year - 1
     if month < 12:
-        next_month = month + 1
-        next_year = year
+        next_month, next_year = month + 1, year
     else:
         next_month = 1
         next_year = year + 1
@@ -121,8 +120,8 @@ def create_dict(ev, start_dt, end_dt, now_date):
         'start_datetime': start_dt,
         'end_datetime': end_dt,
         'event_type': ev.event_type,
-        'get_event_type_display': ev.get_event_type_display(),
-        'get_recurrence_display': ev.get_recurrence_display(),
+        'event_type_display': ev.get_event_type_display(),
+        'recurrence_display': ev.get_recurrence_display(),
         'location': ev.location,
         'description': ev.description,
         'is_all_day': ev.is_all_day,
@@ -189,7 +188,7 @@ def build_day(day, month, today, events_by_date):
 
 
 # helpers to gather data
-def get_data(request):
+def get_data(request, events_by_date=None):
     """Helper function to gather data needed for upcoming deadlines and reschedule prompts"""
     now = timezone.now()
     upcoming_deadlines = Event.objects.filter(
@@ -214,9 +213,12 @@ def get_data(request):
         for e in missed_sessions
     ]
     reschedule_prompts += request.session.pop('reschedule_prompts', [])
+    today_events = (events_by_date or {}).get(now.date(), [])
     return {
         "upcoming_deadlines": upcoming_deadlines,
         "reschedule_prompts": reschedule_prompts,
+        "warnings": get_deadline_study_warnings(request.user),
+        "workload_warning": get_ai_workload_warning(request.user, today_events),
     }
 
 
@@ -228,6 +230,7 @@ def event_status(start_dt, end_dt, now):
         return 'Past'
     else:        
         return 'Upcoming'
+
 
 @login_required
 @require_POST
@@ -259,58 +262,80 @@ def apply_session_schedule(request):
 @login_required
 @require_POST
 def subscribe_event(request, pk):
+    """Subscribe to a public event by copying it to the user's calendar."""
     from django.shortcuts import get_object_or_404
     original = get_object_or_404(Event, pk=pk, visibility=Event.Visibility.PUBLIC)
     if original.creator == request.user:
         return JsonResponse({'success': False, 'error': 'You own this event.'}, status=400)
-    already = Event.objects.filter(creator=request.user, title=original.title, start_datetime=original.start_datetime,
+    already = Event.objects.filter(
+        creator=request.user,
+        title=original.title,
+        start_datetime=original.start_datetime,
     ).exists()
     if already:
         return JsonResponse({'success': False, 'error': 'Already subscribed.'}, status=400)
-    Event.objects.create( creator=request.user,title=original.title,
-        event_type=original.event_type, start_datetime=original.start_datetime,
-        end_datetime=original.end_datetime, location=original.location,
-        description=original.description, visibility=Event.Visibility.PRIVATE,
-        is_all_day=original.is_all_day, recurrence=original.recurrence,
+    Event.objects.create(
+        creator=request.user,
+        title=original.title,
+        event_type=original.event_type,
+        start_datetime=original.start_datetime,
+        end_datetime=original.end_datetime,
+        location=original.location,
+        description=original.description,
+        visibility=Event.Visibility.PRIVATE,
+        is_all_day=original.is_all_day,
+        recurrence=original.recurrence,
         allow_conflict=True,
     )
     return JsonResponse({'success': True})
 
 
-@login_required
-@require_POST
-def event_create(request):
-    is_all_day = request.POST.get("is_all_day") == "on"
-    allow_conflict = request.POST.get("allow_conflict") == "on"
-
+def _parse_event_datetimes(request, is_all_day):
+    """Parse and validate start/end datetimes from POST data."""
     start_datetime = request.POST.get("start_datetime")
     end_datetime = request.POST.get("end_datetime")
-    recurrence = request.POST.get("recurrence", "none")  # default 'none'
 
     if is_all_day:
         if not start_datetime:
             messages.error(request, "Please select a date for an all-day event.")
-            return redirect("calendar")
+            return None, None
         date_part = start_datetime.split("T")[0]
-        start_datetime = f"{date_part}T00:00"
-        end_datetime = f"{date_part}T23:59"
-    else:
-        if not start_datetime or not end_datetime:
-            messages.error(request, "Start and end times are required.")
-            return redirect("calendar")
+        return f"{date_part}T00:00", f"{date_part}T23:59"
+
+    if not start_datetime or not end_datetime:
+        messages.error(request, "Start and end times are required.")
+        return None, None
+
+    return start_datetime, end_datetime
+
+
+@login_required
+@require_POST
+def event_create(request):
+    """Create a new calendar event from form POST data."""
+    is_all_day = request.POST.get("is_all_day") == "on"
+    allow_conflict = request.POST.get("allow_conflict") == "on"
+
+    start_datetime, end_datetime = _parse_event_datetimes(request, is_all_day)
+    if start_datetime is None:
+        return redirect("calendar")
 
     event = Event(
         creator=request.user,
         title=request.POST["title"],
         event_type=request.POST.get("event_type", "other"),
-        start_datetime=start_datetime,
-        end_datetime=end_datetime,
+        start_datetime=timezone.make_aware(
+            datetime.fromisoformat(start_datetime)
+        ),
+        end_datetime=timezone.make_aware(
+            datetime.fromisoformat(end_datetime)
+        ),
         location=request.POST.get("location", ""),
         description=request.POST.get("description", ""),
         allow_conflict=allow_conflict,
         visibility=request.POST.get("visibility", "public"),
         is_all_day=is_all_day,
-        recurrence=recurrence,
+        recurrence=request.POST.get("recurrence", "none"),
     )
 
     try:

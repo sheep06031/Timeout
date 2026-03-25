@@ -11,6 +11,27 @@
 {% block content %}
 <div class="cal-page">
 
+  {% if workload_warning %}
+  <div class="alert alert-warning alert-dismissible fade show d-flex align-items-center justify-content-between mb-3" role="alert">
+      <span>⚠️ {{ workload_warning }}</span>
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+  </div>
+  {% endif %}
+
+  {% if warnings %}
+  <div class="alert alert-warning alert-dismissible fade show d-flex align-items-center justify-content-between" role="alert">
+    <div>
+      <strong>Workload Warning</strong>
+      <ul class="mb-0">
+        {% for warning in warnings %}
+          <li>{{ warning }}</li>
+        {% endfor %}
+      </ul>
+    </div>
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+  </div>
+  {% endif %}
+
   {% include "partials/reschedule_banners.html" %}
 
   <div class="cal-card">
@@ -35,7 +56,8 @@
             <div class="page-info-tooltip">
               This shows your upcoming events for the month.<br>
               Click on a day or the 'Add Event' button to add a new event. <br>
-              Click on an event to view details and edit your event.
+              Click on an event to view details and edit your event. <br>
+              To link a deadline to a study session, click on the event to 'Edit' and select the related study session.
             </div>
           </div>
         <div class="cal-view-switcher">
@@ -57,16 +79,42 @@
         </div>
 
         <a href="{% url 'calendar' %}" class="cal-today-btn">Today</a>
-        <a href="#" class="cal-add-btn" data-bs-toggle="modal" data-bs-target="#studyPlannerModal">
-          <span class="cal-add-label">Plan Study</span>
-        </a>
-        <a href="#" class="cal-add-btn" data-bs-toggle="modal" data-bs-target="#rescheduleSessionsModal">
-          <span class="cal-add-label">Reschedule Sessions</span>
-        </a>
-        <a href="#" class="cal-add-btn" data-bs-toggle="modal" data-bs-target="#aiEventModal">
-          <span class="cal-add-label">AI Add</span>
-        </a>
-        <!-- onclick="openAddEvent(new Date().toISOString().slice(0,10))" used to be: data-bs-toggle="modal" data-bs-target="#addEventModal"-->
+        <!-- AI dropdown -->
+        <div class="dropdown">
+          <button class="cal-add-btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+            ✨ AI
+          </button>
+          <ul class="dropdown-menu dropdown-menu-end cal-ai-dropdown">
+            <li>
+              <a class="dropdown-item ai-plan" href="#" data-bs-toggle="modal" data-bs-target="#studyPlannerModal">
+                <span class="ai-item-icon">📚</span>
+                <span class="ai-item-text">
+                  <span class="ai-item-label">Plan Study</span>
+                  <span class="ai-item-desc">Generate a study schedule</span>
+                </span>
+              </a>
+            </li>
+            <li>
+              <a class="dropdown-item ai-reschedule" href="#" data-bs-toggle="modal" data-bs-target="#rescheduleSessionsModal">
+                <span class="ai-item-icon">🔄</span>
+                <span class="ai-item-text">
+                  <span class="ai-item-label">Reschedule Sessions</span>
+                  <span class="ai-item-desc">Optimise your existing sessions</span>
+                </span>
+              </a>
+            </li>
+            <li>
+              <a class="dropdown-item ai-add" href="#" data-bs-toggle="modal" data-bs-target="#aiEventModal">
+                <span class="ai-item-icon">✨</span>
+                <span class="ai-item-text">
+                  <span class="ai-item-label">AI Add Event</span>
+                  <span class="ai-item-desc">Describe an event in plain text</span>
+                </span>
+              </a>
+            </li>
+          </ul>
+        </div>
+
         <a href="#" class="cal-add-btn" onclick="openAddEvent(new Date().toISOString().slice(0,10))">
           + <span class="cal-add-label">Add Event</span>
         </a>
@@ -234,7 +282,6 @@
 </div>
 
 <!-- Mobile FAB -->
- <!--onclick="openAddEvent(new Date().toISOString().slice(0,10))" used to be: data-bs-toggle="modal" data-bs-target="#addEventModal" -->
 <a href="#" class="cal-fab" onclick="openAddEvent(new Date().toISOString().slice(0,10))" aria-label="Add event">+</a>
 {% include "partials/modals/ai_modal.html" %}
 {% include "partials/modals/study_planner_modal.html" %}

@@ -4,11 +4,51 @@ from collections import Counter
 from datetime import timedelta
 from django.conf import settings
 from django.core.cache import cache
-from django.db.models import Sum, F
 from django.utils import timezone
 from timeout.models import Event
 
 logger = logging.getLogger(__name__)
+
+
+def _get_most_productive_day(events_this_week):
+    """Return the weekday name with most completed events, or 'None yet'."""
+    completed = events_this_week.filter(is_completed=True)
+    day_counts = Counter()
+    for ev in completed:
+        day_counts[ev.start_datetime.strftime('%A')] += 1
+    if day_counts:
+        return day_counts.most_common(1)[0][0]
+    return 'None yet'
+
+
+def _gather_study_stats(user, now):
+    """Query the last 7 days of events and return aggregated stats dict."""
+    week_ago = now - timedelta(days=7)
+    events_this_week = Event.objects.filter(
+        creator=user,
+        start_datetime__gte=week_ago,
+        start_datetime__lte=now,
+    )
+
+    study_events = events_this_week.filter(event_type=Event.EventType.STUDY_SESSION)
+    total_seconds = sum(
+        max((ev.end_datetime - ev.start_datetime).total_seconds(), 0)
+        for ev in study_events
+    )
+
+    missed_deadlines = events_this_week.filter(
+        event_type=Event.EventType.DEADLINE,
+        is_completed=False,
+        end_datetime__lt=now,
+    ).count()
+
+    return {
+        'total_study_hours': round(total_seconds / 3600, 1),
+        'missed_deadlines': missed_deadlines,
+        'most_productive_day': _get_most_productive_day(events_this_week),
+        'total_events': events_this_week.count(),
+        'completed_tasks': events_this_week.filter(is_completed=True).count(),
+    }
 
 
 class AIService:
@@ -126,5 +166,5 @@ def api_call(api_key, prompt):
         )
         return response.choices[0].message.content.strip()
     except Exception as exc:
-        logger.exception('OpenAI briefing call failed: %s', exc)
+        logger.warning('OpenAI briefing call failed: %s', exc)
         return None

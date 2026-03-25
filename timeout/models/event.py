@@ -44,10 +44,11 @@ class Event(models.Model):
     creator = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
-        related_name='created_events',  # ← now you can use user.created_events
+        related_name='created_events',
         null=True,
         blank=True
     )
+
     title = models.CharField(max_length=200)
     description = models.TextField(max_length=1000, blank=True)
     event_type = models.CharField(
@@ -87,8 +88,16 @@ class Event(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     is_global = models.BooleanField(default=False)
-    is_completed = models.BooleanField(default=False) # Added to track event
+    is_completed = models.BooleanField(default=False)
 
+    linked_study_sessions = models.ManyToManyField(
+        "self",
+        blank=True,
+        symmetrical=False,
+        related_name="linked_deadlines",
+        limit_choices_to={"event_type": "study_session"},
+    )
+    
 
     class Meta:
         ordering = ['-start_datetime']
@@ -108,49 +117,49 @@ class Event(models.Model):
         Prevent overlapping events for the same user unless allowed.
         """
 
-        # 1️⃣ Validate time range
+        # Basic time validation
         if self.start_datetime >= self.end_datetime:
             raise ValidationError("End time must be after start time.")
 
-        # 2️⃣ Allow certain types to overlap automatically
-        overlap_allowed_types = [
-            self.EventType.DEADLINE,  # keep or change as you like
+        # Define which types cannot overlap
+        non_overlapping_types = [
+            self.EventType.CLASS,
+            self.EventType.STUDY_SESSION,
+            self.EventType.EXAM,
+            self.EventType.MEETING,
         ]
 
-        if self.event_type in overlap_allowed_types:
-            return
+        # Only check conflicts if the event type is in non_overlapping_types
+        if self.event_type not in non_overlapping_types:
+            return  # deadlines & "other" can overlap freely
 
-        # 3️⃣ Allow override checkbox
-        if self.allow_conflict:
-            return
-
-        # 4️⃣ Ignore cancelled events
+        # Ignore cancelled events
         if self.status == self.EventStatus.CANCELLED:
             return
 
+        # Check for overlapping events for this user
         overlapping_events = Event.objects.filter(
             creator=self.creator,
             start_datetime__lt=self.end_datetime,
             end_datetime__gt=self.start_datetime,
-        ).exclude(pk=self.pk)
+        ).exclude(pk=self.pk).filter(event_type__in=non_overlapping_types)
 
         if overlapping_events.exists():
             conflict = overlapping_events.first()
             raise ValidationError(
                 f'This event conflicts with "{conflict.title}" '
                 f'({conflict.start_datetime:%d %b %H:%M} - '
-                f'{conflict.end_datetime:%H:%M}). '
-                f'Tick "Override conflict" to allow it.'
+                f'{conflict.end_datetime:%H:%M}).'
             )
-
     def save(self, *args, **kwargs):
+        """Save event and auto-sync visibility with social post. PUBLIC events create/update posts, PRIVATE ones delete posts."""
         is_new = self.pk is None
 
         super().save(*args, **kwargs)
 
-        from .post import Post  # adjust if needed
+        from .post import Post 
 
-        # If event is PUBLIC → ensure post exists
+        # If event is PUBLIC then ensure post exists
         if self.visibility == self.Visibility.PUBLIC and self.creator:
 
             existing_post = self.posts.first()
@@ -174,11 +183,12 @@ class Event(models.Model):
                     privacy=Post.Privacy.PUBLIC,
                 )
 
-        # If event is PRIVATE → delete any linked post
+        # If event is PRIVATE then delete any linked post
         else:
             self.posts.all().delete()
 
     def delete(self, *args, **kwargs):
+        """" Delete event. """
         self.posts.all().delete()
         super().delete(*args, **kwargs)
 
@@ -201,17 +211,11 @@ class Event(models.Model):
         from django.utils import timezone
         return self.start_datetime > timezone.now()
     
-    def mark_completed(self): #for deadline list page, events can be marked as completed and calculate the duration from creation of the event until clicked complete
-        """Mark event as completed and calculate actual duration."""
-        from django.utils import timezone
+    def mark_completed(self):
+        """Mark event as completed."""
         self.is_completed = True
-        self.completed_at = timezone.now()
-        # Calculate duration in hours from creation to completion
-        delta = self.completed_at - self.created_at
-        self.actual_duration_hours = round(delta.total_seconds() / 3600, 2) # calculate the duration in hours and round to 2 decimals
-        self.save(update_fields=[
-            'is_completed', 'completed_at', 'actual_duration_hours', 'updated_at',
-        ])
+        self.save(update_fields=['is_completed', 'updated_at'])
 
     def __str__(self):
+        """Return a string representation with title and date of the event."""
         return f"{self.title} ({self.start_datetime.date()})"

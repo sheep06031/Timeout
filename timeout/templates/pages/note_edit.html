@@ -11,15 +11,21 @@
   .note-editor-page {
     max-width: 900px;
     margin: 0 auto;
-    padding: 24px 16px;
+    padding: 16px 16px 0;
   }
   .note-editor-topbar {
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 12px;
-    margin-bottom: 16px;
+    margin-bottom: 12px;
     flex-wrap: wrap;
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    background: var(--bg-primary, #fff);
+    padding-top: 4px;
+    padding-bottom: 4px;
   }
   .note-editor-topbar .btn { flex-shrink: 0; }
   .note-editor-title {
@@ -41,10 +47,15 @@
     display: flex;
     align-items: center;
     gap: 16px;
-    margin-bottom: 12px;
+    margin-bottom: 8px;
     flex-wrap: wrap;
     font-size: 0.85rem;
     color: var(--text-secondary, #718096);
+    position: sticky;
+    top: 50px;
+    z-index: 19;
+    background: var(--bg-primary, #fff);
+    padding-bottom: 4px;
   }
   .note-editor-meta .badge { font-weight: 500; }
   .autosave-indicator {
@@ -55,7 +66,7 @@
   .autosave-indicator.saving { color: #f59e0b; }
   .autosave-indicator.saved { color: #22c55e; }
 
-  /* ── Spacing & page-mode controls ── */
+  /* Spacing & page-mode controls*/
   .spacing-control, .pagemode-control {
     display: flex;
     align-items: center;
@@ -72,7 +83,108 @@
     font-size: 0.8rem;
   }
 
-  /* ── Paged mode — only adds break lines + page labels ── */
+  /* Editor body: outline panel + editor */
+  .note-editor-body {
+    display: flex;
+  }
+
+  /* Outline panel */
+  .note-outline-panel {
+    width: 200px;
+    flex-shrink: 0;
+    border-right: 1px solid var(--border-color, #e2e8f0);
+    overflow-y: auto;
+    padding: 8px 0;
+    transition: width 0.2s ease, opacity 0.2s ease;
+    position: sticky;
+    top: 90px;
+    align-self: flex-start;
+    max-height: calc(100vh - 100px);
+  }
+  .note-outline-panel.collapsed {
+    width: 0;
+    padding: 0;
+    border-right: none;
+    overflow: hidden;
+    opacity: 0;
+    pointer-events: none;
+  }
+  .note-outline-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 12px 8px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-secondary, #718096);
+    border-bottom: 1px solid var(--border-color, #e2e8f0);
+    margin-bottom: 4px;
+  }
+  .note-outline-close {
+    background: none;
+    border: none;
+    color: var(--text-secondary, #718096);
+    cursor: pointer;
+    font-size: 1rem;
+    padding: 0 2px;
+    line-height: 1;
+  }
+  .note-outline-close:hover { color: var(--text-primary, #1a202c); }
+  .note-outline-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  .note-outline-item {
+    padding: 5px 12px;
+    font-size: 0.78rem;
+    color: var(--text-secondary, #718096);
+    cursor: pointer;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    border-left: 2px solid transparent;
+    transition: background 0.15s, color 0.15s;
+  }
+  .note-outline-item:hover {
+    background: var(--hover-bg, rgba(91, 115, 232, 0.08));
+    color: var(--text-primary, #1a202c);
+    border-left-color: var(--accent, #5B73E8);
+  }
+  .note-outline-item--h1 { padding-left: 12px; font-weight: 600; }
+  .note-outline-item--h2 { padding-left: 24px; }
+  .note-outline-item--h3 { padding-left: 36px; font-size: 0.72rem; }
+  .note-outline-empty {
+    padding: 12px;
+    font-size: 0.78rem;
+    color: var(--text-muted, #a0aec0);
+    font-style: italic;
+  }
+  .note-outline-toggle {
+    background: none;
+    border: 1px solid var(--border-color, #e2e8f0);
+    border-radius: 4px;
+    color: var(--text-secondary, #718096);
+    cursor: pointer;
+    font-size: 0.8rem;
+    padding: 2px 8px;
+    line-height: 1.3;
+    white-space: nowrap;
+  }
+  .note-outline-toggle:hover {
+    background: var(--hover-bg, rgba(91, 115, 232, 0.08));
+    color: var(--text-primary, #1a202c);
+  }
+
+  /* Editor area */
+  .note-editor-main {
+    flex: 1;
+    min-width: 0;
+  }
+
+  /* Paged mode and labels */
   .page-break-line {
     position: absolute;
     left: 0;
@@ -94,12 +206,20 @@
     border-radius: 3px;
   }
 
-  /* ── Quill editor ── */
+  /* Quill editor */
   .ql-editor {
-    min-height: 500px;
+    height: calc(100vh - 220px);
     font-size: 1rem;
     line-height: 1.7;
     padding: 24px 28px;
+  }
+  /* Paged mode: editor grows with content so page markers stay aligned */
+  .note-editor-main.paged-active .ql-editor {
+    height: auto;
+    min-height: calc(100vh - 220px);
+  }
+  .note-editor-main.paged-active .ql-container {
+    position: relative;
   }
   .ql-toolbar.ql-snow {
     border-radius: 8px 8px 0 0;
@@ -121,7 +241,11 @@
     right: 28px;
   }
 
-  /* ── Dark mode ── */
+  /* Dark mode*/
+  [data-theme="dark"] .note-editor-topbar,
+  [data-theme="dark"] .note-editor-meta {
+    background: var(--bg-primary, #13141f);
+  }
   [data-theme="dark"] .note-editor-title {
     color: var(--text-primary, #e2e8f0);
   }
@@ -136,6 +260,24 @@
   }
   [data-theme="dark"] .page-number-label {
     background: var(--bg-primary, #1e1e2e);
+  }
+  [data-theme="dark"] .note-outline-panel {
+    border-right-color: var(--border-color, #3a3a4e);
+  }
+  [data-theme="dark"] .note-outline-header {
+    border-bottom-color: var(--border-color, #3a3a4e);
+  }
+  [data-theme="dark"] .note-outline-toggle {
+    border-color: var(--border-color, #3a3a4e);
+    color: var(--text-secondary, #a0aec0);
+  }
+  [data-theme="dark"] .note-outline-toggle:hover {
+    background: var(--hover-bg, rgba(91, 115, 232, 0.12));
+    color: var(--text-primary, #e2e8f0);
+  }
+  [data-theme="dark"] .note-outline-item:hover {
+    background: var(--hover-bg, rgba(91, 115, 232, 0.12));
+    color: var(--text-primary, #e2e8f0);
   }
   [data-theme="dark"] .ql-toolbar.ql-snow {
     background: var(--bg-secondary, #2a2a3e);
@@ -185,7 +327,7 @@
 {% block content %}
 <div class="note-editor-page" id="notesPage">
 
-  <!-- ══ Top bar: Back / Title / Save ══ -->
+  <!-- Top bar: Back / Title / Save -->
   <div class="note-editor-topbar">
     <a href="{% url 'notes' %}" class="btn btn-light btn-sm">&#8592; Back to Notes</a>
     <input
@@ -212,8 +354,9 @@
     </div>
   </div>
 
-  <!-- ══ Meta info ══ -->
+  <!-- Meta info-->
   <div class="note-editor-meta">
+    <button class="note-outline-toggle" id="outlineToggleBtn" title="Toggle outline">&#9776; Outline</button>
     <span class="badge bg-light text-dark">{{ note.get_category_display }}</span>
     {% if note.event %}
       <span>&#128197; {{ note.event.title }}</span>
@@ -241,12 +384,28 @@
     <div class="nt-word-count" id="wordCount" style="margin-left:auto;">0 words</div>
   </div>
 
-  <!-- ══ Quill Editor ══ -->
-  <div id="quill-editor"></div>
+  <!-- Body: Outline + Editor -->
+  <div class="note-editor-body">
+
+    <div class="note-outline-panel collapsed" id="outlinePanel">
+      <div class="note-outline-header">
+        <span>Outline</span>
+        <button class="note-outline-close" id="outlineCloseBtn" title="Close outline">&times;</button>
+      </div>
+      <ul class="note-outline-list" id="outlineList">
+        <li class="note-outline-empty">No headings yet</li>
+      </ul>
+    </div>
+
+    <!-- Scrollable editor -->
+    <div class="note-editor-main" id="editorMain">
+      <div id="quill-editor"></div>
+    </div>
+  </div>
 
 </div>
 
-<!-- ══ Focus Mode Overlay ══ -->
+<!-- Focus Mode Overlay -->
 <div class="nt-focus-overlay" id="focusOverlay" style="display:none">
   <div class="nt-focus-bar">
     <span class="nt-focus-bar-label">&#127919; Focus Mode Active</span>
@@ -255,7 +414,7 @@
   </div>
 </div>
 
-<!-- ══ Inactivity Warning Overlay ══ -->
+<!-- Inactivity Warning Overlay -->
 <div class="nt-warn-overlay" id="warnOverlay" style="display:none">
   <div class="nt-warn-card">
     <div class="nt-warn-icon">&#9888;&#65039;</div>
@@ -265,7 +424,7 @@
   </div>
 </div>
 
-<!-- ══ XP Gain Toast ══ -->
+<!-- XP Gain Toast -->
 <div class="nt-xp-toast" id="xpToast" style="display:none">
   <span class="nt-xp-toast-text" id="xpToastText">+25 XP</span>
 </div>
@@ -284,7 +443,7 @@
 <script src="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.js"></script>
 <script>
 (function() {
-  /* ── Quill setup ── */
+  /* Quill setup */
   const quill = new Quill('#quill-editor', {
     theme: 'snow',
     placeholder: 'Start writing your note...',
@@ -305,13 +464,13 @@
     },
   });
 
-  /* ── Load existing content ── */
+  /* Load existing content */
   const hiddenInput = document.getElementById('id_content');
   if (hiddenInput.value) {
     quill.root.innerHTML = hiddenInput.value;
   }
 
-  /* ── Word count ── */
+  /* Word count */
   function updateWordCount() {
     const text = quill.getText().trim();
     const words = text ? text.split(/\s+/).length : 0;
@@ -320,21 +479,76 @@
   quill.on('text-change', updateWordCount);
   updateWordCount();
 
-  /* ── Line spacing control ── */
+  /* Outline panel */
+  const outlinePanel = document.getElementById('outlinePanel');
+  const outlineList = document.getElementById('outlineList');
+  const outlineToggleBtn = document.getElementById('outlineToggleBtn');
+  const outlineCloseBtn = document.getElementById('outlineCloseBtn');
+  const editorMain = document.getElementById('editorMain');
+
+  function updateOutline() {
+    var headings = quill.root.querySelectorAll('h1, h2, h3');
+    outlineList.innerHTML = '';
+
+    if (headings.length === 0) {
+      var empty = document.createElement('li');
+      empty.className = 'note-outline-empty';
+      empty.textContent = 'No headings yet';
+      outlineList.appendChild(empty);
+      return;
+    }
+
+    headings.forEach(function(heading) {
+      var text = heading.textContent.trim();
+      if (!text) return;
+      var li = document.createElement('li');
+      var tag = heading.tagName.toLowerCase();
+      li.className = 'note-outline-item note-outline-item--' + tag;
+      li.textContent = text;
+      li.title = text;
+      li.addEventListener('click', function() {
+        heading.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      });
+      outlineList.appendChild(li);
+    });
+
+    /* If all headings were empty text */
+    if (outlineList.children.length === 0) {
+      var empty = document.createElement('li');
+      empty.className = 'note-outline-empty';
+      empty.textContent = 'No headings yet';
+      outlineList.appendChild(empty);
+    }
+  }
+
+  outlineToggleBtn.addEventListener('click', function() {
+    outlinePanel.classList.toggle('collapsed');
+  });
+
+  outlineCloseBtn.addEventListener('click', function() {
+    outlinePanel.classList.add('collapsed');
+  });
+
+  quill.on('text-change', updateOutline);
+  updateOutline();
+
+  /* Line spacing control */
   const spacingSelect = document.getElementById('lineSpacing');
   spacingSelect.addEventListener('change', function() {
     quill.root.style.lineHeight = this.value;
     if (pageModeActive) requestAnimationFrame(paginateContent);
   });
 
-  /* ── Page mode ── */
+  /* Page mode */
   const pageModeSelect = document.getElementById('pageMode');
   const qlContainer = document.querySelector('.ql-container');
+  const editorMainEl = document.getElementById('editorMain');
   let pageModeActive = '{{ note.page_mode }}' === 'paged';
   let lastSavedPageMode = '{{ note.page_mode }}';
 
-  /* Page height = editor visible height per "page" (px).
-     Uses the editor's own padding & line-height — nothing changes visually. */
+  /* Apply class on load so CSS switches editor height mode */
+  if (pageModeActive) editorMainEl.classList.add('paged-active');
+
   const PAGE_HEIGHT = 1056;
 
   function clearPageMarkers() {
@@ -345,46 +559,47 @@
     clearPageMarkers();
     if (!pageModeActive) return;
 
-    /* ql-container must be position:relative for overlays */
     qlContainer.style.position = 'relative';
 
     var contentHeight = quill.root.scrollHeight;
     var totalPages = Math.max(1, Math.ceil(contentHeight / PAGE_HEIGHT));
 
     for (var i = 1; i < totalPages; i++) {
-      /* Dashed break line */
       var line = document.createElement('div');
       line.className = 'page-break-line';
       line.style.top = (i * PAGE_HEIGHT) + 'px';
       qlContainer.appendChild(line);
     }
 
-    /* Page number labels — placed just above each break (and at bottom of last page) */
     for (var i = 0; i < totalPages; i++) {
       var label = document.createElement('div');
       label.className = 'page-number-label';
       label.textContent = (i + 1) + ' / ' + totalPages;
-      label.style.top = ((i + 1) * PAGE_HEIGHT - 22) + 'px';
+      var labelTop = (i + 1) * PAGE_HEIGHT - 22;
+      /* Last page may be shorter — cap label at actual content bottom */
+      if (i === totalPages - 1 && labelTop > contentHeight - 22) {
+        labelTop = contentHeight - 22;
+      }
+      label.style.top = labelTop + 'px';
       qlContainer.appendChild(label);
     }
   }
 
   pageModeSelect.addEventListener('change', function() {
     pageModeActive = this.value === 'paged';
+    editorMainEl.classList.toggle('paged-active', pageModeActive);
     requestAnimationFrame(paginateContent);
   });
 
-  /* Initialize on load */
   if (pageModeActive) {
     requestAnimationFrame(paginateContent);
   }
 
-  /* Re-paginate when content changes */
   quill.on('text-change', function() {
     if (pageModeActive) requestAnimationFrame(paginateContent);
   });
 
-  /* ── Sync to hidden input on manual save ── */
+  /* Sync to hidden input on manual save */
   const editForm = document.getElementById('noteEditForm');
   editForm.addEventListener('submit', function() {
     hiddenInput.value = quill.root.innerHTML;
@@ -392,7 +607,7 @@
     document.getElementById('hiddenPageMode').value = pageModeSelect.value;
   });
 
-  /* ── Autosave ── */
+  /* Autosave */
   const autosaveUrl = '{% url "note_autosave" note.id %}';
   const csrfToken = '{{ csrf_token }}';
   const statusEl = document.getElementById('autosaveStatus');
@@ -452,7 +667,7 @@
   document.getElementById('noteTitleInput').addEventListener('input', scheduleAutosave);
   pageModeSelect.addEventListener('change', scheduleAutosave);
 
-  /* ── Save on page leave ── */
+  /* Save on page leave*/
   window.addEventListener('beforeunload', function() {
     const currentContent = quill.root.innerHTML;
     const currentTitle = document.getElementById('noteTitleInput').value;

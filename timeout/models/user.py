@@ -8,10 +8,12 @@ class User(AbstractUser):
     """Custom User model for the Timeout application."""
 
     class ManagementStyle(models.TextChoices):
+        """Class that shows if the user likes to work at night or during daytime"""
         EARLY_BIRD = 'early_bird', 'Early Bird'
         NIGHT_OWL = 'night_owl', 'Night Owl'
 
     class Status(models.TextChoices):
+        """Class that determines the current status of the user"""
         FOCUS    = 'focus',    '🎯 Focus Mode'
         SOCIAL   = 'social',   '💬 Social'
         INACTIVE = 'inactive', '😶 Inactive'
@@ -45,11 +47,13 @@ class User(AbstractUser):
 
     # Appearance / Accessibility
     class Theme(models.TextChoices):
+        """Class that shows the theme options"""
         LIGHT  = 'light',  'Light'
         DARK   = 'dark',   'Dark'
         SYSTEM = 'system', 'System Default'
 
     class ColorblindMode(models.TextChoices):
+        """Class that shows the different modes for the different types of color blindnesses"""
         NONE         = 'none',         'None'
         PROTANOPIA   = 'protanopia',   'Protanopia (Red-blind)'
         DEUTERANOPIA = 'deuteranopia', 'Deuteranopia (Green-blind)'
@@ -89,6 +93,10 @@ class User(AbstractUser):
     longest_note_streak = models.PositiveIntegerField(default=0)
     last_note_date = models.DateField(null=True, blank=True)
 
+    # Moderation
+    is_banned = models.BooleanField(default=False)
+    ban_reason = models.CharField(max_length=300, blank=True)
+
     # Social
     following = models.ManyToManyField(
         'self',
@@ -98,9 +106,11 @@ class User(AbstractUser):
     )
 
     def __str__(self):
+        """Return the username as the string representation."""
         return self.username
 
     def get_full_name(self):
+        """Returns the full name of the User"""
         parts = [self.first_name, self.middle_name, self.last_name]
         return ' '.join(part for part in parts if part)
 
@@ -130,8 +140,10 @@ class User(AbstractUser):
 
     @property
     def follower_count(self):
+        """Return the number of users following this user."""
         return self.followers.count()
 
     @property
     def following_count(self):
+        """Return the number of users this user is following."""
         return self.following.count()

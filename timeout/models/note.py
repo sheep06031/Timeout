@@ -7,6 +7,7 @@ class Note(models.Model):
     """Personal note with optional event link and category."""
 
     class Category(models.TextChoices):
+        """Available note category types for organizing user notes."""
         LECTURE = 'lecture', 'Lecture'
         TODO = 'todo', 'To-Do'
         STUDY_PLAN = 'study_plan', 'Study Plan'
@@ -14,6 +15,7 @@ class Note(models.Model):
         OTHER = 'other', 'Other'
 
     class PageMode(models.TextChoices):
+        """Editor layout options: pageless (continuous) or paged (document-style)."""
         PAGELESS = 'pageless', 'Pageless'
         PAGED = 'paged', 'Paged'
 
@@ -63,6 +65,7 @@ class Note(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
+        """Order pinned notes first, then by creation date. Indexes optimize owner, pin, and category queries."""
         ordering = ['-is_pinned', '-created_at']
         indexes = [
             models.Index(
@@ -76,6 +79,7 @@ class Note(models.Model):
         ]
 
     def __str__(self):
+        """Return a string representation with owner and first 50 chars of title."""
         return f'{self.owner.username}: {self.title[:50]}'
 
     def get_color(self):

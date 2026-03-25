@@ -15,6 +15,7 @@ class TimeoutAccountAdapter(DefaultAccountAdapter):
     """
 
     def get_signup_redirect_url(self, request):
+        """Returns the url after signup"""
         request.session['needs_profile_completion'] = True
         return resolve_url('complete_profile')
 

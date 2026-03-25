@@ -1,13 +1,11 @@
 import re
 import uuid
-
 from django import forms
 from django.contrib.auth import get_user_model
 from django.contrib.auth.forms import AuthenticationForm
 from django.core.exceptions import ValidationError
 
 User = get_user_model()
-
 
 def validate_password_strength(password):
     """Enforce minimum 8 chars, 1 uppercase, 1 lowercase, 1 digit, 1 symbol."""
@@ -57,6 +55,7 @@ class SignupForm(forms.ModelForm):
     )
 
     class Meta:
+        """Defines the model and fields exposed by this form."""
         model = User
         fields = ['email']
         widgets = {
@@ -67,17 +66,20 @@ class SignupForm(forms.ModelForm):
         }
 
     def clean_email(self):
+        """Rejects the email if an account with it already exists."""
         email = self.cleaned_data.get('email')
         if User.objects.filter(email=email).exists():
             raise ValidationError('An account with this email already exists.')
         return email
 
     def clean_password1(self):
+        """Runs strength validation on the password."""
         password = self.cleaned_data.get('password1')
         validate_password_strength(password)
         return password
 
     def clean(self):
+        """Checks passwords match and aren't too similar to the email."""
         cleaned_data = super().clean()
         password1 = cleaned_data.get('password1')
         password2 = cleaned_data.get('password2')
@@ -94,10 +96,9 @@ class SignupForm(forms.ModelForm):
         return cleaned_data
 
     def save(self, commit=True):
+        """Saves the user with a hashed password and a temporary username."""
         user = super().save(commit=False)
         user.set_password(self.cleaned_data['password1'])
-        # Assign a temporary unique username so the DB constraint is satisfied.
-        # The real username is chosen on the Complete Profile page.
         user.username = f'user_{uuid.uuid4().hex[:12]}'
         if commit:
             user.save()
@@ -105,7 +106,6 @@ class SignupForm(forms.ModelForm):
 
 
 # Universities sourced from the seed command (seed.py).
-# Keep this list in sync with UNIVERSITIES in management/commands/seed.py.
 UNIVERSITY_CHOICES = [
     ('', 'Select your university'),
     ('Durham University', 'Durham University'),
@@ -159,6 +159,7 @@ class CompleteProfileForm(forms.ModelForm):
     )
 
     class Meta:
+        """Defines the model and fields exposed by this form."""
         model = User
         # 'university' is intentionally excluded, resolved in clean() / save()
         fields = ['username', 'first_name', 'last_name', 'year_of_study']
@@ -192,8 +193,8 @@ class CompleteProfileForm(forms.ModelForm):
         }
 
     def __init__(self, *args, **kwargs):
+        """Pre-populates university fields if the instance already has one set."""
         super().__init__(*args, **kwargs)
-        # Pre-populate the university dropdowns when editing an existing profile
         if self.instance and self.instance.pk and self.instance.university:
             uni = self.instance.university
             if uni in _KNOWN_UNIVERSITIES:
@@ -203,6 +204,7 @@ class CompleteProfileForm(forms.ModelForm):
                 self.initial.setdefault('university_other', uni)
 
     def clean_username(self):
+        """Validates the username is present and not already taken."""
         username = self.cleaned_data.get('username', '').strip()
         if not username:
             raise ValidationError('A username is required.')
@@ -214,6 +216,7 @@ class CompleteProfileForm(forms.ModelForm):
         return username
 
     def clean(self):
+        """Resolves the final university value from the dropdown or free-text field."""
         cleaned_data = super().clean()
         choice = cleaned_data.get('university_choice', '')
 
@@ -231,6 +234,7 @@ class CompleteProfileForm(forms.ModelForm):
         return cleaned_data
 
     def save(self, commit=True):
+        """Writes the resolved university value before saving the instance."""
         instance = super().save(commit=False)
         instance.university = self.cleaned_data.get('university', '')
         if commit:
@@ -239,13 +243,13 @@ class CompleteProfileForm(forms.ModelForm):
 
 
 class LoginForm(AuthenticationForm):
-    """Login form styled with Bootstrap classes. Authenticates via email."""
+    """Login form styled with Bootstrap classes. Authenticates via email or username."""
 
-    username = forms.EmailField(
-        label='Email',
-        widget=forms.EmailInput(attrs={
+    username = forms.CharField(
+        label='Email or Username',
+        widget=forms.TextInput(attrs={
             'class': 'form-control',
-            'placeholder': 'your@email.com',
+            'placeholder': 'Email or username',
             'autofocus': True,
         }),
     )
@@ -257,17 +261,18 @@ class LoginForm(AuthenticationForm):
     )
 
     def clean(self):
+        identifier = self.cleaned_data.get('username')
+        """Looks up the user by email and swaps it for their username before auth."""
         email = self.cleaned_data.get('username')
         password = self.cleaned_data.get('password')
 
-        if email and password:
-            # Look up the user by email, then authenticate with their username
+        if identifier and password:
+            # Try email first, then fall back to username
             try:
-                user = User.objects.get(email=email)
+                user = User.objects.get(email=identifier)
+                self.cleaned_data['username'] = user.username
             except User.DoesNotExist:
-                raise ValidationError(
-                    'Please enter a correct email and password.'
-                )
-            self.cleaned_data['username'] = user.username
+                # Not an email — treat as username directly, let super() handle it
+                pass
 
         return super().clean()

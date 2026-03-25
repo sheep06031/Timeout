@@ -1,172 +1,189 @@
-"""
-Tests for AIService.get_dashboard_briefing and _call_openai_for_briefing.
-
-Covers: unauthenticated user, cache hit, no API key, successful OpenAI call,
-OpenAI exception handling, stat gathering logic, and most_productive_day branch.
-
-Place in: timeout/tests/services/test_ai_service.py
-"""
-
-from datetime import datetime, timedelta
-from unittest.mock import patch, MagicMock
+from datetime import timedelta
+from unittest.mock import MagicMock, patch
 
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AnonymousUser
-from django.core.cache import cache
 from django.test import TestCase, override_settings
 from django.utils import timezone
 
 from timeout.models import Event
-from timeout.services.ai_service import AIService, _call_openai_for_briefing
+from timeout.services.ai_service import AIService
 
 User = get_user_model()
 
-MOCK_NOW = timezone.make_aware(datetime(2025, 4, 10, 12, 0, 0))
+BRIEFING_TEXT = 'Great week! Keep it up.'
 
 
-class AIServiceGetBriefingTests(TestCase):
-    """Tests for AIService.get_dashboard_briefing."""
+def make_mock_openai(content=BRIEFING_TEXT):
+    mock_client = MagicMock()
+    mock_resp = MagicMock()
+    mock_resp.choices[0].message.content = content
+    mock_client.chat.completions.create.return_value = mock_resp
+    return MagicMock(return_value=mock_client)
+
+
+def make_event(user, event_type, hours_ago=3, duration_hours=2, is_completed=False, end_in_past=False):
+    now = timezone.now()
+    start = now - timedelta(hours=hours_ago)
+    end = start + timedelta(hours=duration_hours)
+    if end_in_past:
+        end = now - timedelta(hours=1)
+    return Event.objects.create(
+        creator=user,
+        title='Test Event',
+        event_type=event_type,
+        start_datetime=start,
+        end_datetime=end,
+        is_completed=is_completed,
+        allow_conflict=True,
+    )
+
+
+@override_settings(OPENAI_API_KEY='test-key')
+class AIServiceTests(TestCase):
 
     def setUp(self):
-        self.user = User.objects.create_user(username="aiuser", password="pass1234")
-        cache.clear()
+        self.user = User.objects.create_user(username='testuser', password='pass1234')
 
-    def tearDown(self):
-        cache.clear()
-
-    # -- Unauthenticated user returns None ---------------------------
+    # unauthenticated
     def test_unauthenticated_returns_none(self):
         result = AIService.get_dashboard_briefing(AnonymousUser())
         self.assertIsNone(result)
 
-    # -- Cache hit returns cached value without calling OpenAI -------
-    @override_settings(OPENAI_API_KEY="test-key")
-    def test_cache_hit_returns_cached(self):
-        cache.set(f'ai_briefing_{self.user.id}', "Cached briefing", 300)
-        result = AIService.get_dashboard_briefing(self.user)
-        self.assertEqual(result, "Cached briefing")
+    # cache hit
+    @patch('timeout.services.ai_service.cache')
+    def test_returns_cached_value_without_openai_call(self, mock_cache):
+        mock_cache.get.return_value = 'cached briefing'
+        with patch('openai.OpenAI') as mock_openai:
+            result = AIService.get_dashboard_briefing(self.user)
+        self.assertEqual(result, 'cached briefing')
+        mock_openai.assert_not_called()
 
-    # -- Successful OpenAI call --------------------------------------
-    @patch("timeout.services.ai_service.timezone.now", return_value=MOCK_NOW)
-    @patch("timeout.services.ai_service._call_openai_for_briefing")
-    def test_successful_briefing(self, mock_openai, mock_now):
-        mock_openai.return_value = "Great week! You studied 5 hours."
-        result = AIService.get_dashboard_briefing(self.user)
-        self.assertEqual(result, "Great week! You studied 5 hours.")
-        mock_openai.assert_called_once()
-        cached = cache.get(f'ai_briefing_{self.user.id}')
-        self.assertEqual(cached, "Great week! You studied 5 hours.")
+    # cache miss → calls openai and caches
+    @patch('timeout.services.ai_service.cache')
+    def test_caches_result_after_openai_call(self, mock_cache):
+        mock_cache.get.return_value = None
+        with patch('openai.OpenAI', make_mock_openai()):
+            AIService.get_dashboard_briefing(self.user)
+        mock_cache.set.assert_called_once()
+        args = mock_cache.set.call_args[0]
+        self.assertEqual(args[1], BRIEFING_TEXT)
+        self.assertEqual(args[2], AIService.CACHE_TIMEOUT)
 
-    # -- OpenAI returns None → method returns None -------------------
-    @patch("timeout.services.ai_service.timezone.now", return_value=MOCK_NOW)
-    @patch("timeout.services.ai_service._call_openai_for_briefing", return_value=None)
-    def test_openai_returns_none(self, mock_openai, mock_now):
-        result = AIService.get_dashboard_briefing(self.user)
+    @patch('timeout.services.ai_service.cache')
+    def test_returns_briefing_text(self, mock_cache):
+        mock_cache.get.return_value = None
+        with patch('openai.OpenAI', make_mock_openai()):
+            result = AIService.get_dashboard_briefing(self.user)
+        self.assertEqual(result, BRIEFING_TEXT)
+
+    # no api key
+    @override_settings(OPENAI_API_KEY='')
+    @patch('timeout.services.ai_service.cache')
+    def test_no_api_key_returns_none(self, mock_cache):
+        mock_cache.get.return_value = None
+        with self.assertLogs('timeout.services.ai_service', level='WARNING') as cm:
+            result = AIService.get_dashboard_briefing(self.user)
         self.assertIsNone(result)
+        self.assertTrue(any('OPENAI_API_KEY not configured' in msg for msg in cm.output))
 
-    # -- Stats gathering with study events ---------------------------
-    @patch("timeout.services.ai_service._call_openai_for_briefing")
-    def test_stats_include_study_hours(self, mock_openai):
-        mock_openai.return_value = "You studied hard!"
-        now = timezone.now()
-        Event.objects.create(
-            creator=self.user, title="Study",
-            event_type=Event.EventType.STUDY_SESSION,
-            start_datetime=now - timedelta(days=1),
-            end_datetime=now - timedelta(days=1) + timedelta(hours=3),
-        )
-        result = AIService.get_dashboard_briefing(self.user)
-        self.assertIsNotNone(result)
-        call_args = mock_openai.call_args[0][0]
-        self.assertGreater(call_args['total_study_hours'], 0)
-
-    # -- Stats with missed deadlines and completed events ------------
-    @patch("timeout.services.ai_service._call_openai_for_briefing")
-    def test_stats_count_missed_deadlines_and_completed(self, mock_openai):
-        mock_openai.return_value = "Keep going!"
-        now = timezone.now()
-        Event.objects.create(
-            creator=self.user, title="Missed DL",
-            event_type=Event.EventType.DEADLINE,
-            start_datetime=now - timedelta(days=2),
-            end_datetime=now - timedelta(hours=1),
-            is_completed=False,
-        )
-        Event.objects.create(
-            creator=self.user, title="Completed",
-            event_type=Event.EventType.DEADLINE,
-            start_datetime=now - timedelta(days=1),
-            end_datetime=now + timedelta(days=1),
-            is_completed=True,
-        )
-        AIService.get_dashboard_briefing(self.user)
-        call_args = mock_openai.call_args[0][0]
-        self.assertGreaterEqual(call_args['missed_deadlines'], 1)
-        self.assertGreaterEqual(call_args['completed_tasks'], 1)
-
-    # -- No completed events → most_productive_day is 'None yet' -----
-    @patch("timeout.services.ai_service._call_openai_for_briefing")
-    def test_no_completed_events_productive_day_none(self, mock_openai):
-        mock_openai.return_value = "Keep it up!"
-        AIService.get_dashboard_briefing(self.user)
-        call_args = mock_openai.call_args[0][0]
-        self.assertEqual(call_args['most_productive_day'], 'None yet')
-
-    # -- Has completed events → most_productive_day is a day name ----
-    @patch("timeout.services.ai_service._call_openai_for_briefing")
-    def test_most_productive_day_with_completed_events(self, mock_openai):
-        mock_openai.return_value = "Nice work!"
-        now = timezone.now()
-        for i in range(2):
-            Event.objects.create(
-                creator=self.user, title=f"Task {i}",
-                event_type=Event.EventType.DEADLINE,
-                start_datetime=now - timedelta(days=1, hours=i),
-                end_datetime=now - timedelta(days=1, hours=i) + timedelta(hours=1),
-                is_completed=True,
-            )
-        AIService.get_dashboard_briefing(self.user)
-        call_args = mock_openai.call_args[0][0]
-        self.assertNotEqual(call_args['most_productive_day'], 'None yet')
-        valid_days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
-        self.assertIn(call_args['most_productive_day'], valid_days)
-
-
-class CallOpenAIForBriefingTests(TestCase):
-    """Tests for the _call_openai_for_briefing helper."""
-
-    # -- No API key returns None ------------------------------------
-    @override_settings(OPENAI_API_KEY=None)
-    def test_no_api_key_returns_none(self):
-        result = _call_openai_for_briefing({"total_study_hours": 5})
+    # openai exception
+    @patch('timeout.services.ai_service.cache')
+    def test_openai_exception_returns_none(self, mock_cache):
+        mock_cache.get.return_value = None
+        mock_openai = MagicMock(side_effect=Exception('API error'))
+        with patch('openai.OpenAI', mock_openai):
+            with self.assertLogs('timeout.services.ai_service', level='WARNING') as cm:
+                result = AIService.get_dashboard_briefing(self.user)
         self.assertIsNone(result)
+        self.assertTrue(any('OpenAI briefing call failed' in msg for msg in cm.output))
 
-    @override_settings(OPENAI_API_KEY="")
-    def test_empty_api_key_returns_none(self):
-        result = _call_openai_for_briefing({"total_study_hours": 5})
-        self.assertIsNone(result)
+    # stats: study hours
+    @patch('timeout.services.ai_service.cache')
+    def test_study_hours_passed_to_openai(self, mock_cache):
+        mock_cache.get.return_value = None
+        make_event(self.user, Event.EventType.STUDY_SESSION, hours_ago=3, duration_hours=2)
 
-    # -- Successful OpenAI call -------------------------------------
-    @override_settings(OPENAI_API_KEY="test-key-123")
-    @patch("openai.OpenAI")
-    def test_successful_call(self, mock_openai_cls):
+        captured = {}
+
+        def fake_create(**kwargs):
+            captured['prompt'] = kwargs['messages'][1]['content']
+            resp = MagicMock()
+            resp.choices[0].message.content = BRIEFING_TEXT
+            return resp
+
         mock_client = MagicMock()
-        mock_openai_cls.return_value = mock_client
-        mock_response = MagicMock()
-        mock_response.choices = [MagicMock()]
-        mock_response.choices[0].message.content = "  Great week!  "
-        mock_client.chat.completions.create.return_value = mock_response
+        mock_client.chat.completions.create.side_effect = fake_create
+        with patch('openai.OpenAI', MagicMock(return_value=mock_client)):
+            AIService.get_dashboard_briefing(self.user)
 
-        result = _call_openai_for_briefing({"total_study_hours": 10})
-        self.assertEqual(result, "Great week!")
+        self.assertIn('total_study_hours', captured['prompt'])
+        self.assertIn('2.0', captured['prompt'])
 
-    # -- OpenAI raises exception → returns None ---------------------
-    @override_settings(OPENAI_API_KEY="test-key-123")
-    @patch("openai.OpenAI")
-    def test_exception_returns_none(self, mock_openai_cls):
+    # stats: missed deadlines
+    @patch('timeout.services.ai_service.cache')
+    def test_missed_deadlines_counted(self, mock_cache):
+        mock_cache.get.return_value = None
+        # overdue incomplete deadline within past 7 days
+        make_event(
+            self.user, Event.EventType.DEADLINE,
+            hours_ago=5, duration_hours=1,
+            is_completed=False, end_in_past=True,
+        )
+
+        captured = {}
+
+        def fake_create(**kwargs):
+            captured['prompt'] = kwargs['messages'][1]['content']
+            resp = MagicMock()
+            resp.choices[0].message.content = BRIEFING_TEXT
+            return resp
+
         mock_client = MagicMock()
-        mock_openai_cls.return_value = mock_client
-        mock_client.chat.completions.create.side_effect = Exception("API down")
+        mock_client.chat.completions.create.side_effect = fake_create
+        with patch('openai.OpenAI', MagicMock(return_value=mock_client)):
+            AIService.get_dashboard_briefing(self.user)
 
-        result = _call_openai_for_briefing({"total_study_hours": 5})
-        self.assertIsNone(result)
+        self.assertIn('"missed_deadlines": 1', captured['prompt'])
+
+    # stats: most productive day
+    @patch('timeout.services.ai_service.cache')
+    def test_most_productive_day_in_stats(self, mock_cache):
+        mock_cache.get.return_value = None
+        make_event(self.user, Event.EventType.OTHER, hours_ago=2, is_completed=True)
+        make_event(self.user, Event.EventType.OTHER, hours_ago=4, is_completed=True)
+
+        captured = {}
+
+        def fake_create(**kwargs):
+            captured['prompt'] = kwargs['messages'][1]['content']
+            resp = MagicMock()
+            resp.choices[0].message.content = BRIEFING_TEXT
+            return resp
+
+        mock_client = MagicMock()
+        mock_client.chat.completions.create.side_effect = fake_create
+        with patch('openai.OpenAI', MagicMock(return_value=mock_client)):
+            AIService.get_dashboard_briefing(self.user)
+
+        self.assertIn('most_productive_day', captured['prompt'])
+
+    # stats: no completed events → 'None yet'
+    @patch('timeout.services.ai_service.cache')
+    def test_no_completed_events_gives_none_yet(self, mock_cache):
+        mock_cache.get.return_value = None
+
+        captured = {}
+
+        def fake_create(**kwargs):
+            captured['prompt'] = kwargs['messages'][1]['content']
+            resp = MagicMock()
+            resp.choices[0].message.content = BRIEFING_TEXT
+            return resp
+
+        mock_client = MagicMock()
+        mock_client.chat.completions.create.side_effect = fake_create
+        with patch('openai.OpenAI', MagicMock(return_value=mock_client)):
+            AIService.get_dashboard_briefing(self.user)
+
+        self.assertIn('None yet', captured['prompt'])
