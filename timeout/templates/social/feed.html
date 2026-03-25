@@ -74,24 +74,55 @@
           class="feed-tab {% if active_tab == 'bookmarks' %}active{% endif %}">
           Bookmarks
         </a>
+        {% if user.is_staff %}
+        <a href="?tab=review_flags"
+           class="feed-tab {% if active_tab == 'review_flags' %}active{% endif %}"
+           style="color:#dc3545;">
+           Review Flags
+        </a>
+        {% endif %}
       </div>
 
-      <!-- Posts -->
-      {% if posts %}
-        {% for post in posts %}
-          {% include 'social/_post_card.html' with post=post %}
-        {% endfor %}
+      <!-- Posts / Flags -->
+      {% if active_tab == 'review_flags' %}
+        {% if flags %}
+          {% for flag in flags %}
+            {% include 'social/_flag_review_card.html' with flag=flag %}
+          {% endfor %}
+        {% else %}
+          <div class="empty-state">
+            <div class="icon">✅</div>
+            No flagged posts to review.
+          </div>
+        {% endif %}
       {% else %}
-        <div class="empty-state">
-          <div class="icon">🌱</div>
-          {% if active_tab == 'following' %}
-            No posts yet, follow some people to see their posts here!
-          {% elif active_tab == 'bookmarks' %}
-            You haven't bookmarked any posts yet.
+        <div id="posts-container">
+          {% if posts %}
+            {% for post in posts %}
+              {% include 'social/_post_card.html' with post=post %}
+            {% endfor %}
           {% else %}
-            Nothing to discover yet. Check back soon!
+            <div class="empty-state">
+              <div class="icon">🌱</div>
+              {% if active_tab == 'following' %}
+                No posts yet, follow some people to see their posts here!
+              {% elif active_tab == 'bookmarks' %}
+                You haven't bookmarked any posts yet.
+              {% else %}
+                Nothing to discover yet. Check back soon!
+              {% endif %}
+            </div>
           {% endif %}
         </div>
+        {% if has_more %}
+        <div id="load-more-wrap" style="text-align:center;margin:1.5rem 0;">
+          <button id="load-more-btn"
+                  data-tab="{{ active_tab }}"
+                  data-cursor="{{ next_cursor }}">
+            Load more
+          </button>
+        </div>
+        {% endif %}
       {% endif %}
 
     </div>
@@ -132,4 +163,5 @@
 
 {% block extra_js %}
 <script src="{% static 'js/social.js' %}"></script>
+{% if user.is_staff %}<script src="{% static 'js/moderation.js' %}"></script>{% endif %}
 {% endblock %}

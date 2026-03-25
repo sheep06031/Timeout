@@ -8,4 +8,5 @@ urlpatterns = [
     path('conversation/start/<str:username>/', messaging.start_conversation, name='start_conversation'),
     path('conversation/<int:conversation_id>/send/', messaging.send_message, name='send_message'),
     path('conversation/<int:conversation_id>/poll/', messaging.poll_messages, name='poll_messages'),
+    path('message/<int:message_id>/delete/', messaging.delete_message, name='delete_message'),
 ]

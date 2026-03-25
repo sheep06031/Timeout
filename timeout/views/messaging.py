@@ -115,6 +115,17 @@ def send_message(request, conversation_id):
 
 
 @login_required
+@require_POST
+def delete_message(request, message_id):
+    """Permanently delete a message (staff only)."""
+    if not request.user.is_staff:
+        return JsonResponse({'error': 'Staff access required.'}, status=403)
+    message = get_object_or_404(Message, id=message_id)
+    message.delete()
+    return JsonResponse({'ok': True})
+
+
+@login_required
 def poll_messages(request, conversation_id):
     """Return messages newer than a given message ID for polling."""
     conv = get_object_or_404(

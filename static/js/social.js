@@ -312,6 +312,23 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
+    document.querySelectorAll('.btn-flag-post').forEach(button => {
+        button.addEventListener('click', function () {
+            const postId = this.dataset.postId;
+            const icon = this.querySelector('i');
+            const alreadyFlagged = icon.className.includes('flag-fill');
+            icon.className = alreadyFlagged ? 'bi bi-flag' : 'bi bi-flag-fill';
+            fetch(`/social/post/${postId}/flag/`, {
+                method: 'POST',
+                headers: { 'X-CSRFToken': getCookie('csrftoken') },
+            })
+            .then(r => r.json())
+            .catch(() => {
+                icon.className = alreadyFlagged ? 'bi bi-flag-fill' : 'bi bi-flag';
+            });
+        });
+    });
+
     document.querySelectorAll('.follow-btn').forEach(button => {
         button.addEventListener('click', function() {
             const username = this.dataset.username;
@@ -361,6 +378,33 @@ document.addEventListener('DOMContentLoaded', function() {
             postEl.style.boxShadow = "0 0 0 3px #5b73e8";
             setTimeout(() => postEl.style.boxShadow = "", 2500);
         }
+    }
+
+    // Load more posts
+    const loadMoreBtn = document.getElementById('load-more-btn');
+    if (loadMoreBtn) {
+        loadMoreBtn.addEventListener('click', function () {
+            const tab = this.dataset.tab;
+            const cursor = this.dataset.cursor;
+            this.textContent = 'Loading…';
+            this.disabled = true;
+            fetch(`/social/feed/more/?tab=${tab}&cursor=${cursor}`)
+                .then(r => r.json())
+                .then(data => {
+                    document.getElementById('posts-container').insertAdjacentHTML('beforeend', data.html);
+                    if (data.has_more) {
+                        this.dataset.cursor = data.next_cursor;
+                        this.textContent = 'Load more';
+                        this.disabled = false;
+                    } else {
+                        document.getElementById('load-more-wrap').remove();
+                    }
+                })
+                .catch(() => {
+                    this.textContent = 'Load more';
+                    this.disabled = false;
+                });
+        });
     }
 
     // FAB create-post modal

@@ -270,15 +270,24 @@ def subscribe_event(request, pk):
     original = get_object_or_404(Event, pk=pk, visibility=Event.Visibility.PUBLIC)
     if original.creator == request.user:
         return JsonResponse({'success': False, 'error': 'You own this event.'}, status=400)
-    already = Event.objects.filter(creator=request.user, title=original.title, start_datetime=original.start_datetime,
+    already = Event.objects.filter(
+        creator=request.user,
+        title=original.title,
+        start_datetime=original.start_datetime,
     ).exists()
     if already:
         return JsonResponse({'success': False, 'error': 'Already subscribed.'}, status=400)
-    Event.objects.create( creator=request.user,title=original.title,
-        event_type=original.event_type, start_datetime=original.start_datetime,
-        end_datetime=original.end_datetime, location=original.location,
-        description=original.description, visibility=Event.Visibility.PRIVATE,
-        is_all_day=original.is_all_day, recurrence=original.recurrence,
+    Event.objects.create(
+        creator=request.user,
+        title=original.title,
+        event_type=original.event_type,
+        start_datetime=original.start_datetime,
+        end_datetime=original.end_datetime,
+        location=original.location,
+        description=original.description,
+        visibility=Event.Visibility.PRIVATE,
+        is_all_day=original.is_all_day,
+        recurrence=original.recurrence,
         allow_conflict=True,
     )
     return JsonResponse({'success': True})
@@ -288,15 +297,18 @@ def _parse_event_datetimes(request, is_all_day):
     """Parse and validate start/end datetimes from POST data."""
     start_datetime = request.POST.get("start_datetime")
     end_datetime = request.POST.get("end_datetime")
+
     if is_all_day:
         if not start_datetime:
             messages.error(request, "Please select a date for an all-day event.")
             return None, None
         date_part = start_datetime.split("T")[0]
         return f"{date_part}T00:00", f"{date_part}T23:59"
+
     if not start_datetime or not end_datetime:
         messages.error(request, "Start and end times are required.")
         return None, None
+
     return start_datetime, end_datetime
 
 
@@ -305,25 +317,35 @@ def _parse_event_datetimes(request, is_all_day):
 def event_create(request):
     """Create a new calendar event from form POST data."""
     is_all_day = request.POST.get("is_all_day") == "on"
+    allow_conflict = request.POST.get("allow_conflict") == "on"
+
     start_datetime, end_datetime = _parse_event_datetimes(request, is_all_day)
     if start_datetime is None:
         return redirect("calendar")
+
     event = Event(
         creator=request.user,
         title=request.POST["title"],
         event_type=request.POST.get("event_type", "other"),
-        start_datetime=start_datetime,
-        end_datetime=end_datetime,
+        start_datetime=timezone.make_aware(
+            datetime.fromisoformat(start_datetime)
+        ),
+        end_datetime=timezone.make_aware(
+            datetime.fromisoformat(end_datetime)
+        ),
         location=request.POST.get("location", ""),
         description=request.POST.get("description", ""),
+        allow_conflict=allow_conflict,
         visibility=request.POST.get("visibility", "public"),
         is_all_day=is_all_day,
         recurrence=request.POST.get("recurrence", "none"),
     )
+
     try:
         event.full_clean()
         event.save()
         messages.success(request, f'"{event.title}" added to calendar.')
     except ValidationError as e:
         messages.error(request, '; '.join(e.messages))
+
     return redirect("calendar")

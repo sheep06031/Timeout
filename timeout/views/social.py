@@ -1,8 +1,8 @@
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.db.models import Q
 from django.http import JsonResponse, HttpResponseForbidden
 from django.shortcuts import render, redirect, get_object_or_404
+from django.template.loader import render_to_string
 from django.utils import timezone
 from django.views.decorators.http import require_POST
 
@@ -12,6 +12,23 @@ from timeout.models.notification import Notification
 from timeout.services import FeedService
 from timeout.views.profile import get_profile_event
 
+
+def _get_conversation_sidebar(user):
+    convs = Conversation.objects.filter(
+        participants=user
+    ).prefetch_related('participants', 'messages').order_by('-updated_at')[:5]
+    return [
+        {'conv': c, 'other': c.get_other_participant(user), 'last': c.get_last_message()}
+        for c in convs
+    ]
+
+
+def _get_feed_posts(tab, user, cursor=None):
+    if tab == 'discover':
+        return FeedService.get_discover_feed(user, cursor=cursor)
+    elif tab == 'bookmarks':
+        return FeedService.get_bookmarked_posts(user, cursor=cursor)
+    return FeedService.get_following_feed(user, cursor=cursor)
 
 
 def _build_feed_context(user, posts, tab):
@@ -36,16 +53,83 @@ def _build_feed_context(user, posts, tab):
 @login_required
 def feed(request):
     """Display feed with posts from following/discover/bookmarks tabs."""
+    from timeout.services.feed_service import PAGE_SIZE
+
     tab = request.GET.get('tab', 'following')
-    if tab == 'discover':
-        posts = FeedService.get_discover_feed(request.user)
-    elif tab == 'bookmarks':
-        posts = FeedService.get_bookmarked_posts(request.user)
+    posts, flags = [], []
+
+    if tab == 'review_flags' and request.user.is_staff:
+        flags = PostFlag.objects.select_related(
+            'post',
+            'post__author',
+            'reporter',
+        ).order_by('-created_at')
     else:
-        tab = 'following'
-        posts = FeedService.get_following_feed(request.user)
-    context = _build_feed_context(request.user, posts, tab)
+        if tab == 'discover':
+            posts = FeedService.get_discover_feed(request.user)
+        elif tab == 'bookmarks':
+            posts = FeedService.get_bookmarked_posts(request.user)
+        else:
+            tab = 'following'
+            posts = FeedService.get_following_feed(request.user)
+
+    has_more = len(posts) > PAGE_SIZE
+    posts = posts[:PAGE_SIZE]
+
+    context = {
+        'posts': posts,
+        'flags': flags,
+        'active_tab': tab,
+        'has_more': has_more,
+        'next_cursor': posts[-1].id if has_more and posts else None,
+        'post_form': PostForm(user=request.user),
+        'conversation_data': _get_conversation_sidebar(request.user),
+        'bookmarked_ids': set(
+            Bookmark.objects.filter(user=request.user).values_list('post_id', flat=True)
+        ),
+        'liked_ids': set(
+            Like.objects.filter(user=request.user).values_list('post_id', flat=True)
+        ),
+    }
+
     return render(request, 'social/feed.html', context)
+
+
+@login_required
+def feed_more(request):
+    from timeout.services.feed_service import PAGE_SIZE
+    tab = request.GET.get('tab', 'following')
+    try:
+        cursor = int(request.GET.get('cursor', 0))
+    except (ValueError, TypeError):
+        cursor = None
+
+    if tab not in ('following', 'discover', 'bookmarks'):
+        tab = 'following'
+
+    posts = _get_feed_posts(tab, request.user, cursor=cursor)
+    has_more = len(posts) > PAGE_SIZE
+    posts = posts[:PAGE_SIZE]
+
+    liked_ids = set(Like.objects.filter(user=request.user).values_list('post_id', flat=True))
+    bookmarked_ids = set(Bookmark.objects.filter(user=request.user).values_list('post_id', flat=True))
+
+    html = ''.join(
+        render_to_string('social/_post_card.html', {
+            'post': post,
+            'user': request.user,
+            'liked_ids': liked_ids,
+            'bookmarked_ids': bookmarked_ids,
+        }, request=request)
+        for post in posts
+    )
+
+    return JsonResponse({
+        'html': html,
+        'has_more': has_more,
+        'next_cursor': posts[-1].id if has_more and posts else None,
+    })
+
 
 @login_required
 def create_post(request):
@@ -88,22 +172,15 @@ def like_post(request, post_id):
     if not post.can_view(request.user):
         return JsonResponse({'error': 'Cannot view post'}, status=403)
 
-    like, created = Like.objects.get_or_create(
-        user=request.user,
-        post=post
-    )
+    like, created = Like.objects.get_or_create(user=request.user, post=post)
 
     if not created:
-        # Unlike
         like.delete()
         liked = False
     else:
         liked = True
 
-    return JsonResponse({
-        'liked': liked,
-        'like_count': post.get_like_count()
-    })
+    return JsonResponse({'liked': liked, 'like_count': post.get_like_count()})
 
 
 @login_required
@@ -113,17 +190,11 @@ def bookmark_post(request, post_id):
     post = get_object_or_404(Post, id=post_id)
 
     if not post.can_view(request.user):
-        return JsonResponse(
-            {'error': 'Cannot view post'}, status=403
-        )
+        return JsonResponse({'error': 'Cannot view post'}, status=403)
 
-    bookmark, created = Bookmark.objects.get_or_create(
-        user=request.user,
-        post=post
-    )
+    bookmark, created = Bookmark.objects.get_or_create(user=request.user, post=post)
 
     if not created:
-        # Remove bookmark
         bookmark.delete()
         bookmarked = False
     else:
@@ -155,7 +226,6 @@ def add_comment(request, post_id):
         comment.author = request.user
         comment.post = post
 
-        # Handle reply to another comment
         parent_id = request.POST.get('parent_id')
         if parent_id:
             parent = get_object_or_404(Comment, id=parent_id)
@@ -169,17 +239,34 @@ def add_comment(request, post_id):
     return redirect('social_feed')
 
 
-def _build_user_profile_context(request, profile_user, posts, is_following, can_view):
+@login_required
+@require_POST
+def delete_comment(request, comment_id):
+    """Delete a comment (author or staff)."""
+    comment = get_object_or_404(Comment, id=comment_id)
+
+    if not comment.can_delete(request.user):
+        return HttpResponseForbidden('You do not have permission to delete this comment.')
+
+    comment.delete()
+    messages.success(request, 'Comment deleted.')
+    return redirect('social_feed')
+
+
+def _build_user_profile_context(
+    request,
+    profile_user,
+    posts,
+    is_following,
+    can_view,
+    event,
+    event_status,
+    has_pending_request,
+    incoming_requests,
+):
     """Assemble context dict for a user's profile page."""
-    event, event_status = get_profile_event(profile_user) if can_view else (None, None)
-    has_pending_request = (
-        request.user != profile_user and
-        FollowRequest.objects.filter(from_user=request.user, to_user=profile_user).exists()
-    )
-    incoming_requests = (
-        FollowRequest.objects.filter(to_user=request.user).select_related('from_user')
-        if request.user == profile_user else []
-    )
+    is_suspended = profile_user.is_banned and not request.user.is_staff
+
     return {
         'profile_user': profile_user,
         'posts': posts,
@@ -187,9 +274,13 @@ def _build_user_profile_context(request, profile_user, posts, is_following, can_
         'can_view': can_view,
         'event': event,
         'event_status': event_status,
-        'friends_count': profile_user.following.filter(followers=profile_user).count() if can_view else 0,
+        'friends_count': (
+            profile_user.following.filter(followers=profile_user).count()
+            if can_view else 0
+        ),
         'has_pending_request': has_pending_request,
         'incoming_requests': incoming_requests,
+        'is_suspended': is_suspended,
     }
 
 
@@ -198,15 +289,38 @@ def user_profile(request, username):
     """View a user's profile and their posts."""
     profile_user = get_object_or_404(User, username=username)
     posts = FeedService.get_user_posts(profile_user, request.user)
+
     is_following = request.user.following.filter(
         id=profile_user.id
     ).exists() if request.user.is_authenticated else False
+
     can_view = (
         request.user == profile_user or
         not profile_user.privacy_private or
         is_following
     )
-    context = _build_user_profile_context(request, profile_user, posts, is_following, can_view)
+
+    event, event_status = get_profile_event(profile_user)
+    has_pending_request = FollowRequest.objects.filter(
+        from_user=request.user,
+        to_user=profile_user,
+    ).exists()
+
+    incoming_requests = FollowRequest.objects.filter(
+        to_user=profile_user
+    ) if request.user == profile_user else FollowRequest.objects.none()
+
+    context = _build_user_profile_context(
+        request,
+        profile_user,
+        posts,
+        is_following,
+        can_view,
+        event,
+        event_status,
+        has_pending_request,
+        incoming_requests,
+    )
     return render(request, 'social/user_profile.html', context)
 
 
@@ -224,7 +338,7 @@ def _handle_private_follow(from_user, to_user):
         req.delete()
         notif_filter.delete()
         return False
-    notif_filter.delete()  # clear any leftover before creating a fresh one
+    notif_filter.delete()
     Notification.objects.create(
         user=to_user,
         title="New Follow Request",
@@ -305,18 +419,22 @@ def update_status(request):
     status = request.POST.get('status')
     if status not in [s[0] for s in User.Status.choices]:
         return JsonResponse({'error': 'Invalid status'}, status=400)
+
     _save_focus_session_if_leaving(request.user, status)
+
     if status == 'focus':
         request.user.focus_started_at = timezone.now()
+
     request.user.status = status
     request.user.save()
+
     return JsonResponse({
         'status': status,
         'status_display': request.user.get_status_display(),
         'focus_started_at': int(request.user.focus_started_at.timestamp())
-                            if request.user.focus_started_at else None,
+        if request.user.focus_started_at else None,
     })
-
+  
 @login_required
 def followers_api(request):
     """Return JSON list of user's followers with follow-back status."""
@@ -324,11 +442,13 @@ def followers_api(request):
     following_ids = set(request.user.following.values_list('id', flat=True))
     return JsonResponse({'users': _serialize_users(users, following_ids=following_ids)})
 
+
 @login_required
 def following_api(request):
     """Return JSON list of users the authenticated user is following."""
     users = request.user.following.all()
     return JsonResponse({'users': _serialize_users(users)})
+
 
 @login_required
 def user_followers_api(request, username):
@@ -343,6 +463,7 @@ def user_followers_api(request, username):
         return JsonResponse({'error': 'This account is private.'}, status=403)
     users = profile_user.followers.all()
     return JsonResponse({'users': _serialize_users(users)})
+
 
 @login_required
 def user_following_api(request, username):
@@ -389,6 +510,7 @@ def friends_api(request):
     friends = request.user.following.filter(followers=request.user)
     return JsonResponse({'users': _serialize_users(friends)})
 
+
 @login_required
 def user_friends_api(request, username):
     """Return JSON list of a profile user's mutual friends if viewable (respects privacy)."""
@@ -402,6 +524,7 @@ def user_friends_api(request, username):
         return JsonResponse({'error': 'This account is private.'}, status=403)
     friends = profile_user.following.filter(followers=profile_user)
     return JsonResponse({'users': _serialize_users(friends)})
+
 
 def _serialize_users(users, following_ids=None):
     """Convert user objects to dicts with profile info and optional follow-back status."""
