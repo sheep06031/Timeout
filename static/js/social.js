@@ -348,7 +348,12 @@ function initBookmarkButtons() {
             .catch(error => console.error('Error:', error));
         });
     });
+}
 
+/**
+ * Initialize flag button handlers.
+ */
+function initFlagButtons() {
     document.querySelectorAll('.btn-flag-post').forEach(button => {
         button.addEventListener('click', function () {
             const postId = this.dataset.postId;
@@ -365,6 +370,7 @@ function initBookmarkButtons() {
             });
         });
     });
+}
 
 /**
  * Initialize follow button handlers with follow/unfollow toggle functionality.
