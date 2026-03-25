@@ -60,7 +60,7 @@ def dashboard(request):
     deadlines = DeadlineService.get_active_deadlines(user)[:5]
 
     # Social feed (recent posts from followed users)
-    social_posts = FeedService.get_following_feed(user, limit=4)
+    social_posts = FeedService.get_following_feed(user)[:4]
 
     # Focus stats (last 7 days)
     focus_stats = get_focus_stats(user)

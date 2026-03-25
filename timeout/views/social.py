@@ -3,6 +3,7 @@ from django.contrib.auth.decorators import login_required
 from django.db.models import Q
 from django.http import JsonResponse, HttpResponseForbidden
 from django.shortcuts import render, redirect, get_object_or_404
+from django.template.loader import render_to_string
 from django.utils import timezone
 from django.views.decorators.http import require_POST
 
@@ -23,8 +24,17 @@ def _get_conversation_sidebar(user):
     ]
 
 
+def _get_feed_posts(tab, user, cursor=None):
+    if tab == 'discover':
+        return FeedService.get_discover_feed(user, cursor=cursor)
+    elif tab == 'bookmarks':
+        return FeedService.get_bookmarked_posts(user, cursor=cursor)
+    return FeedService.get_following_feed(user, cursor=cursor)
+
+
 @login_required
 def feed(request):
+    from timeout.services.feed_service import PAGE_SIZE
     tab = request.GET.get('tab', 'following')
     posts, flags = [], []
 
@@ -32,24 +42,61 @@ def feed(request):
         flags = PostFlag.objects.select_related(
             'post', 'post__author', 'reporter'
         ).order_by('-created_at')
-    elif tab == 'discover':
-        posts = FeedService.get_discover_feed(request.user)
-    elif tab == 'bookmarks':
-        posts = FeedService.get_bookmarked_posts(request.user)
     else:
-        tab = 'following'
-        posts = FeedService.get_following_feed(request.user)
+        tab = tab if tab in ('discover', 'bookmarks') else 'following'
+        posts = _get_feed_posts(tab, request.user)
+
+    has_more = len(posts) > PAGE_SIZE
+    posts = posts[:PAGE_SIZE]
 
     context = {
         'posts': posts,
         'flags': flags,
         'active_tab': tab,
+        'has_more': has_more,
+        'next_cursor': posts[-1].id if has_more and posts else None,
         'post_form': PostForm(user=request.user),
         'conversation_data': _get_conversation_sidebar(request.user),
         'bookmarked_ids': set(Bookmark.objects.filter(user=request.user).values_list('post_id', flat=True)),
         'liked_ids': set(Like.objects.filter(user=request.user).values_list('post_id', flat=True)),
     }
     return render(request, 'social/feed.html', context)
+
+
+@login_required
+def feed_more(request):
+    from timeout.services.feed_service import PAGE_SIZE
+    tab = request.GET.get('tab', 'following')
+    try:
+        cursor = int(request.GET.get('cursor', 0))
+    except (ValueError, TypeError):
+        cursor = None
+
+    if tab not in ('following', 'discover', 'bookmarks'):
+        tab = 'following'
+
+    posts = _get_feed_posts(tab, request.user, cursor=cursor)
+    has_more = len(posts) > PAGE_SIZE
+    posts = posts[:PAGE_SIZE]
+
+    liked_ids = set(Like.objects.filter(user=request.user).values_list('post_id', flat=True))
+    bookmarked_ids = set(Bookmark.objects.filter(user=request.user).values_list('post_id', flat=True))
+
+    html = ''.join(
+        render_to_string('social/_post_card.html', {
+            'post': post,
+            'user': request.user,
+            'liked_ids': liked_ids,
+            'bookmarked_ids': bookmarked_ids,
+        }, request=request)
+        for post in posts
+    )
+
+    return JsonResponse({
+        'html': html,
+        'has_more': has_more,
+        'next_cursor': posts[-1].id if has_more and posts else None,
+    })
 
 
 @login_required

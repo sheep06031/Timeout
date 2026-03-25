@@ -96,21 +96,32 @@
           </div>
         {% endif %}
       {% else %}
-        {% if posts %}
-          {% for post in posts %}
-            {% include 'social/_post_card.html' with post=post %}
-          {% endfor %}
-        {% else %}
-          <div class="empty-state">
-            <div class="icon">🌱</div>
-            {% if active_tab == 'following' %}
-              No posts yet, follow some people to see their posts here!
-            {% elif active_tab == 'bookmarks' %}
-              You haven't bookmarked any posts yet.
-            {% else %}
-              Nothing to discover yet. Check back soon!
-            {% endif %}
-          </div>
+        <div id="posts-container">
+          {% if posts %}
+            {% for post in posts %}
+              {% include 'social/_post_card.html' with post=post %}
+            {% endfor %}
+          {% else %}
+            <div class="empty-state">
+              <div class="icon">🌱</div>
+              {% if active_tab == 'following' %}
+                No posts yet, follow some people to see their posts here!
+              {% elif active_tab == 'bookmarks' %}
+                You haven't bookmarked any posts yet.
+              {% else %}
+                Nothing to discover yet. Check back soon!
+              {% endif %}
+            </div>
+          {% endif %}
+        </div>
+        {% if has_more %}
+        <div id="load-more-wrap" style="text-align:center;margin:1.5rem 0;">
+          <button id="load-more-btn"
+                  data-tab="{{ active_tab }}"
+                  data-cursor="{{ next_cursor }}">
+            Load more
+          </button>
+        </div>
         {% endif %}
       {% endif %}
 

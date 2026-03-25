@@ -380,6 +380,33 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
+    // Load more posts
+    const loadMoreBtn = document.getElementById('load-more-btn');
+    if (loadMoreBtn) {
+        loadMoreBtn.addEventListener('click', function () {
+            const tab = this.dataset.tab;
+            const cursor = this.dataset.cursor;
+            this.textContent = 'Loading…';
+            this.disabled = true;
+            fetch(`/social/feed/more/?tab=${tab}&cursor=${cursor}`)
+                .then(r => r.json())
+                .then(data => {
+                    document.getElementById('posts-container').insertAdjacentHTML('beforeend', data.html);
+                    if (data.has_more) {
+                        this.dataset.cursor = data.next_cursor;
+                        this.textContent = 'Load more';
+                        this.disabled = false;
+                    } else {
+                        document.getElementById('load-more-wrap').remove();
+                    }
+                })
+                .catch(() => {
+                    this.textContent = 'Load more';
+                    this.disabled = false;
+                });
+        });
+    }
+
     // FAB create-post modal
     const fab     = document.getElementById("fabBtn");
     const overlay = document.getElementById("cpOverlay");

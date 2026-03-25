@@ -6,6 +6,7 @@ from timeout.views import social, social_api, moderation
 urlpatterns = [
     # Feed
     path('feed/', social.feed, name='social_feed'),
+    path('feed/more/', social.feed_more, name='feed_more'),
 
     # Posts
     path('post/create/', social.create_post, name='create_post'),
