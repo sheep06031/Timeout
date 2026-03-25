@@ -31,26 +31,6 @@ def _get_feed_posts(tab, user, cursor=None):
         return FeedService.get_bookmarked_posts(user, cursor=cursor)
     return FeedService.get_following_feed(user, cursor=cursor)
 
-
-def _build_feed_context(user, posts, tab):
-    """Assemble context dict for the feed page."""
-    conversations = Conversation.objects.filter(
-        participants=user
-    ).prefetch_related('participants', 'messages').order_by('-updated_at')[:5]
-    conversation_data = [
-        {'conv': conv, 'other': conv.get_other_participant(user), 'last': conv.get_last_message()}
-        for conv in conversations
-    ]
-    return {
-        'posts': posts,
-        'active_tab': tab,
-        'post_form': PostForm(user=user),
-        'conversation_data': conversation_data,
-        'bookmarked_ids': set(Bookmark.objects.filter(user=user).values_list('post_id', flat=True)),
-        'liked_ids': set(Like.objects.filter(user=user).values_list('post_id', flat=True)),
-    }
-
-
 @login_required
 def feed(request):
     """Display feed with posts from following/discover/bookmarks tabs."""
@@ -542,7 +522,6 @@ def _serialize_users(users, following_ids=None):
     return result
 
 
-# Admin Views
 @login_required
 @require_POST
 def flag_post(request, post_id):
