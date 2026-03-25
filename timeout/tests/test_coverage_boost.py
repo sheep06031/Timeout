@@ -1078,7 +1078,7 @@ class OAuthTagTests(TestCase):
         app.sites.add(Site.objects.get_current())
         result = google_oauth_available()
         self.assertTrue(result)
-
+    
     def test_google_oauth_available_false(self):
         from timeout.templatetags.oauth_tags import google_oauth_available
         SocialApp = None  # noqa
