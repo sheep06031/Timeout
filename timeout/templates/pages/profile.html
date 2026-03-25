@@ -68,7 +68,7 @@
                   <span class="badge bg-light text-dark me-2" style="cursor:pointer;" data-bs-toggle="modal" data-bs-target="#followersModal">{{ user.follower_count }} Followers</span>
                   <span id="following-count-badge" class="badge bg-light text-dark me-2" style="cursor:pointer;" data-bs-toggle="modal" data-bs-target="#followingModal">{{ user.following_count }} Following</span>
                   <span class="badge bg-light text-dark me-2" style="cursor:pointer;" data-bs-toggle="modal" data-bs-target="#friendsModal">{{ friends_count }} Friends</span>
-                </div>
+                  <span class="badge bg-light text-dark" style="cursor:pointer;" data-bs-toggle="modal" data-bs-target="#blockedModal">🚫 Blocked</span>                </div>
               </div>
             </div>
           </div>
@@ -163,6 +163,7 @@
   {% include 'partials/modals/followers_modal.html' %}
   {% include 'partials/modals/following_modal.html' %}
   {% include 'partials/modals/friends_modal.html' %}
+  {% include 'partials/modals/blocked_modal.html' %}
 
 {% endblock %}
 
@@ -174,7 +175,9 @@
        data-csrf-token="{{ csrf_token }}"
        data-followers-url="{% url 'followers_api' %}"
        data-following-url="{% url 'following_api' %}"
-       data-friends-url="{% url 'friends_api' %}"></div>
+       data-friends-url="{% url 'friends_api' %}"
+       data-blocked-url="{% url 'blocked_users_api' %}"></div>
+
   <script src="{% static 'js/profile.js' %}"></script>
   
 {% endblock %}

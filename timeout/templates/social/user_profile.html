@@ -61,7 +61,13 @@
                                 data-following="false" data-requested="false">Follow</button>
                       {% endif %}
                       <a href="{% url 'start_conversation' profile_user.username %}" class="btn btn-sm btn-outline-secondary">Message</a>
-                      {% if user.is_staff and not profile_user.is_staff %}
+                      {% if is_blocked %}
+                        <button class="btn btn-sm btn-outline-secondary block-btn"
+                                data-username="{{ profile_user.username }}" data-blocked="true">Unblock</button>
+                      {% elif not has_blocked_me %}
+                        <button class="btn btn-sm btn-outline-danger block-btn"
+                                data-username="{{ profile_user.username }}" data-blocked="false">Block</button>
+                      {% endif %}                      {% if user.is_staff and not profile_user.is_staff %}
                         {% if profile_user.is_banned %}
                           <form method="post" action="{% url 'unban_user' profile_user.username %}" style="margin:0;">
                             {% csrf_token %}
@@ -175,7 +181,22 @@
         {% endif %}
 
         <!-- Posts -->
-        {% if is_suspended %}
+        {% if has_blocked_me %}
+          <div class="post-card mb-4">
+            <div class="post-card-body text-center py-4 text-muted">
+              <p class="mb-1" style="font-size:2rem;">🚫</p>
+              <p class="mb-0 fw-semibold">This user's content is not available.</p>
+            </div>
+          </div>
+        {% elif is_blocked %}
+          <div class="post-card mb-4">
+            <div class="post-card-body text-center py-4 text-muted">
+              <p class="mb-1" style="font-size:2rem;">🚫</p>
+              <p class="mb-0 fw-semibold">You've blocked @{{ profile_user.username }}.</p>
+              <p class="small">Unblock them to see their profile and posts.</p>
+            </div>
+          </div>
+        {% elif is_suspended %}
           <div class="post-card mb-4">
             <div class="post-card-body text-center py-4 text-muted">
               <p class="mb-1" style="font-size:2rem;">🚫</p>

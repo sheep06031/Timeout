@@ -17,8 +17,7 @@
     <div class="convo-header-user">
       <div class="convo-avatar">{{ other_user.username|first|upper }}</div>
       <div>
-        <div class="convo-username">{{ other_user.username }}</div>
-        <div class="convo-status-row">
+      <a href="{% url 'user_profile' other_user.username %}" class="convo-username" style="text-decoration:none;color:inherit;">{{ other_user.username }}</a>        <div class="convo-status-row">
           <span class="status-dot status-{{ other_user.status }}"></span>
           <span class="convo-status-label">{{ other_user.get_status_display }}</span>
         </div>
