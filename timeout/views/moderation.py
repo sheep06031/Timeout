@@ -60,6 +60,7 @@ def deny_flag(request, flag_id):
 
 
 def _is_ajax(request):
+    """Check if request is an AJAX call by examining X-Requested-With header."""
     return request.headers.get('X-Requested-With') == 'XMLHttpRequest'
 
 
