@@ -92,3 +92,37 @@
   setupModal('followingModal', FOLLOWING_URL, 'following-list', 'following-list');
   setupModal('friendsModal', FRIENDS_URL, 'friends-list', 'friends-list');
 })();
+
+document.querySelectorAll('.block-btn').forEach(btn => {
+  btn.addEventListener('click', function () {
+    const username = this.dataset.username;
+    const isBlocked = this.dataset.blocked === 'true';
+    this.disabled = true;
+    this.textContent = isBlocked ? 'Unblocking…' : 'Blocking…';
+
+    fetch(`/social/user/${username}/block/`, {
+      method: 'POST',
+      headers: { 'X-CSRFToken': getCookie('csrftoken') },
+    })
+      .then(r => r.json())
+      .then(data => {
+        if (data.blocked === true) {
+          this.dataset.blocked = 'true';
+          this.textContent = 'Unblock';
+          this.classList.remove('btn-outline-danger');
+          this.classList.add('btn-outline-secondary');
+          location.reload();
+        } else {
+          this.dataset.blocked = 'false';
+          this.textContent = 'Block';
+          this.classList.remove('btn-outline-secondary');
+          this.classList.add('btn-outline-danger');
+          location.reload();
+        }
+      })
+      .catch(() => {
+        this.disabled = false;
+        this.textContent = isBlocked ? 'Unblock' : 'Block';
+      });
+  });
+});

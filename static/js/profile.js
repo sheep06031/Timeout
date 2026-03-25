@@ -7,6 +7,7 @@ const _cfg = document.getElementById('profile-status-config');
 const FOLLOWERS_URL = _cfg?.dataset.followersUrl ?? '';
 const FOLLOWING_URL = _cfg?.dataset.followingUrl ?? '';
 const FRIENDS_URL   = _cfg?.dataset.friendsUrl   ?? '';
+const BLOCKED_URL   = _cfg?.dataset.blockedUrl   ?? '';
 
 /**
  * Initialize status management with UI updates and event listeners.
@@ -307,3 +308,60 @@ document.getElementById('friendsModal')?.addEventListener('show.bs.modal', () =>
       _initModalSearch(input, list);
     });
 });
+
+document.getElementById('blockedModal')?.addEventListener('show.bs.modal', () => {
+  const input = document.querySelector('[data-modal-search="blocked-list"]');
+  input.value = '';
+  input.oninput = null;
+  fetch(BLOCKED_URL)
+    .then(r => r.json())
+    .then(data => {
+      const list = document.getElementById('blocked-list');
+      list.innerHTML = _renderBlockedList(data.users);
+      attachUnblockHandlers(list);
+      _initModalSearch(input, list);
+    });
+});
+
+function _renderBlockedList(users) {
+  if (users.length === 0) return '<p class="text-center text-muted py-3">No blocked users.</p>';
+  return users.map(u => `
+    <div class="user-item d-flex align-items-center justify-content-between mb-3">
+      <div class="d-flex align-items-center gap-3">
+        ${_userAvatarHtml(u)}
+        <div>
+          <div class="fw-semibold">@${u.username}</div>
+          ${u.full_name ? `<div class="text-muted small">${u.full_name}</div>` : ''}
+        </div>
+      </div>
+      <button class="btn btn-sm btn-outline-secondary unblock-btn ms-2" data-username="${u.username}">Unblock</button>
+    </div>`).join('');
+}
+
+function attachUnblockHandlers(container) {
+  container.querySelectorAll('.unblock-btn').forEach(btn => {
+    btn.addEventListener('click', function () {
+      const username = this.dataset.username;
+      this.disabled = true;
+      this.textContent = 'Unblocking…';
+      fetch(`/social/user/${username}/block/`, {
+        method: 'POST',
+        headers: { 'X-CSRFToken': getCookie('csrftoken') },
+      })
+        .then(r => r.json())
+        .then(data => {
+          if (data.blocked === false) {
+            this.closest('.user-item').remove();
+            const list = document.getElementById('blocked-list');
+            if (list && !list.querySelector('.user-item')) {
+              list.innerHTML = '<p class="text-center text-muted py-3">No blocked users.</p>';
+            }
+          }
+        })
+        .catch(() => {
+          this.disabled = false;
+          this.textContent = 'Unblock';
+        });
+    });
+  });
+}

@@ -8,7 +8,7 @@ from django.utils import timezone
 from django.views.decorators.http import require_POST
 
 from timeout.forms import PostForm, CommentForm
-from timeout.models import Post, Comment, Like, Bookmark, User, Conversation, FocusSession, FollowRequest, PostFlag
+from timeout.models import Post, Comment, Like, Bookmark, User, Conversation, FocusSession, FollowRequest, PostFlag, Block
 from timeout.models.notification import Notification
 from timeout.services import FeedService
 from timeout.views.profile import get_profile_event
@@ -153,6 +153,12 @@ def like_post(request, post_id):
     if not post.can_view(request.user):
         return JsonResponse({'error': 'Cannot view post'}, status=403)
 
+    if Block.objects.filter(
+        Q(blocker=request.user, blocked=post.author) |
+        Q(blocker=post.author, blocked=request.user)
+    ).exists():
+        return JsonResponse({'error': 'Cannot interact with this post'}, status=403)
+
     like, created = Like.objects.get_or_create(user=request.user, post=post)
 
     if not created:
@@ -201,6 +207,12 @@ def add_comment(request, post_id):
     if not post.can_view(request.user):
         return HttpResponseForbidden('Cannot view post')
 
+    if Block.objects.filter(
+        Q(blocker=request.user, blocked=post.author) |
+        Q(blocker=post.author, blocked=request.user)
+    ).exists():
+        return HttpResponseForbidden('Cannot interact with this post')
+
     form = CommentForm(request.POST)
     if form.is_valid():
         comment = form.save(commit=False)
@@ -244,6 +256,8 @@ def _build_user_profile_context(
     event_status,
     has_pending_request,
     incoming_requests,
+    is_blocked=False,
+    has_blocked_me=False,
 ):
     """Assemble context dict for a user's profile page."""
     is_suspended = profile_user.is_banned and not request.user.is_staff
@@ -256,12 +270,14 @@ def _build_user_profile_context(
         'event': event,
         'event_status': event_status,
         'friends_count': (
-            profile_user.following.filter(followers=profile_user).count()
+            profile_user.following.filter(following=profile_user).count()
             if can_view else 0
         ),
         'has_pending_request': has_pending_request,
         'incoming_requests': incoming_requests,
         'is_suspended': is_suspended,
+        'is_blocked': is_blocked,
+        'has_blocked_me': has_blocked_me,
     }
 
 
@@ -269,6 +285,10 @@ def _build_user_profile_context(
 def user_profile(request, username):
     """View a user's profile and their posts."""
     profile_user = get_object_or_404(User, username=username)
+
+    is_blocked = Block.objects.filter(blocker=request.user, blocked=profile_user).exists()
+    has_blocked_me = Block.objects.filter(blocker=profile_user, blocked=request.user).exists()
+
     posts = FeedService.get_user_posts(profile_user, request.user)
 
     is_following = request.user.following.filter(
@@ -276,9 +296,13 @@ def user_profile(request, username):
     ).exists() if request.user.is_authenticated else False
 
     can_view = (
-        request.user == profile_user or
-        not profile_user.privacy_private or
-        is_following
+        not is_blocked and
+        not has_blocked_me and
+        (
+            request.user == profile_user or
+            not profile_user.privacy_private or
+            is_following
+        )
     )
 
     event, event_status = get_profile_event(profile_user)
@@ -301,6 +325,8 @@ def user_profile(request, username):
         event_status,
         has_pending_request,
         incoming_requests,
+        is_blocked=is_blocked,
+        has_blocked_me=has_blocked_me,
     )
     return render(request, 'social/user_profile.html', context)
 
@@ -337,6 +363,12 @@ def follow_user(request, username):
     if user_to_follow == request.user:
         return JsonResponse({'error': 'Cannot follow yourself'}, status=400)
 
+    if Block.objects.filter(
+        Q(blocker=request.user, blocked=user_to_follow) |
+        Q(blocker=user_to_follow, blocked=request.user)
+    ).exists():
+        return JsonResponse({'error': 'Cannot follow a blocked user'}, status=403)
+
     if request.user.following.filter(id=user_to_follow.id).exists():
         request.user.following.remove(user_to_follow)
         return JsonResponse({'following': False, 'requested': False})
@@ -348,6 +380,39 @@ def follow_user(request, username):
     request.user.following.add(user_to_follow)
     return JsonResponse({'following': True, 'requested': False})
 
+@login_required
+@require_POST
+def block_user(request, username):
+    """Block or unblock a user (toggle)."""
+    target = get_object_or_404(User, username=username)
+    if target == request.user:
+        return JsonResponse({'error': 'Cannot block yourself'}, status=400)
+
+    block, created = Block.objects.get_or_create(blocker=request.user, blocked=target)
+    if created:
+        request.user.following.remove(target)
+        target.following.remove(request.user)
+        FollowRequest.objects.filter(from_user=request.user, to_user=target).delete()
+        FollowRequest.objects.filter(from_user=target, to_user=request.user).delete()
+        return JsonResponse({'blocked': True})
+
+    block.delete()
+    return JsonResponse({'blocked': False})
+
+
+@login_required
+def blocked_users_api(request):
+    """Return the list of users blocked by the logged-in user."""
+    blocks = Block.objects.filter(blocker=request.user).select_related('blocked')
+    users = [
+        {
+            'username': b.blocked.username,
+            'full_name': b.blocked.get_full_name(),
+            'profile_picture': b.blocked.profile_picture.url if b.blocked.profile_picture else None,
+        }
+        for b in blocks
+    ]
+    return JsonResponse({'users': users})
 
 @login_required
 @require_POST
@@ -467,11 +532,14 @@ def search_users(request):
     if not query:
         return JsonResponse({'users': []})
 
+    blocked_by_me = Block.objects.filter(blocker=request.user).values_list('blocked_id', flat=True)
+    blocking_me = Block.objects.filter(blocked=request.user).values_list('blocker_id', flat=True)
+
     users = User.objects.filter(
         Q(username__icontains=query) |
         Q(first_name__icontains=query) |
         Q(last_name__icontains=query)
-    ).exclude(id=request.user.id)[:10]
+    ).exclude(id=request.user.id).exclude(id__in=blocked_by_me).exclude(id__in=blocking_me)[:10]
 
     results = [
         {

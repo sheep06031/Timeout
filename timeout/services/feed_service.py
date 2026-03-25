@@ -1,5 +1,5 @@
 from django.db.models import Q
-from timeout.models import Post
+from timeout.models import Post, Block
 
 PAGE_SIZE = 15
 
@@ -10,12 +10,16 @@ class FeedService:
     def get_following_feed(user, cursor=None):
         if not user.is_authenticated:
             return Post.objects.none()
+        
+        blocked_by_me = Block.objects.filter(blocker=user).values_list('blocked_id', flat=True)
+        blocking_me = Block.objects.filter(blocked=user).values_list('blocker_id', flat=True)
 
         following_ids = user.following.values_list('id', flat=True)
 
-        qs = Post.objects.filter(
-            Q(author_id__in=following_ids) | Q(author=user)
-        ).exclude(author__is_banned=True)
+        qs = (Post.objects.filter(Q(author_id__in=following_ids) | Q(author=user))
+                          .exclude(author__is_banned=True)
+                          .exclude(author_id__in=blocked_by_me)
+                          .exclude(author_id__in=blocking_me))
 
         if cursor:
             qs = qs.filter(id__lt=cursor)
@@ -34,8 +38,14 @@ class FeedService:
         ).exclude(author__is_banned=True)
 
         if user.is_authenticated:
+            blocked_by_me = Block.objects.filter(blocker=user).values_list('blocked_id', flat=True)
+            blocking_me = Block.objects.filter(blocked=user).values_list('blocker_id', flat=True)
+
             following_ids = user.following.values_list('id', flat=True)
-            qs = qs.exclude(author_id__in=following_ids).exclude(author=user)
+            qs = (qs.exclude(author_id__in=following_ids)
+                    .exclude(author=user)
+                    .exclude(author_id__in=blocked_by_me)
+                    .exclude(author_id__in=blocking_me))
 
         if cursor:
             qs = qs.filter(id__lt=cursor)
@@ -66,11 +76,15 @@ class FeedService:
         if not user.is_authenticated:
             return Post.objects.none()
 
+        blocked_by_me = Block.objects.filter(blocker=user).values_list('blocked_id', flat=True)
+        blocking_me = Block.objects.filter(blocked=user).values_list('blocker_id', flat=True)
+
         bookmarked_post_ids = user.bookmarks.values_list('post_id', flat=True)
 
-        qs = Post.objects.filter(
-            id__in=bookmarked_post_ids
-        ).exclude(author__is_banned=True)
+        qs = (Post.objects.filter(id__in=bookmarked_post_ids)
+                          .exclude(author__is_banned=True)
+                          .exclude(author_id__in=blocked_by_me)
+                          .exclude(author_id__in=blocking_me))
 
         if cursor:
             qs = qs.filter(id__lt=cursor)
