@@ -492,9 +492,9 @@ document.addEventListener('DOMContentLoaded', function() {
     initEventDropdown();
     initLikeButtons();
     initBookmarkButtons();
+    initFlagButtons();
     initFollowButtons();
     initSubscribeButtons();
     initHighlightPost();
     initFabModal();
 });
-}
