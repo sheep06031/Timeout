@@ -15,7 +15,19 @@
         </div>
       </div>
       <div class="d-flex gap-2 align-items-center">
-        {% if user.is_authenticated and post.author != user %}
+        {% if user.is_staff and post.author != user and not post.author.is_staff %}
+          {% if post.author.is_banned %}
+            <button type="button" class="btn-unban-user btn-delete-post"
+                    data-url="{% url 'unban_user' post.author.username %}"
+                    data-username="{{ post.author.username }}"
+                    title="Unban {{ post.author.username }}">Unban</button>
+          {% else %}
+            <button type="button" class="btn-ban-user btn-delete-post"
+                    data-url="{% url 'ban_user' post.author.username %}"
+                    data-username="{{ post.author.username }}"
+                    title="Ban {{ post.author.username }}">Ban</button>
+          {% endif %}
+        {% elif user.is_authenticated and post.author != user %}
           <button type="button" class="btn-flag-post" data-post-id="{{ post.id }}" title="Flag post"><i class="bi bi-flag"></i></button>
         {% endif %}
         {% if post.author == user or user.is_staff %}

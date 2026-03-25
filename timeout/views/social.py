@@ -201,6 +201,8 @@ def user_profile(request, username):
         if request.user == profile_user else []
     )
 
+    is_suspended = profile_user.is_banned and not request.user.is_staff
+
     context = {
         'profile_user': profile_user,
         'posts': posts,
@@ -211,6 +213,7 @@ def user_profile(request, username):
         'friends_count': profile_user.following.filter(followers=profile_user).count() if can_view else 0,
         'has_pending_request': has_pending_request,
         'incoming_requests': incoming_requests,
+        'is_suspended': is_suspended,
     }
     return render(request, 'social/user_profile.html', context)
 

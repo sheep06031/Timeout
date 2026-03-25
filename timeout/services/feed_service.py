@@ -19,7 +19,7 @@ class FeedService:
         # Include user's own posts in following feed
         feed = Post.objects.filter(
             Q(author_id__in=following_ids) | Q(author=user)
-        ).select_related(
+        ).exclude(author__is_banned=True).select_related(
             'author', 'event'
         ).prefetch_related(
             'likes', 'comments', 'bookmarks'
@@ -42,7 +42,7 @@ class FeedService:
         # Base query: all public posts
         feed = Post.objects.filter(
             privacy=Post.Privacy.PUBLIC
-        )
+        ).exclude(author__is_banned=True)
 
         # Exclude posts from users already being followed
         if user.is_authenticated:
@@ -74,9 +74,10 @@ class FeedService:
         Get posts from a specific user, filtered by privacy.
         viewer is the user requesting to see the posts.
         """
-        posts = Post.objects.filter(
-            author=user
-        ).select_related(
+        posts = Post.objects.filter(author=user)
+        if not (viewer.is_authenticated and viewer.is_staff):
+            posts = posts.exclude(author__is_banned=True)
+        posts = posts.select_related(
             'author', 'event'
         ).prefetch_related(
             'likes', 'comments', 'bookmarks'
@@ -101,7 +102,7 @@ class FeedService:
 
         posts = Post.objects.filter(
             id__in=bookmarked_post_ids
-        ).select_related(
+        ).exclude(author__is_banned=True).select_related(
             'author', 'event'
         ).prefetch_related(
             'likes', 'comments', 'bookmarks'

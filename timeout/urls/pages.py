@@ -5,6 +5,7 @@ from timeout.views import settings as settings_views
 
 """URL patterns for the timeout app's main pages."""
 urlpatterns = [
+    path('banned/', pages.banned, name='banned'),
     path('', pages.landing, name='landing'),
     path('dashboard/', pages.dashboard, name='dashboard'),
     path('profile/', pages.profile, name='profile'),

@@ -59,16 +59,24 @@ def deny_flag(request, flag_id):
     return JsonResponse({'ok': True})
 
 
+def _is_ajax(request):
+    return request.headers.get('X-Requested-With') == 'XMLHttpRequest'
+
+
 @login_required
 @require_POST
 def ban_user(request, username):
-    """Ban a user (staff only)."""
+    """Ban a user (staff only). Returns JSON for AJAX calls, redirect otherwise."""
     if not request.user.is_staff:
+        if _is_ajax(request):
+            return JsonResponse({'error': 'Staff access required.'}, status=403)
         return HttpResponseForbidden('Staff access required.')
 
     target = get_object_or_404(User, username=username)
 
     if target.is_staff:
+        if _is_ajax(request):
+            return JsonResponse({'error': 'Cannot ban a staff member.'}, status=400)
         messages.error(request, 'Cannot ban a staff member.')
         return redirect('user_profile', username=username)
 
@@ -77,6 +85,9 @@ def ban_user(request, username):
     target.ban_reason = reason
     target.save(update_fields=['is_banned', 'ban_reason'])
 
+    if _is_ajax(request):
+        return JsonResponse({'ok': True})
+
     messages.success(request, f'{target.username} has been banned.')
     return redirect('user_profile', username=username)
 
@@ -84,14 +95,19 @@ def ban_user(request, username):
 @login_required
 @require_POST
 def unban_user(request, username):
-    """Unban a user (staff only)."""
+    """Unban a user (staff only). Returns JSON for AJAX calls, redirect otherwise."""
     if not request.user.is_staff:
+        if _is_ajax(request):
+            return JsonResponse({'error': 'Staff access required.'}, status=403)
         return HttpResponseForbidden('Staff access required.')
 
     target = get_object_or_404(User, username=username)
     target.is_banned = False
     target.ban_reason = ''
     target.save(update_fields=['is_banned', 'ban_reason'])
+
+    if _is_ajax(request):
+        return JsonResponse({'ok': True})
 
     messages.success(request, f'{target.username} has been unbanned.')
     return redirect('user_profile', username=username)

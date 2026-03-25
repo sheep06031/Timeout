@@ -241,24 +241,19 @@ class BannedUserMiddlewareTest(TestCase):
     def login(self, user):
         self.assertTrue(self.client.login(username=user.username, password="pass"))
 
-    # A banned user visiting any page should be logged out and redirected to login
+    # A banned user visiting any page should be logged out and redirected to /banned/
     def test_banned_user_is_logged_out_and_redirected(self):
         self.login(self.banned_user)
         response = self.client.get(reverse("social_feed"))
-        self.assertRedirects(response, "/accounts/login/", fetch_redirect_response=False)
+        self.assertRedirects(response, "/banned/", fetch_redirect_response=False)
         self.assertNotIn("_auth_user_id", self.client.session)
-        msgs = list(get_messages(response.wsgi_request))
-        self.assertTrue(any("suspended" in str(m) for m in msgs))
 
-    # Middleware must NOT redirect the banned user when they are on the login page
-    # (avoids infinite redirect loop). The login view may still redirect logged-in users,
-    # but that redirect target must not be /accounts/login/ itself.
-    def test_banned_user_on_login_page_has_no_middleware_loop(self):
+    # Middleware must NOT redirect the banned user when they are already on /banned/
+    def test_banned_user_on_banned_page_has_no_middleware_loop(self):
         self.login(self.banned_user)
-        response = self.client.get("/accounts/login/")
-        # If there's a redirect, it must not loop back to /accounts/login/
+        response = self.client.get("/banned/")
         if response.status_code == 302:
-            self.assertNotEqual(response["Location"], "/accounts/login/")
+            self.assertNotEqual(response["Location"], "/banned/")
 
     # A non-banned authenticated user should pass through normally
     def test_non_banned_user_passes_through(self):

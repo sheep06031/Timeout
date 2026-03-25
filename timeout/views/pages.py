@@ -11,6 +11,10 @@ from timeout.services.ai_service import AIService
 from timeout.models.notification import Notification
 
 
+def banned(request):
+    return render(request, 'banned.html')
+
+
 def landing(request):
     """Landing page view. Authenticated users go straight to the dashboard."""
     if request.user.is_authenticated:
