@@ -433,6 +433,7 @@
 
 {% block extra_js %}
 <script>
+  <!-- Initialize global configuration for note editor -->
   window.NOTES_CONFIG = {
     csrfToken: '{{ csrf_token }}',
     pomodoroCompleteUrl: '{% url "pomodoro_complete" %}',
@@ -442,8 +443,14 @@
 <script src="{% static 'js/notes.js' %}"></script>
 <script src="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.js"></script>
 <script>
+/**
+ * Rich text note editor with Quill: word count, outline, page mode, and autosave.
+ * Supports live preview, line spacing, paged view with page breaks, and 2-second autosave.
+ */
 (function() {
-  /* Quill setup */
+  /**
+   * Initialize Quill rich text editor with formatting toolbar and snow theme.
+   */
   const quill = new Quill('#quill-editor', {
     theme: 'snow',
     placeholder: 'Start writing your note...',
@@ -464,13 +471,15 @@
     },
   });
 
-  /* Load existing content */
+  /* Load existing content into editor from hidden form field */
   const hiddenInput = document.getElementById('id_content');
   if (hiddenInput.value) {
     quill.root.innerHTML = hiddenInput.value;
   }
 
-  /* Word count */
+  /**
+   * Update live word count display based on current editor content.
+   */
   function updateWordCount() {
     const text = quill.getText().trim();
     const words = text ? text.split(/\s+/).length : 0;
@@ -479,13 +488,18 @@
   quill.on('text-change', updateWordCount);
   updateWordCount();
 
-  /* Outline panel */
+  /**
+   * Initialize outline panel for navigation via document headings.
+   */
   const outlinePanel = document.getElementById('outlinePanel');
   const outlineList = document.getElementById('outlineList');
   const outlineToggleBtn = document.getElementById('outlineToggleBtn');
   const outlineCloseBtn = document.getElementById('outlineCloseBtn');
   const editorMain = document.getElementById('editorMain');
 
+  /**
+   * Extract headings from editor and rebuild outline list with scroll navigation.
+   */
   function updateOutline() {
     var headings = quill.root.querySelectorAll('h1, h2, h3');
     outlineList.innerHTML = '';
@@ -532,14 +546,18 @@
   quill.on('text-change', updateOutline);
   updateOutline();
 
-  /* Line spacing control */
+  /**
+   * Initialize line spacing control to adjust editor line height.
+   */
   const spacingSelect = document.getElementById('lineSpacing');
   spacingSelect.addEventListener('change', function() {
     quill.root.style.lineHeight = this.value;
     if (pageModeActive) requestAnimationFrame(paginateContent);
   });
 
-  /* Page mode */
+  /**
+   * Initialize page mode (paged view) with automatic page break markers and numbering.
+   */
   const pageModeSelect = document.getElementById('pageMode');
   const qlContainer = document.querySelector('.ql-container');
   const editorMainEl = document.getElementById('editorMain');
@@ -551,10 +569,16 @@
 
   const PAGE_HEIGHT = 1056;
 
+  /**
+   * Remove all page break lines and page number labels from editor.
+   */
   function clearPageMarkers() {
     qlContainer.querySelectorAll('.page-break-line, .page-number-label').forEach(function(el) { el.remove(); });
   }
 
+  /**
+   * Calculate pages and render page break lines with page number labels based on content height.
+   */
   function paginateContent() {
     clearPageMarkers();
     if (!pageModeActive) return;
@@ -599,7 +623,9 @@
     if (pageModeActive) requestAnimationFrame(paginateContent);
   });
 
-  /* Sync to hidden input on manual save */
+  /**
+   * Sync editor content and title to hidden form fields on manual submit.
+   */
   const editForm = document.getElementById('noteEditForm');
   editForm.addEventListener('submit', function() {
     hiddenInput.value = quill.root.innerHTML;
@@ -607,7 +633,9 @@
     document.getElementById('hiddenPageMode').value = pageModeSelect.value;
   });
 
-  /* Autosave */
+  /**
+   * Initialize autosave with 2-second debounce and visual status feedback.
+   */
   const autosaveUrl = '{% url "note_autosave" note.id %}';
   const csrfToken = '{{ csrf_token }}';
   const statusEl = document.getElementById('autosaveStatus');
@@ -616,6 +644,34 @@
   let lastSavedTitle = '{{ note.title|escapejs }}';
   let editCounted = false;
 
+  /**
+   * Set autosave status indicator text and CSS class.
+   */
+  function setStatus(text, className) {
+    statusEl.textContent = text;
+    statusEl.className = 'autosave-indicator' + (className ? ' ' + className : '');
+  }
+
+  /**
+   * Build FormData payload with current editor state for autosave POST.
+   */
+  function buildSavePayload(content, title, pageMode) {
+    const formData = new FormData();
+    formData.append('content', content);
+    formData.append('title', title);
+    formData.append('page_mode', pageMode);
+    formData.append('csrfmiddlewaretoken', csrfToken);
+    if (!editCounted) {
+      formData.append('count_edit', '1');
+      editCounted = true;
+    }
+    return formData;
+  }
+
+  /**
+   * POST current content, title, and page mode to server with status feedback.
+   * Only saves if content differs from last saved version.
+   */
   function doAutosave() {
     const currentContent = quill.root.innerHTML;
     const currentTitle = document.getElementById('noteTitleInput').value;
@@ -623,41 +679,25 @@
 
     if (currentContent === lastSavedContent && currentTitle === lastSavedTitle && currentPageMode === lastSavedPageMode) return;
 
-    statusEl.textContent = 'Saving...';
-    statusEl.className = 'autosave-indicator saving';
+    setStatus('Saving...', 'saving');
 
-    const formData = new FormData();
-    formData.append('content', currentContent);
-    formData.append('title', currentTitle);
-    formData.append('page_mode', pageModeSelect.value);
-    formData.append('csrfmiddlewaretoken', csrfToken);
-    if (!editCounted) {
-      formData.append('count_edit', '1');
-      editCounted = true;
-    }
-
-    fetch(autosaveUrl, { method: 'POST', body: formData })
+    fetch(autosaveUrl, { method: 'POST', body: buildSavePayload(currentContent, currentTitle, currentPageMode) })
       .then(function(res) { return res.json(); })
       .then(function(data) {
         if (data.status === 'ok') {
           lastSavedContent = currentContent;
           lastSavedTitle = currentTitle;
           lastSavedPageMode = currentPageMode;
-          statusEl.textContent = 'Saved';
-          statusEl.className = 'autosave-indicator saved';
-          setTimeout(function() {
-            if (statusEl.textContent === 'Saved') {
-              statusEl.textContent = '';
-            }
-          }, 3000);
+          setStatus('Saved', 'saved');
+          setTimeout(function() { if (statusEl.textContent === 'Saved') setStatus(''); }, 3000);
         }
       })
-      .catch(function() {
-        statusEl.textContent = 'Save failed';
-        statusEl.className = 'autosave-indicator';
-      });
+      .catch(function() { setStatus('Save failed'); });
   }
 
+  /**
+   * Debounce autosave trigger to 2 seconds to reduce unnecessary API calls.
+   */
   function scheduleAutosave() {
     clearTimeout(autosaveTimer);
     autosaveTimer = setTimeout(doAutosave, 2000);
@@ -667,7 +707,9 @@
   document.getElementById('noteTitleInput').addEventListener('input', scheduleAutosave);
   pageModeSelect.addEventListener('change', scheduleAutosave);
 
-  /* Save on page leave*/
+  /**
+   * Save content on page unload using sendBeacon if unsaved changes exist.
+   */
   window.addEventListener('beforeunload', function() {
     const currentContent = quill.root.innerHTML;
     const currentTitle = document.getElementById('noteTitleInput').value;
