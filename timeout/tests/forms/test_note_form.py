@@ -91,7 +91,7 @@ class NoteFormTest(TestCase):
         self.assertFalse(form.is_valid())
         self.assertIn('category', form.errors)
 
-    # --- Page mode ---
+    # Page mode
 
     def test_page_mode_defaults_to_pageless(self):
         form = NoteForm(data={

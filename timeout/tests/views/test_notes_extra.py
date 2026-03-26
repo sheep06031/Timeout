@@ -13,11 +13,7 @@ from timeout.services import NoteService
 User = get_user_model()
 
 
-# ---------------------------------------------------------------------------
 # Note model property tests
-# ---------------------------------------------------------------------------
-
-
 class NoteUrgencyTest(TestCase):
     """Tests for Note.urgency property across all levels."""
 
@@ -148,11 +144,7 @@ class NoteCanDeleteTest(TestCase):
         self.assertFalse(self.note.can_delete(self.other))
 
 
-# ---------------------------------------------------------------------------
 # StudyLog model tests
-# ---------------------------------------------------------------------------
-
-
 class StudyLogModelTest(TestCase):
     """Tests for StudyLog __str__ and activity_level property."""
 
@@ -206,13 +198,7 @@ class StudyLogModelTest(TestCase):
         )
         self.assertEqual(log.activity_level, 4)
 
-
-# ---------------------------------------------------------------------------
-# NoteService tests (log_pomodoro, get_heatmap_data, get_daily_progress,
-#                     award_pomodoro_xp, update_streak_and_xp)
-# ---------------------------------------------------------------------------
-
-
+# NoteService tests (log_pomodoro, get_heatmap_data, get_daily_progress, award_pomodoro_xp, update_streak_and_xp)
 class NoteServicePomodoroTest(TestCase):
     """Tests for NoteService Pomodoro / gamification helpers."""
 
@@ -326,12 +312,7 @@ class NoteServiceStreakTest(TestCase):
         # longest should remain unchanged since 1 < 10
         self.assertEqual(self.user.longest_note_streak, 10)
 
-
-# ---------------------------------------------------------------------------
 # View tests
-# ---------------------------------------------------------------------------
-
-
 class _ViewTestBase(TestCase):
     """Shared setUp for view tests."""
 

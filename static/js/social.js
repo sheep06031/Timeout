@@ -1,4 +1,11 @@
-// CSRF token helper
+/**
+ * Social Feed Interactions
+ * Handles user search, messaging, feed interactions (likes, bookmarks, follows), event dropdowns, and modal management.
+ */
+
+/**
+ * Retrieve CSRF token from browser cookies for secure form submissions.
+ */
 function getCookie(name) {
     let cookieValue = null;
     if (document.cookie && document.cookie !== '') {
@@ -18,31 +25,10 @@ function getCookie(name) {
 
 const csrftoken = getCookie('csrftoken');
 
-function initEventDropdown() {
-    const nativeSelect = document.getElementById('id_event');
-    if (!nativeSelect) return;
-
-    nativeSelect.style.display = 'none';
-
-    const wrapper = document.createElement('div');
-    wrapper.className = 'custom-event-select';
-
-    const trigger = document.createElement('div');
-    trigger.className = 'custom-event-trigger';
-    trigger.textContent = nativeSelect.options[nativeSelect.selectedIndex]?.text || 'No event';
-
-    const dropdown = document.createElement('div');
-    dropdown.className = 'custom-event-dropdown';
-    document.body.appendChild(dropdown); 
-
-    function positionDropdown() {
-        const rect = trigger.getBoundingClientRect();
-        dropdown.style.position = 'fixed';
-        dropdown.style.top = (rect.bottom + 4) + 'px';
-        dropdown.style.left = rect.left + 'px';
-        dropdown.style.width = rect.width + 'px';
-    }
-
+/**
+ * Populate custom dropdown menu with options from native select element.
+ */
+function _createDropdownOptions(nativeSelect, dropdown, trigger) {
     Array.from(nativeSelect.options).forEach((opt) => {
         const item = document.createElement('div');
         item.className = 'custom-event-option' + (opt.selected ? ' selected' : '');
@@ -60,11 +46,16 @@ function initEventDropdown() {
 
         dropdown.appendChild(item);
     });
+}
 
+/**
+ * Attach click and scroll listeners to toggle custom dropdown visibility.
+ */
+function _attachDropdownListeners(trigger, dropdown) {
     trigger.addEventListener('click', (e) => {
         e.stopPropagation();
         const isOpen = dropdown.classList.contains('open');
-        if (!isOpen) positionDropdown();
+        if (!isOpen) _positionEventDropdown(trigger, dropdown);
         dropdown.classList.toggle('open', !isOpen);
         trigger.classList.toggle('open', !isOpen);
     });
@@ -75,13 +66,51 @@ function initEventDropdown() {
     });
 
     window.addEventListener('scroll', () => {
-        if (dropdown.classList.contains('open')) positionDropdown();
+        if (dropdown.classList.contains('open')) _positionEventDropdown(trigger, dropdown);
     }, { passive: true });
+}
+
+/**
+ * Position custom dropdown below trigger element with matching width.
+ */
+function _positionEventDropdown(trigger, dropdown) {
+    const rect = trigger.getBoundingClientRect();
+    dropdown.style.position = 'fixed';
+    dropdown.style.top = (rect.bottom + 4) + 'px';
+    dropdown.style.left = rect.left + 'px';
+    dropdown.style.width = rect.width + 'px';
+}
+
+/**
+ * Initialize custom event type dropdown replacing native select element.
+ */
+function initEventDropdown() {
+    const nativeSelect = document.getElementById('id_event');
+    if (!nativeSelect) return;
+
+    nativeSelect.style.display = 'none';
+
+    const wrapper = document.createElement('div');
+    wrapper.className = 'custom-event-select';
+
+    const trigger = document.createElement('div');
+    trigger.className = 'custom-event-trigger';
+    trigger.textContent = nativeSelect.options[nativeSelect.selectedIndex]?.text || 'No event';
+
+    const dropdown = document.createElement('div');
+    dropdown.className = 'custom-event-dropdown';
+    document.body.appendChild(dropdown);
+
+    _createDropdownOptions(nativeSelect, dropdown, trigger);
+    _attachDropdownListeners(trigger, dropdown);
 
     wrapper.appendChild(trigger);
     nativeSelect.insertAdjacentElement('afterend', wrapper);
 }
 
+/**
+ * Update follow button appearance and text based on follow state.
+ */
 function applyFollowState(btn, following, requested) {
     btn.classList.remove('btn-primary', 'btn-secondary', 'btn-warning');
     if (following) {
@@ -98,177 +127,179 @@ function applyFollowState(btn, following, requested) {
     btn.dataset.requested = requested;
 }
 
-document.addEventListener('DOMContentLoaded', function() {
+/**
+ * Position search results dropdown below input field with matching width.
+ */
+function _positionSearchDropdown(input, results) {
+    const rect = input.getBoundingClientRect();
+    results.style.position = 'fixed';
+    results.style.top = (rect.bottom + 4) + 'px';
+    results.style.left = rect.left + 'px';
+    results.style.width = rect.width + 'px';
+    results.style.zIndex = '9999';
+}
+
+/**
+ * Generate HTML for a single user search result row with avatar and info.
+ */
+function _renderSearchResult(u) {
+    const avatar = u.profile_picture
+        ? `<img src="${u.profile_picture}" class="search-avatar" alt="">`
+        : `<div class="search-avatar search-avatar--initial">${u.username[0].toUpperCase()}</div>`;
+    return `<a href="${u.profile_url}" class="search-result-row">
+        ${avatar}
+        <div class="search-result-info">
+            <span class="search-result-name">${u.full_name}</span>
+            <span class="search-result-username">@${u.username}</span>
+        </div>
+        <span class="status-dot status-${u.status}"></span>
+    </a>`;
+}
+
+/**
+ * Render all search results or empty state and position dropdown.
+ */
+function _handleSearchResults(data, results, input) {
+    results.innerHTML = '';
+    if (!data.users.length) {
+        results.innerHTML = '<div class="search-no-results">No users found</div>';
+    } else {
+        data.users.forEach(u => { results.innerHTML += _renderSearchResult(u); });
+    }
+    _positionSearchDropdown(input, results);
+    results.hidden = false;
+}
+
+/**
+ * Initialize user search with debounced API calls and click-outside dismissal.
+ */
+function initUserSearch() {
     const input = document.getElementById('userSearchInput');
     const results = document.getElementById('userSearchResults');
     if (!input) return;
 
     document.body.appendChild(results);
-
-    function positionDropdown() {
-        const rect = input.getBoundingClientRect();
-        results.style.position = 'fixed';
-        results.style.top = (rect.bottom + 4) + 'px';
-        results.style.left = rect.left + 'px';
-        results.style.width = rect.width + 'px';
-        results.style.zIndex = '9999';
-    }
-
     let debounceTimer;
 
     input.addEventListener('input', function() {
         clearTimeout(debounceTimer);
         const query = this.value.trim();
-
-        if (!query) {
-            results.hidden = true;
-            results.innerHTML = '';
-            return;
-        }
+        if (!query) { results.hidden = true; results.innerHTML = ''; return; }
 
         debounceTimer = setTimeout(function() {
             fetch(`/social/search/?q=${encodeURIComponent(query)}`)
                 .then(r => r.json())
-                .then(data => {
-                    results.innerHTML = '';
-                    if (!data.users.length) {
-                        results.innerHTML = '<div class="search-no-results">No users found</div>';
-                    } else {
-                        data.users.forEach(u => {
-                            const avatar = u.profile_picture
-                                ? `<img src="${u.profile_picture}" class="search-avatar" alt="">`
-                                : `<div class="search-avatar search-avatar--initial">${u.username[0].toUpperCase()}</div>`;
-                            results.innerHTML += `
-                                <a href="${u.profile_url}" class="search-result-row">
-                                    ${avatar}
-                                    <div class="search-result-info">
-                                        <span class="search-result-name">${u.full_name}</span>
-                                        <span class="search-result-username">@${u.username}</span>
-                                    </div>
-                                    <span class="status-dot status-${u.status}"></span>
-                                </a>`;
-                        });
-                    }
-                    positionDropdown();
-                    results.hidden = false;
-                })
+                .then(data => _handleSearchResults(data, results, input))
                 .catch(() => { results.hidden = true; });
         }, 300);
     });
 
     document.addEventListener('click', function(e) {
-        if (!input.contains(e.target) && !results.contains(e.target)) {
-            results.hidden = true;
-        }
+        if (!input.contains(e.target) && !results.contains(e.target)) results.hidden = true;
     });
 
     input.addEventListener('focus', function() {
-        if (results.innerHTML) {
-            positionDropdown();
-            results.hidden = false;
-        }
+        if (results.innerHTML) { _positionSearchDropdown(input, results); results.hidden = false; }
     });
 
-    window.addEventListener('scroll', positionDropdown, { passive: true });
-    window.addEventListener('resize', positionDropdown, { passive: true });
-});
+    window.addEventListener('scroll', () => _positionSearchDropdown(input, results), { passive: true });
+    window.addEventListener('resize', () => _positionSearchDropdown(input, results), { passive: true });
+}
 
-document.addEventListener('DOMContentLoaded', function () {
+/**
+ * Append message to conversation container and auto-scroll to bottom.
+ */
+function _appendMessage(container, msg) {
+    const empty = container.querySelector('.convo-empty');
+    if (empty) empty.remove();
+
+    const row = document.createElement('div');
+    row.className = `msg-bubble-row ${msg.is_me ? 'msg-mine' : 'msg-theirs'}`;
+    row.dataset.messageId = msg.id;
+    row.innerHTML = `
+        <div class="msg-bubble">
+            <div class="msg-text">${msg.content}</div>
+            <div class="msg-time">${msg.created_at}</div>
+        </div>`;
+    container.appendChild(row);
+    container.scrollTop = container.scrollHeight;
+}
+
+/**
+ * Send message via API and update UI on success.
+ */
+function _sendMessage(config, input, sendBtn, container, state) {
+    const content = input.value.trim();
+    if (!content) return;
+    sendBtn.disabled = true;
+
+    fetch(config.sendUrl, {
+        method: 'POST',
+        headers: { 'X-CSRFToken': config.csrfToken },
+        body: new URLSearchParams({ content }),
+    })
+    .then(r => r.json())
+    .then(msg => {
+        if (msg.error) { console.error(msg.error); return; }
+        _appendMessage(container, msg);
+        state.lastMessageId = msg.id;
+        input.value = '';
+    })
+    .catch(err => console.error('Send error:', err))
+    .finally(() => { sendBtn.disabled = false; input.focus(); });
+}
+
+/**
+ * Fetch new messages from server and append to conversation.
+ */
+function _pollMessages(config, container, state) {
+    fetch(`${config.pollUrl}?last_id=${state.lastMessageId}`)
+        .then(r => r.json())
+        .then(data => {
+            data.messages.forEach(msg => {
+                _appendMessage(container, msg);
+                state.lastMessageId = msg.id;
+            });
+        })
+        .catch(err => console.error('Poll error:', err));
+}
+
+/**
+ * Initialize messaging interface with send/poll handlers and auto-scroll.
+ */
+function initMessaging() {
     const config = window.CONVO_CONFIG;
     if (!config) return;
 
     const input     = document.getElementById('message-input');
     const sendBtn   = document.getElementById('send-btn');
     const container = document.getElementById('message-container');
-
-    let lastMessageId = 0;
+    const state = { lastMessageId: 0 };
 
     document.querySelectorAll('[data-message-id]').forEach(el => {
         const id = parseInt(el.dataset.messageId, 10);
-        if (id > lastMessageId) lastMessageId = id;
+        if (id > state.lastMessageId) state.lastMessageId = id;
     });
 
-    function scrollToBottom() {
-        container.scrollTop = container.scrollHeight;
-    }
-
-    function appendMessage(msg) {
-        const empty = container.querySelector('.convo-empty');
-        if (empty) empty.remove();
-
-        const row = document.createElement('div');
-        row.className = `msg-bubble-row ${msg.is_me ? 'msg-mine' : 'msg-theirs'}`;
-        row.dataset.messageId = msg.id;
-        row.innerHTML = `
-            <div class="msg-bubble">
-                <div class="msg-text">${msg.content}</div>
-                <div class="msg-time">${msg.created_at}</div>
-            </div>`;
-        container.appendChild(row);
-        scrollToBottom();
-    }
-
-    function sendMessage() {
-        const content = input.value.trim();
-        if (!content) return;
-
-        sendBtn.disabled = true;
-
-        fetch(config.sendUrl, {
-            method: 'POST',
-            headers: { 'X-CSRFToken': config.csrfToken },
-            body: new URLSearchParams({ content }),
-        })
-        .then(r => r.json())
-        .then(msg => {
-            if (msg.error) { console.error(msg.error); return; }
-            appendMessage(msg);
-            lastMessageId = msg.id;
-            input.value = '';
-        })
-        .catch(err => console.error('Send error:', err))
-        .finally(() => { sendBtn.disabled = false; input.focus(); });
-    }
-
-    function pollMessages() {
-        fetch(`${config.pollUrl}?last_id=${lastMessageId}`)
-            .then(r => r.json())
-            .then(data => {
-                data.messages.forEach(msg => {
-                    appendMessage(msg);
-                    lastMessageId = msg.id;
-                });
-            })
-            .catch(err => console.error('Poll error:', err));
-    }
-
-    sendBtn.addEventListener('click', sendMessage);
+    sendBtn.addEventListener('click', () => _sendMessage(config, input, sendBtn, container, state));
     input.addEventListener('keydown', function (e) {
-        if (e.key === 'Enter' && !e.shiftKey) {
-            e.preventDefault();
-            sendMessage();
-        }
+        if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); _sendMessage(config, input, sendBtn, container, state); }
     });
 
-    setInterval(pollMessages, 3000);
-    scrollToBottom();
-});
+    setInterval(() => _pollMessages(config, container, state), 3000);
+    container.scrollTop = container.scrollHeight;
+}
 
-document.addEventListener('DOMContentLoaded', function() {
-
-    initEventDropdown();
-
+/**
+ * Initialize like button handlers with API calls and UI updates.
+ */
+function initLikeButtons() {
     document.querySelectorAll('.like-btn').forEach(button => {
         button.addEventListener('click', function() {
             const postId = this.dataset.postId;
-            const url = `/social/post/${postId}/like/`;
-
-            fetch(url, {
+            fetch(`/social/post/${postId}/like/`, {
                 method: 'POST',
-                headers: {
-                    'X-CSRFToken': csrftoken,
-                    'Content-Type': 'application/json'
-                }
+                headers: { 'X-CSRFToken': csrftoken, 'Content-Type': 'application/json' }
             })
             .then(response => response.json())
             .then(data => {
@@ -282,24 +313,30 @@ document.addEventListener('DOMContentLoaded', function() {
             .catch(error => console.error('Error:', error));
         });
     });
+}
 
+/**
+ * Apply bookmarked visual state to button if previously bookmarked.
+ */
+function _initBookmarkState(button) {
+    const icon = button.querySelector('.bookmark-icon');
+    if (button.dataset.bookmarked === 'true') {
+        icon.className = 'bi bi-bookmark-fill bookmark-icon';
+        button.classList.add('bookmarked');
+    }
+}
+
+/**
+ * Initialize bookmark button handlers with API calls and state management.
+ */
+function initBookmarkButtons() {
     document.querySelectorAll('.bookmark-btn').forEach(button => {
-        const icon = button.querySelector('.bookmark-icon');
-        if (button.dataset.bookmarked === 'true') {
-            icon.className = 'bi bi-bookmark-fill bookmark-icon';
-            button.classList.add('bookmarked');
-        }
-
+        _initBookmarkState(button);
         button.addEventListener('click', function() {
             const postId = this.dataset.postId;
-            const url = `/social/post/${postId}/bookmark/`;
-
-            fetch(url, {
+            fetch(`/social/post/${postId}/bookmark/`, {
                 method: 'POST',
-                headers: {
-                    'X-CSRFToken': csrftoken,
-                    'Content-Type': 'application/json'
-                }
+                headers: { 'X-CSRFToken': csrftoken, 'Content-Type': 'application/json' }
             })
             .then(response => response.json())
             .then(data => {
@@ -311,7 +348,34 @@ document.addEventListener('DOMContentLoaded', function() {
             .catch(error => console.error('Error:', error));
         });
     });
+}
 
+/**
+ * Initialize flag button handlers.
+ */
+function initFlagButtons() {
+    document.querySelectorAll('.btn-flag-post').forEach(button => {
+        button.addEventListener('click', function () {
+            const postId = this.dataset.postId;
+            const icon = this.querySelector('i');
+            const alreadyFlagged = icon.className.includes('flag-fill');
+            icon.className = alreadyFlagged ? 'bi bi-flag' : 'bi bi-flag-fill';
+            fetch(`/social/post/${postId}/flag/`, {
+                method: 'POST',
+                headers: { 'X-CSRFToken': getCookie('csrftoken') },
+            })
+            .then(r => r.json())
+            .catch(() => {
+                icon.className = alreadyFlagged ? 'bi bi-flag-fill' : 'bi bi-flag';
+            });
+        });
+    });
+}
+
+/**
+ * Initialize follow button handlers with follow/unfollow toggle functionality.
+ */
+function initFollowButtons() {
     document.querySelectorAll('.follow-btn').forEach(button => {
         button.addEventListener('click', function() {
             const username = this.dataset.username;
@@ -324,16 +388,18 @@ document.addEventListener('DOMContentLoaded', function() {
             .catch(error => console.error('Error:', error));
         });
     });
+}
 
+/**
+ * Initialize event subscription button handlers with success feedback.
+ */
+function initSubscribeButtons() {
     document.querySelectorAll('.btn-subscribe-event').forEach(btn => {
         btn.addEventListener('click', function () {
             const url = this.dataset.url;
             fetch(url, {
                 method: 'POST',
-                headers: {
-                    'X-CSRFToken': csrftoken,
-                    'Content-Type': 'application/json',
-                },
+                headers: { 'X-CSRFToken': csrftoken, 'Content-Type': 'application/json' },
             })
             .then(r => r.json())
             .then(data => {
@@ -349,33 +415,86 @@ document.addEventListener('DOMContentLoaded', function() {
             .catch(err => console.error('Subscribe error:', err));
         });
     });
+}
 
-    // Highlight post from URL param
+/**
+ * Scroll to and highlight a post based on URL parameter.
+ */
+function initHighlightPost() {
     const params = new URLSearchParams(window.location.search);
     const highlightId = params.get("highlight_post");
-    if (highlightId) {
-        const postEl = document.querySelector(`.post-card[data-post-id="${highlightId}"]`);
-        if (postEl) {
-            postEl.scrollIntoView({ behavior: "smooth", block: "center" });
-            postEl.style.transition = "box-shadow 0.4s ease";
-            postEl.style.boxShadow = "0 0 0 3px #5b73e8";
-            setTimeout(() => postEl.style.boxShadow = "", 2500);
-        }
+    if (!highlightId) return;
+    const postEl = document.querySelector(`.post-card[data-post-id="${highlightId}"]`);
+    if (postEl) {
+        postEl.scrollIntoView({ behavior: "smooth", block: "center" });
+        postEl.style.transition = "box-shadow 0.4s ease";
+        postEl.style.boxShadow = "0 0 0 3px #5b73e8";
+        setTimeout(() => postEl.style.boxShadow = "", 2500);
+    }
+}
+
+    // Load more posts
+    const loadMoreBtn = document.getElementById('load-more-btn');
+    if (loadMoreBtn) {
+        loadMoreBtn.addEventListener('click', function () {
+            const tab = this.dataset.tab;
+            const cursor = this.dataset.cursor;
+            this.textContent = 'Loading…';
+            this.disabled = true;
+            fetch(`/social/feed/more/?tab=${tab}&cursor=${cursor}`)
+                .then(r => r.json())
+                .then(data => {
+                    document.getElementById('posts-container').insertAdjacentHTML('beforeend', data.html);
+                    if (data.has_more) {
+                        this.dataset.cursor = data.next_cursor;
+                        this.textContent = 'Load more';
+                        this.disabled = false;
+                    } else {
+                        document.getElementById('load-more-wrap').remove();
+                    }
+                })
+                .catch(() => {
+                    this.textContent = 'Load more';
+                    this.disabled = false;
+                });
+        });
     }
 
-    // FAB create-post modal
+/**
+ * Initialize FAB (floating action button) modal with open/close handlers.
+ */
+function initFabModal() {
     const fab     = document.getElementById("fabBtn");
     const overlay = document.getElementById("cpOverlay");
     const cpClose = document.getElementById("cpClose");
-    if (fab && overlay && cpClose) {
-        fab.addEventListener("click", () => overlay.classList.add("open"));
-        cpClose.addEventListener("click", () => overlay.classList.remove("open"));
-        overlay.addEventListener("click", (e) => {
-            if (e.target === overlay) overlay.classList.remove("open");
-        });
-        document.addEventListener("keydown", (e) => {
-            if (e.key === "Escape") overlay.classList.remove("open");
-        });
-    }
+    if (!fab || !overlay || !cpClose) return;
+    fab.addEventListener("click", () => overlay.classList.add("open"));
+    cpClose.addEventListener("click", () => overlay.classList.remove("open"));
+    overlay.addEventListener("click", (e) => {
+        if (e.target === overlay) overlay.classList.remove("open");
+    });
+    document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") overlay.classList.remove("open");
+    });
+}
 
+// Init
+
+document.addEventListener('DOMContentLoaded', function() {
+    initUserSearch();
+});
+
+document.addEventListener('DOMContentLoaded', function () {
+    initMessaging();
+});
+
+document.addEventListener('DOMContentLoaded', function() {
+    initEventDropdown();
+    initLikeButtons();
+    initBookmarkButtons();
+    initFlagButtons();
+    initFollowButtons();
+    initSubscribeButtons();
+    initHighlightPost();
+    initFabModal();
 });

@@ -1,115 +1,96 @@
-from django.db.models import Q, Count
-from timeout.models import Post
+from django.db.models import Q
+from timeout.models import Post, Block
+
+PAGE_SIZE = 15
 
 class FeedService:
     """Service for managing social feed logic."""
 
     @staticmethod
-    def get_following_feed(user, limit=50):
-        """
-        Get posts from users that the current user follows.
-        Ordered by creation time (newest first).
-        """
+    def get_following_feed(user, cursor=None):
         if not user.is_authenticated:
             return Post.objects.none()
+        
+        blocked_by_me = Block.objects.filter(blocker=user).values_list('blocked_id', flat=True)
+        blocking_me = Block.objects.filter(blocked=user).values_list('blocker_id', flat=True)
 
-        # Get posts from followed users
         following_ids = user.following.values_list('id', flat=True)
 
-        # Include user's own posts in following feed
-        feed = Post.objects.filter(
-            Q(author_id__in=following_ids) | Q(author=user)
-        ).select_related(
-            'author', 'event'
-        ).prefetch_related(
+        qs = (Post.objects.filter(Q(author_id__in=following_ids) | Q(author=user))
+                          .exclude(author__is_banned=True)
+                          .exclude(author_id__in=blocked_by_me)
+                          .exclude(author_id__in=blocking_me))
+
+        if cursor:
+            qs = qs.filter(id__lt=cursor)
+
+        qs = qs.select_related('author', 'event').prefetch_related(
             'likes', 'comments', 'bookmarks'
-        ).order_by('-created_at')[:limit]
+        ).order_by('-created_at')[:PAGE_SIZE + 1]
 
-        # Filter by privacy
-        viewable_posts = [
-            post for post in feed if post.can_view(user)
-        ]
-
-        return viewable_posts
+        posts = [p for p in qs if p.can_view(user)]
+        return posts
 
     @staticmethod
-    def get_discover_feed(user, limit=50):
-        """
-        Get public posts from all users, ordered by engagement.
-        Shows popular posts the user hasn't seen from
-        people they don't follow.
-        """
-        # Base query: all public posts
-        feed = Post.objects.filter(
+    def get_discover_feed(user, cursor=None):
+        qs = Post.objects.filter(
             privacy=Post.Privacy.PUBLIC
-        )
+        ).exclude(author__is_banned=True)
 
-        # Exclude posts from users already being followed
         if user.is_authenticated:
+            blocked_by_me = Block.objects.filter(blocker=user).values_list('blocked_id', flat=True)
+            blocking_me = Block.objects.filter(blocked=user).values_list('blocker_id', flat=True)
+
             following_ids = user.following.values_list('id', flat=True)
-            feed = feed.exclude(author_id__in=following_ids)
-            # Exclude own posts
-            feed = feed.exclude(author=user)
+            qs = (qs.exclude(author_id__in=following_ids)
+                    .exclude(author=user)
+                    .exclude(author_id__in=blocked_by_me)
+                    .exclude(author_id__in=blocking_me))
 
-        # Annotate with engagement metrics
-        feed = feed.annotate(
-            like_count=Count('likes', distinct=True),
-            comment_count=Count('comments', distinct=True)
-        ).select_related(
-            'author', 'event'
-        ).prefetch_related(
+        if cursor:
+            qs = qs.filter(id__lt=cursor)
+
+        qs = qs.select_related('author', 'event').prefetch_related(
             'likes', 'comments', 'bookmarks'
-        )
+        ).order_by('-created_at')[:PAGE_SIZE + 1]
 
-        # Order by engagement (likes + comments) and recency
-        feed = feed.order_by(
-            '-like_count', '-comment_count', '-created_at'
-        )[:limit]
-
-        return feed
+        return list(qs)
 
     @staticmethod
-    def get_user_posts(user, viewer, limit=50):
-        """
-        Get posts from a specific user, filtered by privacy.
-        viewer is the user requesting to see the posts.
-        """
-        posts = Post.objects.filter(
-            author=user
-        ).select_related(
-            'author', 'event'
-        ).prefetch_related(
+    def get_user_posts(user, viewer, cursor=None):
+        qs = Post.objects.filter(author=user)
+        if not (viewer.is_authenticated and viewer.is_staff):
+            qs = qs.exclude(author__is_banned=True)
+
+        if cursor:
+            qs = qs.filter(id__lt=cursor)
+
+        qs = qs.select_related('author', 'event').prefetch_related(
             'likes', 'comments', 'bookmarks'
-        ).order_by('-created_at')[:limit]
+        ).order_by('-created_at')[:PAGE_SIZE + 1]
 
-        # Filter by privacy
-        viewable_posts = [
-            post for post in posts if post.can_view(viewer)
-        ]
-
-        return viewable_posts
+        return [p for p in qs if p.can_view(viewer)]
 
     @staticmethod
-    def get_bookmarked_posts(user, limit=50):
-        """Get posts bookmarked by the user."""
+    def get_bookmarked_posts(user, cursor=None):
         if not user.is_authenticated:
             return Post.objects.none()
 
-        bookmarked_post_ids = user.bookmarks.values_list(
-            'post_id', flat=True
-        )
+        blocked_by_me = Block.objects.filter(blocker=user).values_list('blocked_id', flat=True)
+        blocking_me = Block.objects.filter(blocked=user).values_list('blocker_id', flat=True)
 
-        posts = Post.objects.filter(
-            id__in=bookmarked_post_ids
-        ).select_related(
-            'author', 'event'
-        ).prefetch_related(
+        bookmarked_post_ids = user.bookmarks.values_list('post_id', flat=True)
+
+        qs = (Post.objects.filter(id__in=bookmarked_post_ids)
+                          .exclude(author__is_banned=True)
+                          .exclude(author_id__in=blocked_by_me)
+                          .exclude(author_id__in=blocking_me))
+
+        if cursor:
+            qs = qs.filter(id__lt=cursor)
+
+        qs = qs.select_related('author', 'event').prefetch_related(
             'likes', 'comments', 'bookmarks'
-        ).order_by('-created_at')[:limit]
+        ).order_by('-created_at')[:PAGE_SIZE + 1]
 
-        
-        viewable_posts = [
-            post for post in posts if post.can_view(user)
-        ]
-
-        return viewable_posts
+        return [p for p in qs if p.can_view(user)]

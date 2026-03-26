@@ -24,35 +24,28 @@ SORT_OPTIONS = {
 DEFAULT_SORT = 'recently_edited'
 
 
-@login_required
-def note_list(request):
-    """List all notes with search, category filter, and sorting."""
-    category = request.GET.get('category', '')
-    query = request.GET.get('q', '')
-    sort = request.GET.get('sort', DEFAULT_SORT)
-
+def _get_filtered_notes(user, query, category, sort):
+    """Filter and sort notes based on search query, category, and sort option."""
     if query:
-        notes = NoteService.search_notes(request.user, query)
+        notes = NoteService.search_notes(user, query)
     elif category:
-        notes = NoteService.get_notes_by_category(request.user, category)
+        notes = NoteService.get_notes_by_category(user, category)
     else:
-        notes = NoteService.get_user_notes(request.user)
-
-    # Apply sorting (pinned notes always stay on top)
+        notes = NoteService.get_user_notes(user)
     if sort in SORT_OPTIONS:
         order_field = SORT_OPTIONS[sort][0]
         notes = notes.order_by('-is_pinned', order_field)
+    return notes
 
-    user = request.user
 
-    # Build note list for Pomodoro linking (id + title)
+def _build_note_list_context(user, notes, category, query, sort):
+    """Assemble context dict for the note list page."""
     user_notes_simple = list(
         Note.objects.filter(owner=user)
         .values_list('id', 'title')
         .order_by('-is_pinned', '-created_at')[:20]
     )
-
-    context = {
+    return {
         'notes': notes,
         'form': NoteForm(user=user),
         'categories': Note.Category.choices,
@@ -60,18 +53,25 @@ def note_list(request):
         'search_query': query,
         'active_sort': sort,
         'sort_options': [(k, v[1]) for k, v in SORT_OPTIONS.items()],
-        # Gamification
         'xp': user.xp,
         'level': user.level,
         'xp_progress_pct': user.xp_progress_pct,
         'xp_for_next_level': user.xp_for_next_level,
         'note_streak': user.note_streak,
         'longest_streak': user.longest_note_streak,
-        # Daily goals
         'daily_progress': NoteService.get_daily_progress(user),
-        # Pomodoro note linking
         'user_notes_json': json.dumps(user_notes_simple),
     }
+
+
+@login_required
+def note_list(request):
+    """List all notes with search, category filter, and sorting."""
+    category = request.GET.get('category', '')
+    query = request.GET.get('q', '')
+    sort = request.GET.get('sort', DEFAULT_SORT)
+    notes = _get_filtered_notes(request.user, query, category, sort)
+    context = _build_note_list_context(request.user, notes, category, query, sort)
     return render(request, 'pages/notes.html', context)
 
 
@@ -110,33 +110,32 @@ def note_create(request):
     return redirect('notes')
 
 
+def _handle_note_edit_post(request, note):
+    """Process note edit form submission."""
+    form = NoteForm(request.POST, instance=note, user=request.user)
+    if form.is_valid():
+        form.save()
+        NoteService.update_streak_and_xp(request.user, NoteService.XP_NOTE_EDIT)
+        NoteService.log_note_edited(request.user)
+        messages.success(request, 'Note saved successfully!')
+        return redirect('notes')
+    messages.error(request, 'Error updating note.')
+    return redirect('notes')
+
+
 @login_required
 def note_edit(request, note_id):
     """Edit an existing note — full-page rich text editor."""
     note = get_object_or_404(Note, id=note_id)
-
     if not note.can_edit(request.user):
         return HttpResponseForbidden('You cannot edit this note.')
-
     if request.method == 'POST':
-        form = NoteForm(request.POST, instance=note, user=request.user)
-        if form.is_valid():
-            form.save()
-            NoteService.update_streak_and_xp(
-                request.user, NoteService.XP_NOTE_EDIT,
-            )
-            NoteService.log_note_edited(request.user)
-            messages.success(request, 'Note saved successfully!')
-            return redirect('notes')
-        messages.error(request, 'Error updating note.')
-        return redirect('notes')
-
+        return _handle_note_edit_post(request, note)
     user = request.user
     form = NoteForm(instance=note, user=user)
     context = {
         'form': form,
         'note': note,
-        # Gamification (for focus mode / stats bar on edit page)
         'xp': user.xp,
         'level': user.level,
         'xp_progress_pct': user.xp_progress_pct,
@@ -162,7 +161,6 @@ def note_autosave(request, note_id):
         note.title = title
     note.content = content
 
-    # Persist page mode if sent
     page_mode = request.POST.get('page_mode', '').strip()
     if page_mode in ('pageless', 'paged'):
         note.page_mode = page_mode
@@ -170,7 +168,6 @@ def note_autosave(request, note_id):
 
     note.save(update_fields=update_fields)
 
-    # Track daily edit (once per note per session via flag from client)
     if request.POST.get('count_edit') == '1':
         NoteService.log_note_edited(request.user)
 

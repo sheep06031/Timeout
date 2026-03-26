@@ -1,5 +1,4 @@
 from django.contrib import admin
-
 from timeout.models import Note
 
 
@@ -38,4 +37,4 @@ class NoteAdmin(admin.ModelAdmin):
             return obj.title[:50] + '...'
         return obj.title
 
-    title_preview.short_description = 'Title'
+    title_preview.short_description = 'Title' # Display full title in admin list view

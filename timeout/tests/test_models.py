@@ -23,7 +23,7 @@ class UserModelTests(TestCase):
             management_style='night_owl',
         )
 
-    # ── Field values ──────────────────────────────────────
+    #  Field values 
 
     def test_user_creation(self):
         self.assertEqual(self.user.username, 'testuser')
@@ -42,7 +42,7 @@ class UserModelTests(TestCase):
     def test_profile_picture_blank(self):
         self.assertFalse(self.user.profile_picture)
 
-    # ── Defaults ──────────────────────────────────────────
+    #  Defaults 
 
     def test_default_privacy(self):
         user = User.objects.create_user(username='u2', password='Pass1234!')
@@ -60,19 +60,19 @@ class UserModelTests(TestCase):
         self.assertIsNone(user.year_of_study)
         self.assertEqual(user.academic_interests, '')
 
-    # ── Choices ───────────────────────────────────────────
+    #  Choices ─
 
     def test_management_style_choices(self):
         choices = dict(User.ManagementStyle.choices)
         self.assertEqual(choices['early_bird'], 'Early Bird')
         self.assertEqual(choices['night_owl'], 'Night Owl')
 
-    # ── String representation ─────────────────────────────
+    #  String representation ─
 
     def test_str(self):
         self.assertEqual(str(self.user), 'testuser')
 
-    # ── get_full_name ─────────────────────────────────────
+    #  get_full_name ─
 
     def test_full_name_with_middle(self):
         self.assertEqual(self.user.get_full_name(), 'Jane Marie Smith')
@@ -90,7 +90,7 @@ class UserModelTests(TestCase):
         user = User.objects.create_user(username='empty', password='Pass1234!')
         self.assertEqual(user.get_full_name(), '')
 
-    # ── Following / Followers relationship ────────────────
+    #  Following / Followers relationship 
 
     def test_follow_user(self):
         other = User.objects.create_user(username='other', password='Pass1234!')

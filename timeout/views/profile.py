@@ -41,6 +41,7 @@ def get_profile_event(user):
 
 @login_required
 def profile_edit(request):
+    """View and edit user profile information."""
     if request.method == 'POST':
         form = ProfileEditForm(request.POST, request.FILES, instance=request.user)
         if form.is_valid():

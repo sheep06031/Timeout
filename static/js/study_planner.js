@@ -1,7 +1,13 @@
-/* Study Planner */
+/**
+ * Study Session Planner
+ * AI-powered study session planning tool that generates and schedules study sessions based on deadline and duration.
+ */
 
 let plannedSessions = [];
 
+/**
+ * Retrieve CSRF token from browser cookies for form submission.
+ */
 function getCsrfToken() {
   for (const cookie of document.cookie.split(';')) {
     const [key, val] = cookie.trim().split('=');
@@ -10,6 +16,9 @@ function getCsrfToken() {
   return '';
 }
 
+/**
+ * Request AI-generated study session plan from server based on user inputs.
+ */
 async function fetchPlan() {
   const body = new FormData();
   body.append('event_id', document.getElementById('spDeadline').value);
@@ -19,6 +28,9 @@ async function fetchPlan() {
   return res.json();
 }
 
+/**
+ * Submit study plan request and display preview if successful.
+ */
 async function submitPlan() {
   const btn = document.getElementById('spPlanBtn');
   const errorBox = document.getElementById('spError');
@@ -43,6 +55,9 @@ async function submitPlan() {
   }
 }
 
+/**
+ * Display preview of planned study sessions with dates and times.
+ */
 function showPreview(sessions) {
   document.getElementById('spPreview').innerHTML = sessions.map(s => {
     const start = new Date(s.start);
@@ -58,6 +73,9 @@ function showPreview(sessions) {
   document.getElementById('confirmBtn').onclick = () => saveSessions(sessions);
 }
 
+/**
+ * Save confirmed study sessions to calendar and reload page.
+ */
 async function saveSessions(sessions) {
   const btn = document.getElementById('confirmBtn');
   btn.disabled = true;
@@ -74,6 +92,9 @@ async function saveSessions(sessions) {
   }
 }
 
+/**
+ * Display preview/confirmation step with session details and confirm button.
+ */
 function showStep2() {
   document.getElementById('sp-step-1').classList.add('d-none');
   document.getElementById('sp-step-2').classList.remove('d-none');
@@ -82,6 +103,9 @@ function showStep2() {
   document.getElementById('confirmBtn').classList.remove('d-none');
 }
 
+/**
+ * Display planning input step with deadline, hours, and session length fields.
+ */
 function showStep1() {
   document.getElementById('sp-step-1').classList.remove('d-none');
   document.getElementById('sp-step-2').classList.add('d-none');

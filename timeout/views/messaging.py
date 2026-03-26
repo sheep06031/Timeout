@@ -4,7 +4,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.views.decorators.http import require_POST
 from django.db.models import Q
 
-from timeout.models import User, Conversation, Message
+from timeout.models import User, Conversation, Message, Block
 from timeout.models.notification import Notification
 
 
@@ -34,6 +34,12 @@ def start_conversation(request, username):
 
     if other_user == request.user:
         return redirect('inbox')
+    
+    if Block.objects.filter(
+        Q(blocker=request.user, blocked=other_user) |
+        Q(blocker=other_user, blocked=request.user)
+    ).exists():
+        return redirect('inbox')
 
     # Check if conversation already exists between these two users
     conversation = Conversation.objects.filter(
@@ -42,7 +48,6 @@ def start_conversation(request, username):
         participants=other_user
     ).first()
 
-    # Create one if it doesn't exist
     if not conversation:
         conversation = Conversation.objects.create()
         conversation.participants.add(request.user, other_user)
@@ -59,11 +64,16 @@ def conversation(request, conversation_id):
         participants=request.user
     )
 
-    # Mark messages as read
+    other_user = conv.get_other_participant(request.user)
+    if other_user and Block.objects.filter(
+        Q(blocker=request.user, blocked=other_user) |
+        Q(blocker=other_user, blocked=request.user)
+    ).exists():
+        return redirect('inbox')
+
     conv.messages.exclude(sender=request.user).update(is_read=True)
 
     messages = conv.messages.select_related('sender').order_by('created_at')
-    other_user = conv.get_other_participant(request.user)
 
     context = {
         'conversation': conv,
@@ -73,6 +83,8 @@ def conversation(request, conversation_id):
     return render(request, 'messaging/conversation.html', context)
 
 
+
+
 @login_required
 @require_POST
 def send_message(request, conversation_id):
@@ -80,8 +92,14 @@ def send_message(request, conversation_id):
     conv = get_object_or_404(
         Conversation,
         id=conversation_id,
-        participants=request.user
-    )
+        participants=request.user )
+
+    receiver = conv.get_other_participant(request.user)
+    if receiver and Block.objects.filter(
+        Q(blocker=request.user, blocked=receiver) |
+        Q(blocker=receiver, blocked=request.user)
+    ).exists():
+        return JsonResponse({'error': 'Cannot message a blocked user'}, status=403)
 
     content = request.POST.get('content', '').strip()
     if not content:
@@ -90,13 +108,9 @@ def send_message(request, conversation_id):
     message = Message.objects.create(
         conversation=conv,
         sender=request.user,
-        content=content,
-    )
+        content=content,)
 
-    # Update conversation timestamp
     conv.save()
-
-    receiver = conv.get_other_participant(request.user)
 
     if receiver:
         Notification.objects.create(
@@ -112,8 +126,18 @@ def send_message(request, conversation_id):
         'content': message.content,
         'sender': message.sender.username,
         'created_at': message.created_at.strftime('%H:%M'),
-        'is_me': True,
-    })
+        'is_me': True,})
+
+
+@login_required
+@require_POST
+def delete_message(request, message_id):
+    """Permanently delete a message (staff only)."""
+    if not request.user.is_staff:
+        return JsonResponse({'error': 'Staff access required.'}, status=403)
+    message = get_object_or_404(Message, id=message_id)
+    message.delete()
+    return JsonResponse({'ok': True})
 
 
 @login_required
@@ -131,7 +155,6 @@ def poll_messages(request, conversation_id):
         id__gt=last_id
     ).select_related('sender').order_by('created_at')
 
-    # Mark new messages from the other user as read
     new_messages.exclude(sender=request.user).update(is_read=True)
 
     data = [{

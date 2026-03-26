@@ -2,7 +2,7 @@
 Custom management command to clear seeded data from the database.
 
 Usage:
-    python manage.py unseed              # Remove everything including superusers
+    python manage.py unseed
     python manage.py unseed --keep-super  # Keep superuser @johndoe
 """
 
@@ -44,8 +44,7 @@ class Command(BaseCommand):
             User.objects.exclude(username=SUPERUSER_USERNAME).delete()
         else:
             self.stdout.write(self.style.WARNING(
-                'Mode: Removing ALL data (including superusers)'
-            ))
+                'Mode: Removing ALL data (including superusers)'))
             notes_deleted = Note.objects.all().delete()[0]
             logs_deleted = StudyLog.objects.all().delete()[0]
             User.objects.all().delete()
@@ -54,6 +53,5 @@ class Command(BaseCommand):
         users_removed = total_users_before - total_users_after
 
         self.stdout.write(self.style.SUCCESS(
-            f'Removed {users_removed} user(s), {notes_deleted} notes, {logs_deleted} study logs.'
-        ))
+            f'Removed {users_removed} user(s), {notes_deleted} notes, {logs_deleted} study logs.'))
         self.stdout.write(f'Remaining users: {total_users_after}')

@@ -4,6 +4,7 @@ from timeout.models import Event
 from timeout.models.notification import Notification
 
 def ai_suggestions(request):
+    """Context processor to provide AI-generated suggestions based on today's events."""
     if not request.user.is_authenticated:
         return {"ai_suggestions": []}
 
@@ -17,6 +18,7 @@ def ai_suggestions(request):
     return {"ai_suggestions": suggestions}
 
 def unread_notifications_count(request):
+    """Context processor to provide count of unread notifications and latest notification ID."""
     if request.user.is_authenticated:
         qs = Notification.objects.filter(user=request.user, is_read=False)
         count = qs.count()

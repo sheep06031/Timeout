@@ -17,9 +17,7 @@ from allauth.socialaccount.models import SocialApp
 
 from timeout.forms.profileEditForm import ProfileEditForm
 from timeout.models import Event
-from timeout.services.deadline_service import (
-    DeadlineService, _format_timedelta, _format_elapsed,
-)
+from timeout.services.deadline_service import (DeadlineService, time_string, time_passed,)
 
 User = get_user_model()
 
@@ -36,7 +34,7 @@ def make_user(username='testuser', password='TestPass1!', **kwargs):
     return User.objects.create_user(username=username, password=password, **kwargs)
 
 
-# ─── Calendar View ──────────────────────────────────────────────────
+# Calendar View 
 
 class CalendarViewTests(TestCase):
 
@@ -125,7 +123,7 @@ class CalendarViewTests(TestCase):
         self.assertEqual(resp.status_code, 302)
 
 
-# ─── Event Create ───────────────────────────────────────────────────
+#  Event Create 
 
 class EventCreateTests(TestCase):
 
@@ -175,7 +173,7 @@ class EventCreateTests(TestCase):
         self.assertEqual(resp.status_code, 302)
 
 
-# ─── Event Delete ───────────────────────────────────────────────────
+#  Event Delete 
 
 class EventDeleteTests(TestCase):
 
@@ -201,7 +199,7 @@ class EventDeleteTests(TestCase):
         self.assertTrue(Event.objects.filter(pk=self.event.pk).exists())
 
 
-# ─── Deadline Service ───────────────────────────────────────────────
+#  Deadline Service 
 
 class DeadlineServiceTests(TestCase):
 
@@ -258,62 +256,62 @@ class DeadlineServiceTests(TestCase):
         result = DeadlineService.mark_complete(self.user, self.normal.pk)
         self.assertIsNone(result)
 
-    def test_format_timedelta_days(self):
-        result = _format_timedelta(timedelta(days=2, hours=3))
+    def testtime_string_days(self):
+        result = time_string(timedelta(days=2, hours=3))
         self.assertIn('2d', result)
         self.assertIn('left', result)
 
-    def test_format_timedelta_hours(self):
-        result = _format_timedelta(timedelta(hours=5, minutes=30))
+    def testtime_string_hours(self):
+        result = time_string(timedelta(hours=5, minutes=30))
         self.assertIn('5h', result)
         self.assertIn('left', result)
 
-    def test_format_timedelta_minutes(self):
-        result = _format_timedelta(timedelta(minutes=45))
+    def testtime_string_minutes(self):
+        result = time_string(timedelta(minutes=45))
         self.assertIn('45m', result)
 
-    def test_format_timedelta_overdue_days(self):
-        result = _format_timedelta(timedelta(days=-2, hours=-3))
+    def testtime_string_overdue_days(self):
+        result = time_string(timedelta(days=-2, hours=-3))
         self.assertIn('overdue', result)
 
-    def test_format_timedelta_overdue_hours(self):
-        result = _format_timedelta(timedelta(hours=-5))
+    def testtime_string_overdue_hours(self):
+        result = time_string(timedelta(hours=-5))
         self.assertIn('overdue', result)
 
-    def test_format_timedelta_overdue_minutes(self):
-        result = _format_timedelta(timedelta(minutes=-30))
+    def testtime_string_overdue_minutes(self):
+        result = time_string(timedelta(minutes=-30))
         self.assertIn('overdue', result)
 
-    def test_format_elapsed_days(self):
-        result = _format_elapsed(timedelta(days=3))
+    def testtime_passed_days(self):
+        result = time_passed(timedelta(days=3))
         self.assertIn('3 days ago', result)
 
-    def test_format_elapsed_one_day(self):
-        result = _format_elapsed(timedelta(days=1))
+    def testtime_passed_one_day(self):
+        result = time_passed(timedelta(days=1))
         self.assertIn('1 day ago', result)
 
-    def test_format_elapsed_hours(self):
-        result = _format_elapsed(timedelta(hours=5))
+    def testtime_passed_hours(self):
+        result = time_passed(timedelta(hours=5))
         self.assertIn('5 hours ago', result)
 
-    def test_format_elapsed_one_hour(self):
-        result = _format_elapsed(timedelta(hours=1))
+    def testtime_passed_one_hour(self):
+        result = time_passed(timedelta(hours=1))
         self.assertIn('1 hour ago', result)
 
-    def test_format_elapsed_minutes(self):
-        result = _format_elapsed(timedelta(minutes=15))
+    def testtime_passed_minutes(self):
+        result = time_passed(timedelta(minutes=15))
         self.assertIn('15 min ago', result)
 
-    def test_format_elapsed_just_now(self):
-        result = _format_elapsed(timedelta(seconds=30))
+    def testtime_passed_just_now(self):
+        result = time_passed(timedelta(seconds=30))
         self.assertEqual(result, 'Added just now')
 
-    def test_format_elapsed_negative(self):
-        result = _format_elapsed(timedelta(seconds=-5))
+    def testtime_passed_negative(self):
+        result = time_passed(timedelta(seconds=-5))
         self.assertEqual(result, 'Added just now')
 
 
-# ─── Deadline Views ─────────────────────────────────────────────────
+#  Deadline Views 
 
 class DeadlineViewTests(TestCase):
 
@@ -353,7 +351,7 @@ class DeadlineViewTests(TestCase):
         self.assertEqual(resp.status_code, 302)
 
 
-# ─── Settings View ──────────────────────────────────────────────────
+#  Settings View 
 
 class SettingsViewTests(TestCase):
 
@@ -420,7 +418,7 @@ class SettingsViewTests(TestCase):
         self.assertEqual(resp.status_code, 302)
 
 
-# ─── Profile Edit View ──────────────────────────────────────────────
+#  Profile Edit View 
 
 class ProfileEditViewTests(TestCase):
 
@@ -460,7 +458,7 @@ class ProfileEditViewTests(TestCase):
         self.assertEqual(resp.status_code, 302)
 
 
-# ─── Profile Edit Form ──────────────────────────────────────────────
+#  Profile Edit Form 
 
 class ProfileEditFormTests(TestCase):
 
@@ -552,7 +550,7 @@ class ProfileEditFormTests(TestCase):
             self.assertEqual(user.university, 'Existing')
 
 
-# ─── AI Calendar ────────────────────────────────────────────────────
+#  AI Calendar 
 
 class AICalendarTests(TestCase):
 
@@ -681,7 +679,7 @@ class AICalendarTests(TestCase):
         self.assertEqual(resp.status_code, 405)
 
 
-# ─── Social API Endpoints ───────────────────────────────────────────
+#  Social API Endpoints 
 
 class SocialAPITests(TestCase):
 
@@ -739,7 +737,7 @@ class SocialAPITests(TestCase):
         self.assertNotIn('alice', usernames)
 
 
-# ─── Profile View with Events ───────────────────────────────────────
+#  Profile View with Events 
 
 class ProfileEventTests(TestCase):
 
@@ -781,7 +779,7 @@ class ProfileEventTests(TestCase):
         self.assertEqual(resp.status_code, 200)
 
 
-# ─── Event Edit Edge Cases ──────────────────────────────────────────
+#  Event Edit Edge Cases 
 
 class EventEditEdgeCases(TestCase):
 

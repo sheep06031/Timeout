@@ -47,7 +47,7 @@ class NoteServiceTest(TestCase):
             category=Note.Category.PERSONAL,
         )
 
-    # --- get_user_notes ---
+    #  get_user_notes 
 
     def test_get_user_notes_returns_only_own_notes(self):
         notes = NoteService.get_user_notes(self.user)
@@ -62,7 +62,7 @@ class NoteServiceTest(TestCase):
         notes = NoteService.get_user_notes(AnonymousUser())
         self.assertEqual(notes.count(), 0)
 
-    # --- get_notes_by_category ---
+    #  get_notes_by_category 
 
     def test_get_notes_by_category(self):
         notes = NoteService.get_notes_by_category(
@@ -83,7 +83,7 @@ class NoteServiceTest(TestCase):
         )
         self.assertEqual(notes.count(), 0)
 
-    # --- get_notes_for_event ---
+    # get_notes_for_event
 
     def test_get_notes_for_event(self):
         notes = NoteService.get_notes_for_event(
@@ -102,8 +102,7 @@ class NoteServiceTest(TestCase):
         )
         self.assertEqual(notes.count(), 0)
 
-    # --- search_notes ---
-
+    # search_notes
     def test_search_notes_by_title(self):
         notes = NoteService.search_notes(self.user, 'Lecture')
         self.assertEqual(notes.count(), 1)

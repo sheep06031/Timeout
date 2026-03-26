@@ -1,5 +1,4 @@
 import json
-from datetime import datetime, timedelta
 
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
@@ -16,6 +15,7 @@ from timeout.services.study_planner import get_free_slots, pick_evenly_spaced_sl
 @login_required
 @require_POST
 def plan_sessions(request):
+    """AJAX endpoint to plan study sessions for a given deadline."""
     event_id = request.POST.get('event_id')
     hours_needed = float(request.POST.get('hours_needed', 4))
     session_length = float(request.POST.get('session_length', 2))
@@ -31,17 +31,14 @@ def plan_sessions(request):
     candidates = pick_evenly_spaced_slots(free_slots, num_sessions, now, deadline.start_datetime)
 
     title = f'Study for {deadline.title}'
-    sessions = []
-    for slot in candidates:
-        slot_start = datetime.strptime(slot['start'], '%Y-%m-%dT%H:%M')
-        slot_end = slot_start + timedelta(hours=session_length)
-        sessions.append({'title': title, 'start': slot['start'], 'end': slot_end.strftime('%Y-%m-%dT%H:%M')})
+    sessions = [{**slot, 'title': title} for slot in candidates]
     return JsonResponse({'success': True, 'sessions': sessions})
 
 
 @login_required
 @require_POST
 def confirm_sessions(request):
+    """AJAX endpoint to confirm and create study sessions after GPT scheduling."""
     try:
         sessions = json.loads(request.POST.get('sessions', '[]'))
     except json.JSONDecodeError:
@@ -69,6 +66,7 @@ def confirm_sessions(request):
 
 
 def call_gpt(deadline, hours_needed, session_length, free_slots):
+    """Call GPT to schedule sessions based on the deadline and free slots."""
     prompt = build_prompt(deadline, hours_needed, session_length, free_slots)
     try:
         from openai import OpenAI
@@ -90,6 +88,7 @@ def call_gpt(deadline, hours_needed, session_length, free_slots):
 
 
 def build_prompt(deadline, hours_needed, session_length, candidates):
+    """Build a prompt for GPT to schedule study sessions."""
     now = timezone.now().strftime('%Y-%m-%d %H:%M')
     due = deadline.start_datetime.strftime('%Y-%m-%d %H:%M')
     num_sessions = len(candidates)

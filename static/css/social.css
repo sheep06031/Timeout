@@ -335,17 +335,44 @@
 
 .btn-delete-post:hover { background: rgba(239, 68, 68, 0.16); }
 
-.btn-flag-post {
-    font-size: 13px;
-    color: var(--to-muted);
-    background: none;
-    border: none;
+.btn-flag-action-delete {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--accent);
+    background: rgba(91, 115, 232, 0.08);
+    border: 1px solid rgba(91, 115, 232, 0.20);
+    border-radius: 50px;
+    padding: 5px 13px;
     cursor: pointer;
-    padding: 4px 6px;
-    border-radius: 4px;
-    transition: color 0.2s, background 0.2s;
+    transition: background 0.2s;
 }
-.btn-flag-post:hover { color: #f59e0b; background: rgba(245, 158, 11, 0.10); }
+.btn-flag-action-delete:hover { background: rgba(91, 115, 232, 0.16); }
+
+.btn-dismiss-flag {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--accent-teal);
+    background: rgba(78, 205, 196, 0.08);
+    border: 1px solid rgba(78, 205, 196, 0.20);
+    border-radius: 50px;
+    padding: 5px 13px;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+.btn-dismiss-flag:hover { background: rgba(78, 205, 196, 0.16); }
+
+.btn-flag-post {
+    font-size: 11px;
+    font-weight: 700;
+    color: #ef4444;
+    background: rgba(239, 68, 68, 0.08);
+    border: 1px solid rgba(239, 68, 68, 0.20);
+    border-radius: 50px;
+    padding: 5px 13px;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+.btn-flag-post:hover { background: rgba(239, 68, 68, 0.16); }
 
 .btn-delete-comment {
     font-size: 14px;
@@ -1038,3 +1065,18 @@
     color: var(--to-muted);
     text-align: center;
 }
+
+#load-more-btn {
+    background: var(--to-gradient);
+    color: #fff;
+    border: none;
+    border-radius: 24px;
+    padding: 10px 32px;
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    transition: opacity 0.2s;
+}
+
+#load-more-btn:hover { opacity: 0.88; }
+#load-more-btn:disabled { opacity: 0.55; cursor: default; }

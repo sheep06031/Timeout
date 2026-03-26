@@ -1,13 +1,11 @@
 import re
 import uuid
-
 from django import forms
 from django.contrib.auth import get_user_model
 from django.contrib.auth.forms import AuthenticationForm
 from django.core.exceptions import ValidationError
 
 User = get_user_model()
-
 
 def validate_password_strength(password):
     """Enforce minimum 8 chars, 1 uppercase, 1 lowercase, 1 digit, 1 symbol."""

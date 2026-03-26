@@ -1,7 +1,6 @@
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render
 from timeout.models.notification import Notification
-from timeout.models.follow_request import FollowRequest
 from django.http import JsonResponse
 from django.core.paginator import Paginator
 from timeout.services.notification_service import NotificationService
@@ -9,32 +8,39 @@ from timeout.services.notification_service import NotificationService
 
 @login_required
 def notifications_view(request):
+    """Display user notifications with pagination and filtering."""
     notifications_qs = Notification.objects.filter(
         user=request.user,
         is_dismissed=False
     ).order_by('-created_at')
-
     unread_count = notifications_qs.filter(is_read=False).count()
 
-    # Filter by unread if requested
     filter_param = request.GET.get('filter')
     if filter_param == 'unread':
         notifications_qs = notifications_qs.filter(is_read=False)
 
-    paginator = Paginator(notifications_qs, 10)
-    page_number = request.GET.get('page')
+    paginator = Paginator(notifications_qs, 15)
+    page_number = request.GET.get('page', 1)
     notifications = paginator.get_page(page_number)
 
-    pending_usernames = set(
-        FollowRequest.objects.filter(to_user=request.user)
-        .values_list('from_user__username', flat=True)
-    )
-    for n in notifications:
-        n.follow_request_username = None
-        if n.type == Notification.Type.FOLLOW and 'requested to follow you' in n.message:
-            username = n.message.split(' requested to follow you')[0]
-            if username in pending_usernames:
-                n.follow_request_username = username
+    # AJAX request for infinite scroll
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        data = [{
+            'id': n.id,
+            'title': n.title,
+            'message': n.message,
+            'type': n.type,
+            'is_read': n.is_read,
+            'created_at': n.created_at.isoformat(),
+            'deadline_id': n.deadline_id,
+            'conversation_id': n.conversation_id,
+            'post_id': n.post_id,
+        } for n in notifications]
+        return JsonResponse({
+            'notifications': data,
+            'has_next': notifications.has_next(),
+            'next_page': notifications.next_page_number() if notifications.has_next() else None,
+        })
 
     return render(request, 'pages/notifications.html', {
         'notifications': notifications,
@@ -45,6 +51,7 @@ def notifications_view(request):
 
 @login_required
 def mark_notification_read(request, notification_id):
+    """Mark a notification as read."""
     try:
         n = Notification.objects.get(id=notification_id, user=request.user)
         n.is_read = True
@@ -54,7 +61,15 @@ def mark_notification_read(request, notification_id):
         return JsonResponse({'error': 'Notification not found'}, status=404)
 
 @login_required
+def mark_all_notifications_unread(request):
+    Notification.objects.filter(
+        user=request.user, is_read=True, is_dismissed=False
+    ).update(is_read=False)
+    return JsonResponse({'success': True})
+
+@login_required
 def delete_notification(request, notification_id):
+    """Dismiss a notification (mark as dismissed and read)."""
     try:
         n = Notification.objects.get(id=notification_id, user=request.user)
         n.is_dismissed = True
@@ -65,14 +80,30 @@ def delete_notification(request, notification_id):
         return JsonResponse({'error': 'Notification not found'}, status=404)
 
 @login_required
+def mark_all_notifications_read(request):
+    Notification.objects.filter(user=request.user, is_read=False, is_dismissed=False).update(is_read=True)
+    return JsonResponse({'success': True})
+
+@login_required
+def mark_notification_unread(request, notification_id):
+    try:
+        n = Notification.objects.get(id=notification_id, user=request.user)
+        n.is_read = False
+        n.save(update_fields=['is_read'])
+        return JsonResponse({'success': True})
+    except Notification.DoesNotExist:
+        return JsonResponse({'error': 'Notification not found'}, status=404)
+
+@login_required
 def poll_notifications(request):
+    """AJAX endpoint to poll for new notifications since last_id."""
     try:
         last_id = int(request.GET.get('last_id', 0))
     except (ValueError, TypeError):
         last_id = 0
 
     NotificationService.create_deadline_notifications(request.user)
-    NotificationService.create_event_notifications(request.user)  # ADD THIS
+    NotificationService.create_event_notifications(request.user)
 
     notifications = Notification.objects.filter(
         user=request.user,

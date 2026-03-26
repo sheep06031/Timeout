@@ -24,7 +24,6 @@ class SeedCommandTests(TestCase):
 
     def test_seed_creates_25_regular_users(self):
         self._call_seed()
-        # 25 regular + 1 superuser = 26
         self.assertEqual(User.objects.count(), 26)
         self.assertEqual(User.objects.filter(is_superuser=False).count(), 25)
 

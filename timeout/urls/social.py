@@ -1,9 +1,12 @@
 from django.urls import path
-from timeout.views import social
+from timeout.views import social, social_api, moderation
+
+"""URL patterns for the timeout app's social features."""
 
 urlpatterns = [
     # Feed
     path('feed/', social.feed, name='social_feed'),
+    path('feed/more/', social.feed_more, name='feed_more'),
 
     # Posts
     path('post/create/', social.create_post, name='create_post'),
@@ -15,12 +18,12 @@ urlpatterns = [
     path('post/<int:post_id>/comment/', social.add_comment, name='add_comment'),
     path('comment/<int:comment_id>/delete/', social.delete_comment, name='delete_comment'),
 
-    # Flagging
-    path('post/<int:post_id>/flag/', social.flag_post, name='flag_post'),
-
-    # Moderation
-    path('user/<str:username>/ban/', social.ban_user, name='ban_user'),
-    path('user/<str:username>/unban/', social.unban_user, name='unban_user'),
+    # Flagging & moderation
+    path('post/<int:post_id>/flag/', moderation.flag_post, name='flag_post'),
+    path('flag/<int:flag_id>/approve/', moderation.approve_flag, name='approve_flag'),
+    path('flag/<int:flag_id>/deny/', moderation.deny_flag, name='deny_flag'),
+    path('user/<str:username>/ban/', moderation.ban_user, name='ban_user'),
+    path('user/<str:username>/unban/', moderation.unban_user, name='unban_user'),
 
     # Bookmarks
     path('bookmarks/', social.bookmarks, name='bookmarks'),
@@ -28,19 +31,23 @@ urlpatterns = [
     # User profiles and following
     path('user/<str:username>/', social.user_profile, name='user_profile'),
     path('user/<str:username>/follow/', social.follow_user, name='follow_user'),
+    path('user/<str:username>/block/', social.block_user, name='block_user'),
     path('user/<str:username>/follow/accept/', social.accept_follow_request, name='accept_follow_request'),
     path('user/<str:username>/follow/reject/', social.reject_follow_request, name='reject_follow_request'),
     path('status/update/', social.update_status, name='update_status'),
-    path('friends/', social.friends_api, name='friends_api'),
-    path('user/<str:username>/friends/', social.user_friends_api, name='user_friends_api'),
 
-    # Follow lists (own)
-    path('followers/', social.followers_api, name='followers_api'),
-    path('following/', social.following_api, name='following_api'),
+    # Friends & follow lists (own)
+    path('friends/', social_api.friends_api, name='friends_api'),
+    path('followers/', social_api.followers_api, name='followers_api'),
+    path('following/', social_api.following_api, name='following_api'),
+    path('blocked/', social.blocked_users_api, name='blocked_users_api'),
+
 
     # User search
     path('search/', social.search_users, name='search_users'),
-    # Follow lists (other users)
-    path('user/<str:username>/followers/', social.user_followers_api, name='user_followers_api'),
-    path('user/<str:username>/following/', social.user_following_api, name='user_following_api'),
+
+    # Friends & follow lists (other users)
+    path('user/<str:username>/friends/', social_api.user_friends_api, name='user_friends_api'),
+    path('user/<str:username>/followers/', social_api.user_followers_api, name='user_followers_api'),
+    path('user/<str:username>/following/', social_api.user_following_api, name='user_following_api'),
 ]

@@ -31,14 +31,14 @@ class EventDeleteViewTests(TestCase):
         self.event = make_event(self.user, title='My Event')
         self.url = reverse('event_delete', kwargs={'pk': self.event.pk})
 
-    # ── Authentication ────────────────────────────────────────
+    # Authentication
 
     def test_login_required_redirects_anonymous(self):
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 302)
         self.assertIn('/login/', response['Location'])
 
-    # ── Ownership ─────────────────────────────────────────────
+    # Ownership
 
     def test_other_user_gets_404(self):
         self.client.login(username='other', password='pass123')
@@ -51,7 +51,7 @@ class EventDeleteViewTests(TestCase):
         self.assertRedirects(response, reverse('calendar'))
         self.assertFalse(Event.objects.filter(pk=self.event.pk).exists())
 
-    # ── Redirect & message ────────────────────────────────────
+    # Redirect & message 
 
     def test_redirects_to_calendar_after_delete(self):
         self.client.login(username='owner', password='pass123')
@@ -64,7 +64,7 @@ class EventDeleteViewTests(TestCase):
         messages = list(response.context['messages'])
         self.assertTrue(any('My Event' in str(m) for m in messages))
 
-    # ── Cascading deletes ─────────────────────────────────────
+    # Cascading deletes
 
     def test_deletes_linked_notifications(self):
         Notification.objects.create(
@@ -121,7 +121,7 @@ class EventDeleteViewTests(TestCase):
             Notification.objects.filter(user=self.other).exists()
         )
 
-    # ── Non-existent event ────────────────────────────────────
+    # Non-existent event 
 
     def test_nonexistent_event_returns_404(self):
         self.client.login(username='owner', password='pass123')
@@ -129,7 +129,7 @@ class EventDeleteViewTests(TestCase):
         response = self.client.get(url)
         self.assertEqual(response.status_code, 404)
 
-    # ── Event types ───────────────────────────────────────────
+    # Event types 
 
     def test_delete_deadline_event(self):
         event = make_event(self.user, title='Deadline', event_type=Event.EventType.DEADLINE)

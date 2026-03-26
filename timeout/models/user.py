@@ -8,10 +8,12 @@ class User(AbstractUser):
     """Custom User model for the Timeout application."""
 
     class ManagementStyle(models.TextChoices):
+        """Class that shows if the user likes to work at night or during daytime"""
         EARLY_BIRD = 'early_bird', 'Early Bird'
         NIGHT_OWL = 'night_owl', 'Night Owl'
 
     class Status(models.TextChoices):
+        """Class that determines the current status of the user"""
         FOCUS    = 'focus',    '🎯 Focus Mode'
         SOCIAL   = 'social',   '💬 Social'
         INACTIVE = 'inactive', '😶 Inactive'
@@ -20,8 +22,7 @@ class User(AbstractUser):
         max_length=10,
         choices=Status.choices,
         default=Status.INACTIVE,
-)
-    # Profile fields
+    )
     middle_name = models.CharField(max_length=50, blank=True)
     bio = models.TextField(max_length=500, blank=True)
     university = models.CharField(max_length=150, blank=True)
@@ -31,11 +32,7 @@ class User(AbstractUser):
         blank=True,
     )
     academic_interests = models.CharField(max_length=300, blank=True)
-
-    # Focus timer
     focus_started_at = models.DateTimeField(null=True, blank=True)
-
-    # Settings
     privacy_private = models.BooleanField(default=False)
     management_style = models.CharField(
         max_length=10,
@@ -43,13 +40,14 @@ class User(AbstractUser):
         default=ManagementStyle.EARLY_BIRD,
     )
 
-    # Appearance / Accessibility
     class Theme(models.TextChoices):
+        """Class that shows the theme options"""
         LIGHT  = 'light',  'Light'
         DARK   = 'dark',   'Dark'
         SYSTEM = 'system', 'System Default'
 
     class ColorblindMode(models.TextChoices):
+        """Class that shows the different modes for the different types of color blindnesses"""
         NONE         = 'none',         'None'
         PROTANOPIA   = 'protanopia',   'Protanopia (Red-blind)'
         DEUTERANOPIA = 'deuteranopia', 'Deuteranopia (Green-blind)'
@@ -75,25 +73,25 @@ class User(AbstractUser):
     )
     daily_study_reminder = models.TimeField(null=True, blank=True)
 
-    # Daily Study Goals
+    # Daily Study Goals 
     daily_pomo_goal = models.PositiveSmallIntegerField(default=4)
     daily_notes_goal = models.PositiveSmallIntegerField(default=3)
     daily_focus_goal = models.PositiveSmallIntegerField(default=120)  # minutes
 
-    # Status preferences
+    # Status preferences 
     auto_online = models.BooleanField(default=False)
 
-    # Gamification
+    # Gamification 
     xp = models.PositiveIntegerField(default=0)
     note_streak = models.PositiveIntegerField(default=0)
     longest_note_streak = models.PositiveIntegerField(default=0)
     last_note_date = models.DateField(null=True, blank=True)
 
-    # Moderation
+    # Moderation 
     is_banned = models.BooleanField(default=False)
     ban_reason = models.CharField(max_length=300, blank=True)
 
-    # Social
+    # Social 
     following = models.ManyToManyField(
         'self',
         symmetrical=False,
@@ -102,9 +100,11 @@ class User(AbstractUser):
     )
 
     def __str__(self):
+        """Return the username as the string representation."""
         return self.username
 
     def get_full_name(self):
+        """Returns the full name of the User"""
         parts = [self.first_name, self.middle_name, self.last_name]
         return ' '.join(part for part in parts if part)
 
@@ -134,8 +134,10 @@ class User(AbstractUser):
 
     @property
     def follower_count(self):
+        """Return the number of users following this user."""
         return self.followers.count()
 
     @property
     def following_count(self):
+        """Return the number of users this user is following."""
         return self.following.count()

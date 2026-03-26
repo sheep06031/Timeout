@@ -1,44 +1,64 @@
+/**
+ * AI Calendar Event Creation
+ * Handles user input validation, API calls, and UI feedback for AI-powered event creation.
+ */
+
+
+
+/**
+ * Reset the AI input UI to loading state with spinners and hidden result elements.
+ */
+function _resetAiUI() {
+  document.getElementById('aiSubmitBtn').disabled = true;
+  document.getElementById('aiSpinner').classList.remove('d-none');
+  document.getElementById('aiSuccess').classList.add('d-none');
+  document.getElementById('aiError').classList.add('d-none');
+  document.getElementById('aiResult').classList.remove('d-none');
+}
+
+/**
+ * Display an error message in the AI result panel.
+ */
+function _showAiError(msg) {
+  var el = document.getElementById('aiError');
+  el.textContent = msg;
+  el.classList.remove('d-none');
+}
+
+/**
+ * Process AI event creation response and show success or error message.
+ */
+function _handleAiResult(data) {
+  if (data.success) {
+    var el = document.getElementById('aiSuccess');
+    el.textContent = '"' + data.event.title + '" added (' + data.event.start + ' \u2013 ' + data.event.end + ')';
+    el.classList.remove('d-none');
+    document.getElementById('aiUserInput').value = '';
+    setTimeout(function() { location.reload(); }, 1500);
+  } else {
+    _showAiError(data.error || 'Failed to create event.');
+  }
+}
+
+/**
+ * Submit user input to AI event creation API and handle the response.
+ */
 async function submitAiEvent() {
-  const input = document.getElementById('aiUserInput').value.trim();
+  var input = document.getElementById('aiUserInput').value.trim();
   if (!input) return;
 
-  const btn = document.getElementById('aiSubmitBtn');
-  const spinner = document.getElementById('aiSpinner');
-  const successEl = document.getElementById('aiSuccess');
-  const errorEl = document.getElementById('aiError');
-  const resultEl = document.getElementById('aiResult');
-
-  btn.disabled = true;
-  spinner.classList.remove('d-none');
-  successEl.classList.add('d-none');
-  errorEl.classList.add('d-none');
-  resultEl.classList.remove('d-none');
+  _resetAiUI();
 
   try {
-    const formData = new FormData();
+    var formData = new FormData();
     formData.append('user_input', input);
     formData.append('csrfmiddlewaretoken', window.AI_CSRF_TOKEN);
-
-    const res = await fetch(window.AI_ADD_URL, {
-      method: 'POST',
-      body: formData,
-    });
-    const data = await res.json();
-
-    if (data.success) {
-      successEl.textContent = `"${data.event.title}" added (${data.event.start} – ${data.event.end})`;
-      successEl.classList.remove('d-none');
-      document.getElementById('aiUserInput').value = '';
-      setTimeout(() => location.reload(), 1500);
-    } else {
-      errorEl.textContent = data.error || 'Failed to create event.';
-      errorEl.classList.remove('d-none');
-    }
+    var res = await fetch(window.AI_ADD_URL, { method: 'POST', body: formData });
+    _handleAiResult(await res.json());
   } catch (err) {
-    errorEl.textContent = 'Network error. Please try again.';
-    errorEl.classList.remove('d-none');
+    _showAiError('Network error. Please try again.');
   } finally {
-    btn.disabled = false;
-    spinner.classList.add('d-none');
+    document.getElementById('aiSubmitBtn').disabled = false;
+    document.getElementById('aiSpinner').classList.add('d-none');
   }
 }

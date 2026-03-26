@@ -11,7 +11,7 @@
 {% block content %}
 <div class="nt-page" id="notesPage">
 
-  <!-- ══ Study Stats Bar ══ -->
+  <!-- Study Stats Bar-->
   <div class="nt-stats-bar">
     <div class="nt-stat-item nt-stat-streak">
       <span class="nt-stat-icon" id="streakIcon">&#128293;</span>
@@ -55,7 +55,7 @@
     </div>
   </div>
 
-  <!-- ══ Daily Goals Widget ══ -->
+  <!-- Daily Goals Widget -->
   <div class="nt-goals-bar" id="goalsBar">
     <div class="nt-goals-header">
       <div class="nt-goals-title-row">
@@ -121,7 +121,7 @@
     </div>
   </div>
 
-  <!-- ══ Study Heatmap ══ -->
+  <!-- Study Heatmap  -->
   <div class="nt-heatmap-card" id="heatmapCard">
     <div class="nt-heatmap-header">
       <h3 class="nt-heatmap-title">&#128200; Study Activity</h3>
@@ -143,7 +143,7 @@
 
   <div class="nt-main-layout">
 
-    <!-- ══ Left: Notes List ══ -->
+    <!-- Left: Notes List  -->
     <div class="nt-content-area">
       <div class="nt-card">
 
@@ -162,7 +162,7 @@
           </div>
         </div>
 
-        <!-- Search, Filter & Sort -->
+        <!-- Search, Filter and Sort -->
         <form method="get" action="{% url 'notes' %}" class="nt-filter">
           <input
             type="text"
@@ -258,7 +258,7 @@
       </div>
     </div>
 
-    <!-- ══ Right: Pomodoro Timer Panel ══ -->
+    <!-- Right: Pomodoro Timer Panel -->
     <div class="nt-pomo-panel" id="pomoPanel">
       <div class="nt-pomo-header">
         <span class="nt-pomo-tomato">&#127813;</span>
@@ -307,7 +307,7 @@
   </div>
 </div>
 
-<!-- ══ Focus Mode Overlay ══ -->
+<!-- Focus Mode Overlay -->
 <div class="nt-focus-overlay" id="focusOverlay" style="display:none">
   <div class="nt-focus-bar">
     <span class="nt-focus-bar-label">&#127919; Focus Mode Active</span>
@@ -316,7 +316,7 @@
   </div>
 </div>
 
-<!-- ══ Inactivity Warning Overlay ══ -->
+<!-- Inactivity Warning Overlay -->
 <div class="nt-warn-overlay" id="warnOverlay" style="display:none">
   <div class="nt-warn-card">
     <div class="nt-warn-icon">&#9888;&#65039;</div>
@@ -326,12 +326,12 @@
   </div>
 </div>
 
-<!-- ══ XP Gain Toast ══ -->
+<!-- XP Gain Toast -->
 <div class="nt-xp-toast" id="xpToast" style="display:none">
   <span class="nt-xp-toast-text" id="xpToastText">+25 XP</span>
 </div>
 
-<!-- ══ Edit Goals Modal ══ -->
+<!-- Edit Goals Modal -->
 <div class="modal fade" id="editGoalsModal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-sm">
     <div class="modal-content">

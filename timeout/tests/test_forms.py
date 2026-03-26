@@ -126,12 +126,12 @@ class LoginFormTests(TestCase):
 
     def test_form_has_placeholders(self):
         form = LoginForm()
-        self.assertEqual(form.fields['username'].widget.attrs['placeholder'], 'your@email.com')
+        self.assertEqual(form.fields['username'].widget.attrs['placeholder'], 'Email or username')
         self.assertEqual(form.fields['password'].widget.attrs['placeholder'], 'Password')
 
     def test_login_form_uses_email_field(self):
         form = LoginForm()
-        self.assertEqual(form.fields['username'].label, 'Email')
+        self.assertEqual(form.fields['username'].label, 'Email or Username')
 
 
 class CompleteProfileFormTests(TestCase):

@@ -39,7 +39,7 @@ class NoteViewsTest(TestCase):
         ok = self.client.login(username=user.username, password='pass123')
         self.assertTrue(ok)
 
-    # --- Authentication ---
+    #  Authentication 
 
     def test_note_list_requires_login(self):
         resp = self.client.get(reverse('notes'))
@@ -57,7 +57,7 @@ class NoteViewsTest(TestCase):
         resp = self.client.post(reverse('note_delete', args=[self.note.id]))
         self.assertEqual(resp.status_code, 302)
 
-    # --- List View ---
+    #  List View 
 
     def test_note_list_renders(self):
         self.login(self.user)
@@ -93,7 +93,7 @@ class NoteViewsTest(TestCase):
         resp = self.client.get(reverse('notes') + '?q=nonexistent')
         self.assertEqual(len(resp.context['notes']), 0)
 
-    # --- Create View ---
+    #  Create View 
 
     def test_create_note_valid(self):
         self.login(self.user)
@@ -118,7 +118,7 @@ class NoteViewsTest(TestCase):
         self.assertEqual(resp.status_code, 302)
         self.assertEqual(Note.objects.count(), count_before)
 
-    # --- Edit View ---
+    #  Edit View 
 
     def test_edit_note_get_renders_form(self):
         self.login(self.user)
@@ -148,7 +148,7 @@ class NoteViewsTest(TestCase):
         )
         self.assertEqual(resp.status_code, 403)
 
-    # --- Delete View ---
+    #  Delete View 
 
     def test_delete_note_by_owner(self):
         self.login(self.user)
@@ -166,7 +166,7 @@ class NoteViewsTest(TestCase):
         self.assertEqual(resp.status_code, 403)
         self.assertTrue(Note.objects.filter(id=self.note.id).exists())
 
-    # --- Pin Toggle ---
+    #  Pin Toggle 
 
     def test_toggle_pin_on(self):
         self.login(self.user)
@@ -196,7 +196,7 @@ class NoteViewsTest(TestCase):
         )
         self.assertEqual(resp.status_code, 404)
 
-    # --- Share ---
+    #  Share 
 
     def test_share_note_creates_post(self):
         self.login(self.user)
@@ -226,7 +226,7 @@ class NoteViewsTest(TestCase):
         self.assertIn('[Lecture]', post.content)
         self.assertIn('Test Note', post.content)
 
-    # --- Create: redirects to editor ---
+    #  Create: redirects to editor 
 
     def test_create_note_redirects_to_editor(self):
         self.login(self.user)
@@ -278,7 +278,7 @@ class NoteViewsTest(TestCase):
         resp = self.client.get(reverse('note_create'))
         self.assertRedirects(resp, reverse('notes'))
 
-    # --- Page mode ---
+    #  Page mode 
 
     def test_note_default_page_mode_is_pageless(self):
         self.login(self.user)
@@ -302,7 +302,7 @@ class NoteViewsTest(TestCase):
         self.note.refresh_from_db()
         self.assertEqual(self.note.page_mode, 'paged')
 
-    # --- Autosave ---
+    #  Autosave 
 
     def test_autosave_updates_content(self):
         self.login(self.user)
@@ -353,7 +353,7 @@ class NoteViewsTest(TestCase):
         )
         self.assertEqual(resp.status_code, 404)
 
-    # --- Sorting ---
+    #  Sorting 
 
     def test_sort_alphabetical(self):
         self.login(self.user)

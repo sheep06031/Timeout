@@ -22,14 +22,14 @@ class ForgotPasswordViewTests(TestCase):
             password='OldPass123!',
         )
 
-    # ── GET request ────────────────────────────────────────────
+    #  GET request 
 
     def test_get_renders_request_step(self):
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.context['step'], 'request')
 
-    # ── Authenticated user redirect ───────────────────────────
+    #  Authenticated user redirect 
 
     def test_authenticated_user_redirected_to_dashboard(self):
         self.client.login(username='testuser', password='OldPass123!')
@@ -41,7 +41,7 @@ class ForgotPasswordViewTests(TestCase):
         response = self.client.post(self.url, {'step': 'request', 'identifier': 'testuser'})
         self.assertRedirects(response, reverse('dashboard'))
 
-    # ── Step: request ─────────────────────────────────────────
+    #  Step: request 
 
     def test_empty_identifier_shows_error(self):
         response = self.client.post(self.url, {'step': 'request', 'identifier': ''})
@@ -109,7 +109,7 @@ class ForgotPasswordViewTests(TestCase):
         msgs = [m.message for m in get_messages(response.wsgi_request)]
         self.assertTrue(any('te***@example.com' in m for m in msgs))
 
-    # ── Step: verify ──────────────────────────────────────────
+    #  Step: verify 
 
     def test_verify_no_stored_code_shows_session_expired(self):
         # No session data set at all
@@ -193,14 +193,14 @@ class ResetPasswordViewTests(TestCase):
         session['reset_code_time'] = time.time()
         session.save()
 
-    # ── Authenticated user redirect ───────────────────────────
+    #  Authenticated user redirect 
 
     def test_authenticated_user_redirected_to_dashboard(self):
         self.client.login(username='testuser', password='OldPass123!')
         response = self.client.get(self.url)
         self.assertRedirects(response, reverse('dashboard'))
 
-    # ── Guards: missing session data ──────────────────────────
+    #  Guards: missing session data 
 
     def test_no_reset_verified_redirects_to_forgot_password(self):
         response = self.client.get(self.url)
@@ -230,7 +230,7 @@ class ResetPasswordViewTests(TestCase):
         msgs = [m.message for m in get_messages(response.wsgi_request)]
         self.assertIn('User not found. Please start over.', msgs)
 
-    # ── GET renders form ──────────────────────────────────────
+    #  GET renders form 
 
     def test_get_renders_reset_password_form(self):
         self._setup_verified_session()
@@ -238,7 +238,7 @@ class ResetPasswordViewTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'auth/reset_password.html')
 
-    # ── POST: mismatched passwords ────────────────────────────
+    #  POST: mismatched passwords 
 
     def test_mismatched_passwords_shows_error(self):
         self._setup_verified_session()
@@ -250,7 +250,7 @@ class ResetPasswordViewTests(TestCase):
         msgs = [m.message for m in get_messages(response.wsgi_request)]
         self.assertIn('Passwords do not match.', msgs)
 
-    # ── POST: weak password ───────────────────────────────────
+    #  POST: weak password 
 
     @patch('timeout.views.password_reset.validate_password_strength')
     def test_weak_password_shows_error(self, mock_validate):
@@ -265,7 +265,7 @@ class ResetPasswordViewTests(TestCase):
         msgs = [m.message for m in get_messages(response.wsgi_request)]
         self.assertIn('Password must be at least 8 characters long.', msgs)
 
-    # ── POST: success ─────────────────────────────────────────
+    #  POST: success 
 
     @patch('timeout.views.password_reset.validate_password_strength')
     def test_successful_password_reset(self, mock_validate):

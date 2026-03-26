@@ -816,7 +816,7 @@
 [data-theme="dark"] .lb-rank { color: var(--text-muted); }
 [data-theme="dark"] .lb-link:hover { color: var(--text-primary); }
 
-/* ── Color Blindness Filters ── */
+/* Color Blindness Filters*/
 /* SVG filter definitions live in base.html as an inline <svg> */
 [data-colorblind="protanopia"] {
     filter: url(#cb-protanopia);

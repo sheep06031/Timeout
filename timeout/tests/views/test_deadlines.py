@@ -27,9 +27,9 @@ class DeadlineListViewTests(TestCase):
         self.client.login(username="dluser", password="pass1234")
         self.url = reverse("deadline_list")
 
-    # ------------------------------------------------------------------
+    # 
     # Context data
-    # ------------------------------------------------------------------
+    # 
     @patch("timeout.services.deadline_service.timezone.now")
     def test_empty_deadlines(self, mock_now):
         mock_now.return_value = timezone.make_aware(datetime(2025, 4, 10, 12, 0))
@@ -95,9 +95,9 @@ class DeadlineListViewTests(TestCase):
         resp = self.client.get(self.url)
         self.assertEqual(resp.context["total_count"], 0)
 
-    # ------------------------------------------------------------------
+    # 
     # Auth guard
-    # ------------------------------------------------------------------
+    # 
     def test_unauthenticated_redirects(self):
         self.client.logout()
         resp = self.client.get(self.url)
@@ -125,9 +125,9 @@ class DeadlineMarkCompleteViewTests(TestCase):
     def _url(self, event_id):
         return reverse("deadline_mark_complete", kwargs={"event_id": event_id})
 
-    # ------------------------------------------------------------------
+    # 
     # Success path
-    # ------------------------------------------------------------------
+    # 
     def test_mark_complete_success(self):
         resp = self.client.post(self._url(self.deadline.pk))
         self.assertEqual(resp.status_code, 200)
@@ -139,9 +139,9 @@ class DeadlineMarkCompleteViewTests(TestCase):
         self.deadline.refresh_from_db()
         self.assertTrue(self.deadline.is_completed)
 
-    # ------------------------------------------------------------------
+    # 
     # 404 – event not found / already completed / wrong user
-    # ------------------------------------------------------------------
+    # 
     def test_mark_complete_nonexistent_event(self):
         resp = self.client.post(self._url(99999))
         self.assertEqual(resp.status_code, 404)
@@ -173,9 +173,7 @@ class DeadlineMarkCompleteViewTests(TestCase):
         resp = self.client.post(self._url(event.pk))
         self.assertEqual(resp.status_code, 200)
 
-    # ------------------------------------------------------------------
     # HTTP method / auth guards
-    # ------------------------------------------------------------------
     def test_get_not_allowed(self):
         resp = self.client.get(self._url(self.deadline.pk))
         self.assertEqual(resp.status_code, 405)
@@ -187,11 +185,7 @@ class DeadlineMarkCompleteViewTests(TestCase):
         self.assertIn("login", resp.url)
 
 
-# ======================================================================
 # Filter / Sort / Type validation tests
-# ======================================================================
-
-
 class DeadlineListViewFilterSortTests(TestCase):
     """Test the filter/sort/type validation branches in deadline_list_view."""
 
@@ -201,25 +195,25 @@ class DeadlineListViewFilterSortTests(TestCase):
         self.client.login(username="filterviewuser", password="pass1234")
         self.url = reverse("deadline_list")
 
-    # -- Invalid status falls back to 'active' -----------------------
+    # Invalid status falls back to 'active'
     def test_invalid_status_defaults_to_active(self):
         resp = self.client.get(self.url, {"status": "bogus"})
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(resp.context["status_filter"], "active")
 
-    # -- Invalid sort falls back to 'asc' ----------------------------
+    # Invalid sort falls back to 'asc' 
     def test_invalid_sort_defaults_to_asc(self):
         resp = self.client.get(self.url, {"sort": "bogus"})
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(resp.context["sort_order"], "asc")
 
-    # -- Invalid event_type falls back to '' -------------------------
+    # Invalid event_type falls back to ''
     def test_invalid_event_type_defaults_to_empty(self):
         resp = self.client.get(self.url, {"type": "bogus_type"})
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(resp.context["event_type"], "")
 
-    # -- Valid filters pass through ----------------------------------
+    # Valid filters pass through
     def test_valid_completed_filter(self):
         resp = self.client.get(self.url, {"status": "completed"})
         self.assertEqual(resp.context["status_filter"], "completed")
@@ -236,7 +230,7 @@ class DeadlineListViewFilterSortTests(TestCase):
         resp = self.client.get(self.url, {"type": "exam"})
         self.assertEqual(resp.context["event_type"], "exam")
 
-    # -- Combined filters --------------------------------------------
+    # Combined filters
     def test_combined_filters(self):
         now = timezone.now()
         Event.objects.create(
@@ -259,7 +253,7 @@ class DeadlineListViewFilterSortTests(TestCase):
         self.assertIn("Exam DL", titles)
         self.assertNotIn("Deadline DL", titles)
 
-    # -- Context includes expected keys ------------------------------
+    # Context includes expected keys
     def test_context_has_all_keys(self):
         resp = self.client.get(self.url)
         for key in ('deadlines', 'total_count', 'overdue_count', 'urgent_count',

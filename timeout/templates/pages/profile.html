@@ -13,10 +13,12 @@
   <div class="container mt-4">
     <div class="row">
       <div class="col-lg-8 mx-auto">
+
         <!-- Profile Header -->
         <div class="post-card mb-4">
           <div class="post-card-body">
             <div class="d-flex flex-column flex-sm-row align-items-center align-items-sm-start gap-3">
+              
               <!-- Profile picture -->
               <div>
                 {% if user.profile_picture %}
@@ -25,6 +27,7 @@
                   <div class="profile-avatar profile-avatar-fallback">{{ user.username|first|upper }}</div>
                 {% endif %}
               </div>
+
               <div class="w-100">
                 <div class="d-flex align-items-start justify-content-between gap-2 flex-wrap">
                   <div class="d-flex align-items-center gap-2 flex-wrap">
@@ -55,15 +58,17 @@
                     {% endif %}
                   </div>
                 </div>
+
                 {% if user.bio %}
                   <p class="my-2">{{ user.bio }}</p>
                 {% endif %}
+
                 <div class="mt-3">
                   <span class="badge bg-light text-dark me-2">{{ posts|length }} Posts</span>
                   <span class="badge bg-light text-dark me-2" style="cursor:pointer;" data-bs-toggle="modal" data-bs-target="#followersModal">{{ user.follower_count }} Followers</span>
                   <span id="following-count-badge" class="badge bg-light text-dark me-2" style="cursor:pointer;" data-bs-toggle="modal" data-bs-target="#followingModal">{{ user.following_count }} Following</span>
                   <span class="badge bg-light text-dark me-2" style="cursor:pointer;" data-bs-toggle="modal" data-bs-target="#friendsModal">{{ friends_count }} Friends</span>
-                </div>
+                  <span class="badge bg-light text-dark" style="cursor:pointer;" data-bs-toggle="modal" data-bs-target="#blockedModal">🚫 Blocked</span>                </div>
               </div>
             </div>
           </div>
@@ -158,15 +163,21 @@
   {% include 'partials/modals/followers_modal.html' %}
   {% include 'partials/modals/following_modal.html' %}
   {% include 'partials/modals/friends_modal.html' %}
+  {% include 'partials/modals/blocked_modal.html' %}
+
 {% endblock %}
 
 {% block extra_js %}
+
   <script src="{% static 'js/social.js' %}"></script>
   <div id="profile-status-config"
        data-update-url="{% url 'update_status' %}"
        data-csrf-token="{{ csrf_token }}"
        data-followers-url="{% url 'followers_api' %}"
        data-following-url="{% url 'following_api' %}"
-       data-friends-url="{% url 'friends_api' %}"></div>
+       data-friends-url="{% url 'friends_api' %}"
+       data-blocked-url="{% url 'blocked_users_api' %}"></div>
+
   <script src="{% static 'js/profile.js' %}"></script>
+  
 {% endblock %}

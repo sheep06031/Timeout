@@ -2,7 +2,6 @@
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'css/suggestions.css' %}"> 
-<link rel="stylesheet" href="{% static 'css/navbar.css' %}">
 {% endblock %}
 
 <nav class="navbar navbar-expand-lg sticky-top timeout-nav"
@@ -30,16 +29,19 @@
           <li class="nav-item">
             <a class="nav-link" href="{% url 'social_feed' %}">Social</a>
           </li>
-<li class="nav-item position-relative">
-  <a class="nav-link" href="{% url 'notifications' %}" id="nav-notifications-link">
-    Notifications
-    <span id="nav-notif-badge" 
-      class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
-      {% if unread_count == 0 or user.status == 'focus' %}style="display:none"{% endif %}>
-  {{ unread_count }}
-</span>
-  </a>
-</li>
+          
+          <li class="nav-item position-relative">
+            <a class="nav-link" href="{% url 'notifications' %}" id="nav-notifications-link">
+              Notifications
+              {% with user.unread_count as unread_count %}
+              <span id="nav-notif-badge"
+                    class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
+                    {% if unread_count == 0 or user.status == 'focus' %}style="display:none"{% endif %}>
+                    {% if unread_count > 99 %}99+{% else %}{{ unread_count }}{% endif %}
+              </span>
+              {% endwith %}
+            </a>
+          </li>
 
           <div id="notif-tooltip" class="notif-tooltip" style="display:none; position:absolute;">
             New notification!

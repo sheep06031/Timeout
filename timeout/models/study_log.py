@@ -17,6 +17,7 @@ class StudyLog(models.Model):
     focus_minutes = models.PositiveSmallIntegerField(default=0)
 
     class Meta:
+        """Ensure one log per user-date pair, order by most recent, and index for heatmap queries."""
         unique_together = ['user', 'date']
         ordering = ['-date']
         indexes = [
@@ -27,6 +28,7 @@ class StudyLog(models.Model):
         ]
 
     def __str__(self):
+        """Return a string representation with user and study date."""
         return f'{self.user.username} — {self.date}'
 
     @property

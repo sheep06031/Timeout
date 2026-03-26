@@ -1,7 +1,5 @@
 from django import forms
-
 from timeout.models import Note
-
 
 class NoteForm(forms.ModelForm):
     """Form for creating and editing notes."""

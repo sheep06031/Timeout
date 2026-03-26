@@ -1,5 +1,13 @@
+/**
+ * Study Session Rescheduling
+ * Fetches AI-powered rescheduling suggestions, displays preview, and applies changes to user's calendar.
+ */
+
 let rsSuggestions = [];
 
+/**
+ * Fetch rescheduling suggestions from the server and display preview.
+ */
 function fetchRescheduleSuggestions() {
     rsShowLoading();
 
@@ -24,6 +32,9 @@ function fetchRescheduleSuggestions() {
     });
 }
 
+/**
+ * Render rescheduling suggestions in preview table with original and new times.
+ */
 function rsRenderPreview(original, suggestions) {
     const tbody = document.getElementById('rs-preview-body');
     tbody.innerHTML = '';
@@ -46,20 +57,20 @@ function rsRenderPreview(original, suggestions) {
     });
 }
 
+/**
+ * Apply accepted rescheduling suggestions to user's calendar and reload page.
+ */
 function applyReschedule() {
     const btn = document.getElementById('rs-apply-btn');
     btn.disabled = true;
     btn.textContent = 'Applying…';
-
     const formData = new FormData();
     formData.append('sessions', JSON.stringify(rsSuggestions));
     formData.append('csrfmiddlewaretoken', window.AI_CSRF_TOKEN);
-
     fetch(window.RS_APPLY_URL, {
         method: 'POST',
         headers: { 'X-CSRFToken': window.AI_CSRF_TOKEN },
-        body: formData,
-    })
+        body: formData,})
     .then(r => r.json())
     .then(data => {
         if (data.success) {
@@ -69,15 +80,15 @@ function applyReschedule() {
             rsShowError(data.error || 'Could not apply changes.');
             btn.disabled = false;
             btn.textContent = 'Apply Changes';
-        }
-    })
-    .catch(() => {
+        }}) .catch(() => {
         rsShowError('Could not reach the server.');
         btn.disabled = false;
-        btn.textContent = 'Apply Changes';
-    });
+        btn.textContent = 'Apply Changes';});
 }
 
+/**
+ * Display initial step with suggestion request button.
+ */
 function rsShowStep1() {
     document.getElementById('rs-step-1').classList.remove('d-none');
     document.getElementById('rs-step-2').classList.add('d-none');
@@ -88,6 +99,9 @@ function rsShowStep1() {
     document.getElementById('rs-error').classList.add('d-none');
 }
 
+/**
+ * Display preview step with suggested changes and apply/back buttons.
+ */
 function rsShowStep2() {
     document.getElementById('rs-step-1').classList.add('d-none');
     document.getElementById('rs-step-2').classList.remove('d-none');
@@ -97,6 +111,9 @@ function rsShowStep2() {
     document.getElementById('rs-apply-btn').classList.remove('d-none');
 }
 
+/**
+ * Display loading spinner while fetching suggestions from server.
+ */
 function rsShowLoading() {
     document.getElementById('rs-step-1').classList.add('d-none');
     document.getElementById('rs-step-2').classList.add('d-none');
@@ -105,12 +122,18 @@ function rsShowLoading() {
     document.getElementById('rs-error').classList.add('d-none');
 }
 
+/**
+ * Display error message to the user.
+ */
 function rsShowError(msg) {
     const el = document.getElementById('rs-error');
     el.textContent = msg;
     el.classList.remove('d-none');
 }
 
+/**
+ * Format ISO datetime string to readable date and time (e.g., "Mon, 25 Mar 14:30").
+ */
 function fmtDatetime(str) {
     if (!str) return '—';
     const d = new Date(str);
@@ -118,11 +141,17 @@ function fmtDatetime(str) {
         + ' ' + fmtTime(str);
 }
 
+/**
+ * Extract time portion from ISO datetime string (e.g., "14:30").
+ */
 function fmtTime(str) {
     if (!str) return '—';
     return str.slice(11, 16);
 }
 
+/**
+ * Initialize modal event handler to reset UI when modal closes.
+ */
 document.addEventListener('DOMContentLoaded', function () {
     const modal = document.getElementById('rescheduleSessionsModal');
     if (modal) {

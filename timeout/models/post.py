@@ -6,6 +6,7 @@ class Post(models.Model):
     """Social media post with privacy controls."""
 
     class Privacy(models.TextChoices):
+        """Class that determines the privacy of the post"""
         PUBLIC = 'public', 'Public'
         FOLLOWERS_ONLY = 'followers_only', 'Followers Only'
 
@@ -32,12 +33,14 @@ class Post(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
+        """Order posts by newest first and index for fast feed queries."""
         ordering = ['-created_at']
         indexes = [
             models.Index(fields=['-created_at', 'author']),
         ]
 
     def __str__(self):
+        """Return a string representation with author and first 50 chars of content."""
         preview = self.content[:50]
         return f'{self.author.username}: {preview}...'
 

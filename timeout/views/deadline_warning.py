@@ -24,8 +24,9 @@ def get_deadline_study_warnings(user):
     for deadline in upcoming_deadlines:
 
         if deadline.linked_study_sessions.count() == 0:
-            warnings.append(
-                f"⚠ Deadline '{deadline.title}' has no study sessions scheduled."
-            )
+            warnings.append({
+                'key': f'deadline_warning_{deadline.pk}',
+                'message': f"⚠ Deadline '{deadline.title}' has no study sessions scheduled.",
+            })
 
     return warnings

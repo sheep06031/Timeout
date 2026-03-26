@@ -7,7 +7,13 @@ from django.db.models.signals import post_save
 
 
 class Comment(models.Model):
-    """Threaded comments for posts."""
+    """
+    Model representing comments on posts, including threaded replies.
+    
+    The model stores the content of the comment and the timestamps
+    for creation and updates. It also has helper methods for 
+    counting replies, and checking deletion permissions.
+    """
 
     post = models.ForeignKey(
         'Post',
@@ -31,12 +37,19 @@ class Comment(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
+        """
+        Metadata for the Comment model:
+        - Orders comments chronologically (oldest first)
+        - Adds an index to optimise queries by post and creation time
+        """
+
         ordering = ['created_at']
         indexes = [
             models.Index(fields=['post', 'created_at']),
         ]
 
     def __str__(self):
+        """Return a short representation showing author and first 30 chars of content."""
         preview = self.content[:30]
         return f'{self.author.username}: {preview}...'
 
@@ -57,9 +70,13 @@ class Comment(models.Model):
 @receiver(post_save, sender=Comment)
 def create_comment_notification(sender, instance, created, **kwargs):
     """
-    Send notification to post author when someone comments,
-    or to parent comment author if it's a reply.
+    Automatically create notifications when a comment is created.
+
+    Behaviour:
+    - Only creates a notification when a new comment is created 
+    - Notifies the post author if someone else comments on their post
     """
+
     if created:
         # Notify post author if not self
         if instance.post.author != instance.author:

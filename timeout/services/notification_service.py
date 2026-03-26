@@ -32,49 +32,42 @@ class NotificationService:
             elif 86400 < time_to_end <= 604800:
                 NotificationService._notify_once(user, event, "1 week left to complete your deadline!")
 
+    
+    
     @staticmethod
     def create_event_notifications(user):
         """Check all upcoming event types and create notifications if needed."""
         now = timezone.now()
-
-        # All event types except deadlines (handled separately above)
         event_types = [
-            Event.EventType.EXAM,
-            Event.EventType.CLASS,
-            Event.EventType.MEETING,
-            Event.EventType.STUDY_SESSION,
+            Event.EventType.EXAM, Event.EventType.CLASS,
+            Event.EventType.MEETING, Event.EventType.STUDY_SESSION,
             Event.EventType.OTHER,
         ]
-
         upcoming_events = Event.objects.filter(
-            creator=user,
-            event_type__in=event_types,
+            creator=user, event_type__in=event_types,
             is_completed=False,
             status__in=[Event.EventStatus.UPCOMING, Event.EventStatus.ONGOING],
             start_datetime__gt=now,
         )
-
         for event in upcoming_events:
-            label, icon = NotificationService.EVENT_TYPE_LABELS.get(
-                event.event_type, ("Event", "📅")
-            )
-            time_to_start = (event.start_datetime - now).total_seconds()
+            NotificationService._notify_event_by_time(user, event, now)
 
-            if 0 < time_to_start <= 3600:
-                NotificationService._notify_once(
-                    user, event,
-                    f"Your {label} \"{event.title}\" starts in 1 hour!"
-                )
-            elif 3600 < time_to_start <= 86400:
-                NotificationService._notify_once(
-                    user, event,
-                    f"Your {label} \"{event.title}\" starts tomorrow!"
-                )
-            elif 86400 < time_to_start <= 604800:
-                NotificationService._notify_once(
-                    user, event,
-                    f"Your {label} \"{event.title}\" is coming up this week!"
-                )
+    @staticmethod
+    def _notify_event_by_time(user, event, now):
+        """Send a time-based notification for an upcoming event."""
+        label, icon = NotificationService.EVENT_TYPE_LABELS.get(
+            event.event_type, ("Event", "📅")
+        )
+        time_to_start = (event.start_datetime - now).total_seconds()
+        if 0 < time_to_start <= 3600:
+            msg = f'Your {label} "{event.title}" starts in 1 hour!'
+        elif 3600 < time_to_start <= 86400:
+            msg = f'Your {label} "{event.title}" starts tomorrow!'
+        elif 86400 < time_to_start <= 604800:
+            msg = f'Your {label} "{event.title}" is coming up this week!'
+        else:
+            return
+        NotificationService._notify_once(user, event, msg)
 
     @staticmethod
     def create_message_notification(user, message):

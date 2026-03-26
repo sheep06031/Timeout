@@ -66,7 +66,7 @@
   .autosave-indicator.saving { color: #f59e0b; }
   .autosave-indicator.saved { color: #22c55e; }
 
-  /* ── Spacing & page-mode controls ── */
+  /* Spacing & page-mode controls*/
   .spacing-control, .pagemode-control {
     display: flex;
     align-items: center;
@@ -83,12 +83,12 @@
     font-size: 0.8rem;
   }
 
-  /* ── Editor body: outline panel + editor ── */
+  /* Editor body: outline panel + editor */
   .note-editor-body {
     display: flex;
   }
 
-  /* ── Outline panel ── */
+  /* Outline panel */
   .note-outline-panel {
     width: 200px;
     flex-shrink: 0;
@@ -178,13 +178,13 @@
     color: var(--text-primary, #1a202c);
   }
 
-  /* ── Editor area ── */
+  /* Editor area */
   .note-editor-main {
     flex: 1;
     min-width: 0;
   }
 
-  /* ── Paged mode — only adds break lines + page labels ── */
+  /* Paged mode and labels */
   .page-break-line {
     position: absolute;
     left: 0;
@@ -206,7 +206,7 @@
     border-radius: 3px;
   }
 
-  /* ── Quill editor ── */
+  /* Quill editor */
   .ql-editor {
     height: calc(100vh - 220px);
     font-size: 1rem;
@@ -241,7 +241,7 @@
     right: 28px;
   }
 
-  /* ── Dark mode ── */
+  /* Dark mode*/
   [data-theme="dark"] .note-editor-topbar,
   [data-theme="dark"] .note-editor-meta {
     background: var(--bg-primary, #13141f);
@@ -327,7 +327,7 @@
 {% block content %}
 <div class="note-editor-page" id="notesPage">
 
-  <!-- ══ Top bar: Back / Title / Save ══ -->
+  <!-- Top bar: Back / Title / Save -->
   <div class="note-editor-topbar">
     <a href="{% url 'notes' %}" class="btn btn-light btn-sm">&#8592; Back to Notes</a>
     <input
@@ -354,7 +354,7 @@
     </div>
   </div>
 
-  <!-- ══ Meta info ══ -->
+  <!-- Meta info-->
   <div class="note-editor-meta">
     <button class="note-outline-toggle" id="outlineToggleBtn" title="Toggle outline">&#9776; Outline</button>
     <span class="badge bg-light text-dark">{{ note.get_category_display }}</span>
@@ -384,9 +384,9 @@
     <div class="nt-word-count" id="wordCount" style="margin-left:auto;">0 words</div>
   </div>
 
-  <!-- ══ Body: Outline + Editor ══ -->
+  <!-- Body: Outline + Editor -->
   <div class="note-editor-body">
-    <!-- Outline panel (starts collapsed) -->
+
     <div class="note-outline-panel collapsed" id="outlinePanel">
       <div class="note-outline-header">
         <span>Outline</span>
@@ -405,7 +405,7 @@
 
 </div>
 
-<!-- ══ Focus Mode Overlay ══ -->
+<!-- Focus Mode Overlay -->
 <div class="nt-focus-overlay" id="focusOverlay" style="display:none">
   <div class="nt-focus-bar">
     <span class="nt-focus-bar-label">&#127919; Focus Mode Active</span>
@@ -414,7 +414,7 @@
   </div>
 </div>
 
-<!-- ══ Inactivity Warning Overlay ══ -->
+<!-- Inactivity Warning Overlay -->
 <div class="nt-warn-overlay" id="warnOverlay" style="display:none">
   <div class="nt-warn-card">
     <div class="nt-warn-icon">&#9888;&#65039;</div>
@@ -424,7 +424,7 @@
   </div>
 </div>
 
-<!-- ══ XP Gain Toast ══ -->
+<!-- XP Gain Toast -->
 <div class="nt-xp-toast" id="xpToast" style="display:none">
   <span class="nt-xp-toast-text" id="xpToastText">+25 XP</span>
 </div>
@@ -437,249 +437,12 @@
     csrfToken: '{{ csrf_token }}',
     pomodoroCompleteUrl: '{% url "pomodoro_complete" %}',
     statsUrl: '{% url "notes_stats" %}',
+    autosaveUrl: '{% url "note_autosave" note.id %}',
+    notePageMode: '{{ note.page_mode }}',
+    noteTitle: '{{ note.title|escapejs }}',
   };
 </script>
 <script src="{% static 'js/notes.js' %}"></script>
 <script src="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.js"></script>
-<script>
-(function() {
-  /* ── Quill setup ── */
-  const quill = new Quill('#quill-editor', {
-    theme: 'snow',
-    placeholder: 'Start writing your note...',
-    modules: {
-      toolbar: [
-        [{ 'font': [] }],
-        [{ 'header': [1, 2, 3, false] }],
-        [{ 'size': ['small', false, 'large', 'huge'] }],
-        ['bold', 'italic', 'underline', 'strike'],
-        [{ 'color': [] }, { 'background': [] }],
-        [{ 'list': 'ordered' }, { 'list': 'bullet' }, { 'list': 'check' }],
-        [{ 'indent': '-1' }, { 'indent': '+1' }],
-        [{ 'align': [] }],
-        ['blockquote', 'code-block'],
-        ['link'],
-        ['clean'],
-      ],
-    },
-  });
-
-  /* ── Load existing content ── */
-  const hiddenInput = document.getElementById('id_content');
-  if (hiddenInput.value) {
-    quill.root.innerHTML = hiddenInput.value;
-  }
-
-  /* ── Word count ── */
-  function updateWordCount() {
-    const text = quill.getText().trim();
-    const words = text ? text.split(/\s+/).length : 0;
-    document.getElementById('wordCount').textContent = words + ' words';
-  }
-  quill.on('text-change', updateWordCount);
-  updateWordCount();
-
-  /* ── Outline panel ── */
-  const outlinePanel = document.getElementById('outlinePanel');
-  const outlineList = document.getElementById('outlineList');
-  const outlineToggleBtn = document.getElementById('outlineToggleBtn');
-  const outlineCloseBtn = document.getElementById('outlineCloseBtn');
-  const editorMain = document.getElementById('editorMain');
-
-  function updateOutline() {
-    var headings = quill.root.querySelectorAll('h1, h2, h3');
-    outlineList.innerHTML = '';
-
-    if (headings.length === 0) {
-      var empty = document.createElement('li');
-      empty.className = 'note-outline-empty';
-      empty.textContent = 'No headings yet';
-      outlineList.appendChild(empty);
-      return;
-    }
-
-    headings.forEach(function(heading) {
-      var text = heading.textContent.trim();
-      if (!text) return;
-      var li = document.createElement('li');
-      var tag = heading.tagName.toLowerCase();
-      li.className = 'note-outline-item note-outline-item--' + tag;
-      li.textContent = text;
-      li.title = text;
-      li.addEventListener('click', function() {
-        heading.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      });
-      outlineList.appendChild(li);
-    });
-
-    /* If all headings were empty text */
-    if (outlineList.children.length === 0) {
-      var empty = document.createElement('li');
-      empty.className = 'note-outline-empty';
-      empty.textContent = 'No headings yet';
-      outlineList.appendChild(empty);
-    }
-  }
-
-  outlineToggleBtn.addEventListener('click', function() {
-    outlinePanel.classList.toggle('collapsed');
-  });
-
-  outlineCloseBtn.addEventListener('click', function() {
-    outlinePanel.classList.add('collapsed');
-  });
-
-  quill.on('text-change', updateOutline);
-  updateOutline();
-
-  /* ── Line spacing control ── */
-  const spacingSelect = document.getElementById('lineSpacing');
-  spacingSelect.addEventListener('change', function() {
-    quill.root.style.lineHeight = this.value;
-    if (pageModeActive) requestAnimationFrame(paginateContent);
-  });
-
-  /* ── Page mode ── */
-  const pageModeSelect = document.getElementById('pageMode');
-  const qlContainer = document.querySelector('.ql-container');
-  const editorMainEl = document.getElementById('editorMain');
-  let pageModeActive = '{{ note.page_mode }}' === 'paged';
-  let lastSavedPageMode = '{{ note.page_mode }}';
-
-  /* Apply class on load so CSS switches editor height mode */
-  if (pageModeActive) editorMainEl.classList.add('paged-active');
-
-  const PAGE_HEIGHT = 1056;
-
-  function clearPageMarkers() {
-    qlContainer.querySelectorAll('.page-break-line, .page-number-label').forEach(function(el) { el.remove(); });
-  }
-
-  function paginateContent() {
-    clearPageMarkers();
-    if (!pageModeActive) return;
-
-    qlContainer.style.position = 'relative';
-
-    var contentHeight = quill.root.scrollHeight;
-    var totalPages = Math.max(1, Math.ceil(contentHeight / PAGE_HEIGHT));
-
-    for (var i = 1; i < totalPages; i++) {
-      var line = document.createElement('div');
-      line.className = 'page-break-line';
-      line.style.top = (i * PAGE_HEIGHT) + 'px';
-      qlContainer.appendChild(line);
-    }
-
-    for (var i = 0; i < totalPages; i++) {
-      var label = document.createElement('div');
-      label.className = 'page-number-label';
-      label.textContent = (i + 1) + ' / ' + totalPages;
-      var labelTop = (i + 1) * PAGE_HEIGHT - 22;
-      /* Last page may be shorter — cap label at actual content bottom */
-      if (i === totalPages - 1 && labelTop > contentHeight - 22) {
-        labelTop = contentHeight - 22;
-      }
-      label.style.top = labelTop + 'px';
-      qlContainer.appendChild(label);
-    }
-  }
-
-  pageModeSelect.addEventListener('change', function() {
-    pageModeActive = this.value === 'paged';
-    editorMainEl.classList.toggle('paged-active', pageModeActive);
-    requestAnimationFrame(paginateContent);
-  });
-
-  if (pageModeActive) {
-    requestAnimationFrame(paginateContent);
-  }
-
-  quill.on('text-change', function() {
-    if (pageModeActive) requestAnimationFrame(paginateContent);
-  });
-
-  /* ── Sync to hidden input on manual save ── */
-  const editForm = document.getElementById('noteEditForm');
-  editForm.addEventListener('submit', function() {
-    hiddenInput.value = quill.root.innerHTML;
-    document.getElementById('hiddenTitle').value = document.getElementById('noteTitleInput').value;
-    document.getElementById('hiddenPageMode').value = pageModeSelect.value;
-  });
-
-  /* ── Autosave ── */
-  const autosaveUrl = '{% url "note_autosave" note.id %}';
-  const csrfToken = '{{ csrf_token }}';
-  const statusEl = document.getElementById('autosaveStatus');
-  let autosaveTimer = null;
-  let lastSavedContent = hiddenInput.value || '';
-  let lastSavedTitle = '{{ note.title|escapejs }}';
-  let editCounted = false;
-
-  function doAutosave() {
-    const currentContent = quill.root.innerHTML;
-    const currentTitle = document.getElementById('noteTitleInput').value;
-    const currentPageMode = pageModeSelect.value;
-
-    if (currentContent === lastSavedContent && currentTitle === lastSavedTitle && currentPageMode === lastSavedPageMode) return;
-
-    statusEl.textContent = 'Saving...';
-    statusEl.className = 'autosave-indicator saving';
-
-    const formData = new FormData();
-    formData.append('content', currentContent);
-    formData.append('title', currentTitle);
-    formData.append('page_mode', pageModeSelect.value);
-    formData.append('csrfmiddlewaretoken', csrfToken);
-    if (!editCounted) {
-      formData.append('count_edit', '1');
-      editCounted = true;
-    }
-
-    fetch(autosaveUrl, { method: 'POST', body: formData })
-      .then(function(res) { return res.json(); })
-      .then(function(data) {
-        if (data.status === 'ok') {
-          lastSavedContent = currentContent;
-          lastSavedTitle = currentTitle;
-          lastSavedPageMode = currentPageMode;
-          statusEl.textContent = 'Saved';
-          statusEl.className = 'autosave-indicator saved';
-          setTimeout(function() {
-            if (statusEl.textContent === 'Saved') {
-              statusEl.textContent = '';
-            }
-          }, 3000);
-        }
-      })
-      .catch(function() {
-        statusEl.textContent = 'Save failed';
-        statusEl.className = 'autosave-indicator';
-      });
-  }
-
-  function scheduleAutosave() {
-    clearTimeout(autosaveTimer);
-    autosaveTimer = setTimeout(doAutosave, 2000);
-  }
-
-  quill.on('text-change', scheduleAutosave);
-  document.getElementById('noteTitleInput').addEventListener('input', scheduleAutosave);
-  pageModeSelect.addEventListener('change', scheduleAutosave);
-
-  /* ── Save on page leave ── */
-  window.addEventListener('beforeunload', function() {
-    const currentContent = quill.root.innerHTML;
-    const currentTitle = document.getElementById('noteTitleInput').value;
-    if (currentContent !== lastSavedContent || currentTitle !== lastSavedTitle || pageModeSelect.value !== lastSavedPageMode) {
-      const formData = new FormData();
-      formData.append('content', currentContent);
-      formData.append('title', currentTitle);
-      formData.append('page_mode', pageModeSelect.value);
-      formData.append('csrfmiddlewaretoken', csrfToken);
-      navigator.sendBeacon(autosaveUrl, formData);
-    }
-  });
-})();
-</script>
+<script src="{% static 'js/note_editor.js' %}"></script>
 {% endblock %}

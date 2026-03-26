@@ -18,10 +18,7 @@ from timeout.services.study_planner import (
 User = get_user_model()
 
 
-# ---------------------------------------------------------------------------
 # Helpers
-# ---------------------------------------------------------------------------
-
 def _dt(year, month, day, hour=0, minute=0):
     """Return an aware datetime shortcut."""
     return timezone.make_aware(datetime(year, month, day, hour, minute))
@@ -41,11 +38,7 @@ def _make_event(creator, title, start, end, event_type=None, **kwargs):
     )
 
 
-# ===================================================================
 # SERVICE TESTS
-# ===================================================================
-
-
 class GetBusySlotsTests(TestCase):
     """Tests for get_busy_slots."""
 
@@ -173,12 +166,6 @@ class GetFreeSlotsTests(TestCase):
         start = _dt(2026, 4, 1, 10)
         end = _dt(2026, 4, 1, 22)
         result = get_free_slots(self.user, start, end, 1)
-        # day = start.replace(hour=8) = 08:00 < start(10:00), so day += 1 day
-        # next day is Apr 2 08:00 but Apr 2 > end.date() Apr 1 => empty
-        # Actually: day.date() (Apr 2) > end.date() (Apr 1) so loop doesn't run
-        # Result depends on whether Apr 1 was included. If start > 8am, day
-        # becomes the *next* day, and the loop won't include Apr 1 at all.
-        # This is the actual behavior of the code.
         self.assertEqual(result, [])
 
     def test_min_hours_filters_short_gaps(self):
@@ -276,8 +263,6 @@ class PickEvenlySpacedSlotsTests(TestCase):
 
     def test_fallback_when_no_chosen(self):
         """If _nearest_slot cannot find anything, fallback to first N slots."""
-        # All slots on a date far past the deadline -- _nearest_slot won't find them
-        # because candidate > deadline.  The function should still return something.
         slots = [
             {'start': '2026-04-01T08:00', 'end': '2026-04-01T10:00'},
         ]
@@ -287,11 +272,7 @@ class PickEvenlySpacedSlotsTests(TestCase):
         self.assertTrue(len(result) >= 1)
 
 
-# ===================================================================
 # VIEW TESTS
-# ===================================================================
-
-
 class PlanSessionsViewTests(TestCase):
     """Tests for the plan_sessions view."""
 
@@ -456,9 +437,6 @@ class ConfirmSessionsViewTests(TestCase):
         response = self.client.post(self.url, {'sessions': sessions})
         data = response.json()
         self.assertTrue(data['success'])
-        # Only the first session should succeed (second lacks 'end', third lacks 'title')
-        # The third might actually succeed if Event allows blank title -- but the model
-        # requires title (CharField max_length=200), so KeyError for missing 'title' key.
         self.assertGreaterEqual(data['count'], 1)
 
     def test_empty_sessions_list(self):
@@ -530,7 +508,6 @@ class BuildPromptTests(TestCase):
             {'start': '2026-04-09T08:00', 'end': '2026-04-09T10:00'},
         ]
         result = build_prompt(deadline, 6, 2, candidates)
-        # num_sessions = len(candidates) = 3
         self.assertIn('3', result)
 
     def test_contains_deadline_datetime(self):

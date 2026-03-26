@@ -29,9 +29,7 @@ class CalendarViewNavigationTests(TestCase):
         self.client.login(username="testuser", password="pass1234")
         self.url = reverse("calendar")
 
-    # ------------------------------------------------------------------
     # Basic rendering
-    # ------------------------------------------------------------------
     def test_default_renders_current_month(self):
         """No query params → current month/year used."""
         today = timezone.now().date()
@@ -47,9 +45,8 @@ class CalendarViewNavigationTests(TestCase):
         self.assertEqual(resp.context["year"], 2025)
         self.assertEqual(resp.context["month_name"], "June")
 
-    # ------------------------------------------------------------------
+
     # Invalid / malformed query params
-    # ------------------------------------------------------------------
     def test_invalid_year_month_falls_back_to_today(self):
         """Non-integer values fall back to current month/year."""
         today = timezone.now().date()
@@ -57,9 +54,7 @@ class CalendarViewNavigationTests(TestCase):
         self.assertEqual(resp.context["year"], today.year)
         self.assertEqual(resp.context["month"], today.month)
 
-    # ------------------------------------------------------------------
     # Month < 1 → wraps to December of previous year
-    # ------------------------------------------------------------------
     def test_month_below_one_wraps_to_december(self):
         """month=0 (or -1) should wrap to December of the previous year."""
         resp = self.client.get(self.url, {"year": 2025, "month": 0})
@@ -71,18 +66,15 @@ class CalendarViewNavigationTests(TestCase):
         self.assertEqual(resp.context["month"], 12)
         self.assertEqual(resp.context["year"], 2024)
 
-    # ------------------------------------------------------------------
+
     # Month > 12 → wraps to January of next year
-    # ------------------------------------------------------------------
     def test_month_above_twelve_wraps_to_january(self):
         """month=13 should wrap to January of the next year."""
         resp = self.client.get(self.url, {"year": 2025, "month": 13})
         self.assertEqual(resp.context["month"], 1)
         self.assertEqual(resp.context["year"], 2026)
 
-    # ------------------------------------------------------------------
-    # Prev / next link context values
-    # ------------------------------------------------------------------
+    # Prev / next link context values 
     def test_prev_next_mid_year(self):
         """For month=6 prev→5, next→7; same year."""
         resp = self.client.get(self.url, {"year": 2025, "month": 6})
@@ -103,9 +95,8 @@ class CalendarViewNavigationTests(TestCase):
         self.assertEqual(resp.context["next_month"], 1)
         self.assertEqual(resp.context["next_year"], 2026)
 
-    # ------------------------------------------------------------------
+    
     # Authentication guard
-    # ------------------------------------------------------------------
     def test_unauthenticated_redirects_to_login(self):
         self.client.logout()
         resp = self.client.get(self.url)
@@ -250,10 +241,7 @@ class CalendarViewRecurringEventTests(TestCase):
         self.assertEqual(resp.status_code, 200)
 
 
-# ======================================================================
 # event_create view tests
-# ======================================================================
-
 
 class EventCreateTests(TestCase):
     """Tests for the event_create POST view."""
@@ -264,9 +252,8 @@ class EventCreateTests(TestCase):
         self.client.login(username="creator", password="pass1234")
         self.url = reverse("event_create")
 
-    # ------------------------------------------------------------------
+
     # Successful creation
-    # ------------------------------------------------------------------
     def test_create_normal_event(self):
         resp = self.client.post(self.url, {
             "title": "Team Meeting",
@@ -290,9 +277,7 @@ class EventCreateTests(TestCase):
         event = Event.objects.get(title="Daily Standup")
         self.assertEqual(event.recurrence, "daily")
 
-    # ------------------------------------------------------------------
-    # All-day event logic
-    # ------------------------------------------------------------------
+    # All-day event logic 
     def test_all_day_event_forces_midnight_times(self):
         resp = self.client.post(self.url, {
             "title": "Holiday",
@@ -316,9 +301,7 @@ class EventCreateTests(TestCase):
         self.assertRedirects(resp, reverse("calendar"), fetch_redirect_response=False)
         self.assertFalse(Event.objects.filter(title="Bad All-Day").exists())
 
-    # ------------------------------------------------------------------
     # Non-all-day missing times
-    # ------------------------------------------------------------------
     def test_missing_start_time_non_all_day_shows_error(self):
         resp = self.client.post(self.url, {
             "title": "No Start",
@@ -337,9 +320,7 @@ class EventCreateTests(TestCase):
         self.assertRedirects(resp, reverse("calendar"), fetch_redirect_response=False)
         self.assertFalse(Event.objects.filter(title="No End").exists())
 
-    # ------------------------------------------------------------------
     # Validation error on save
-    # ------------------------------------------------------------------
     def test_validation_error_shows_message(self):
         with patch.object(Event, "full_clean", side_effect=__import__("django.core.exceptions", fromlist=["ValidationError"]).ValidationError("bad")):
             resp = self.client.post(self.url, {
@@ -350,9 +331,7 @@ class EventCreateTests(TestCase):
             })
         self.assertRedirects(resp, reverse("calendar"), fetch_redirect_response=False)
 
-    # ------------------------------------------------------------------
     # Defaults
-    # ------------------------------------------------------------------
     def test_defaults_for_optional_fields(self):
         resp = self.client.post(self.url, {
             "title": "Minimal",
@@ -376,9 +355,7 @@ class EventCreateTests(TestCase):
         event = Event.objects.get(title="Conflicting")
         self.assertTrue(event.allow_conflict)
 
-    # ------------------------------------------------------------------
     # Auth guard
-    # ------------------------------------------------------------------
     def test_unauthenticated_post_redirects(self):
         self.client.logout()
         resp = self.client.post(self.url, {"title": "nope"})
@@ -390,11 +367,7 @@ class EventCreateTests(TestCase):
         self.assertEqual(resp.status_code, 405)
 
 
-# ======================================================================
 # apply_session_schedule view tests
-# ======================================================================
-
-
 class ApplySessionScheduleTests(TestCase):
     """Tests for the apply_session_schedule AJAX endpoint."""
 
@@ -414,7 +387,7 @@ class ApplySessionScheduleTests(TestCase):
             end_datetime=now + start_offset + timedelta(hours=duration_hours),
         )
 
-    # -- Success path ------------------------------------------------
+    # Success path 
     def test_update_sessions_success(self):
         session = self._create_session()
         new_start = "2025-05-01T10:00"
@@ -427,13 +400,13 @@ class ApplySessionScheduleTests(TestCase):
         self.assertTrue(data["success"])
         self.assertEqual(data["count"], 1)
 
-    # -- Invalid JSON ------------------------------------------------
+    # Invalid JSON 
     def test_invalid_json_returns_400(self):
         resp = self.client.post(self.url, {"sessions": "not-valid-json"})
         self.assertEqual(resp.status_code, 400)
         self.assertFalse(resp.json()["success"])
 
-    # -- Nonexistent event skipped -----------------------------------
+    # Nonexistent event skipped 
     def test_nonexistent_event_skipped(self):
         resp = self.client.post(self.url, {
             "sessions": json.dumps([{"id": 99999, "start": "2025-05-01T10:00", "end": "2025-05-01T12:00"}])
@@ -441,7 +414,7 @@ class ApplySessionScheduleTests(TestCase):
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(resp.json()["count"], 0)
 
-    # -- Wrong event type skipped ------------------------------------
+    # Wrong event type skipped 
     def test_wrong_event_type_skipped(self):
         event = Event.objects.create(
             creator=self.user,
@@ -456,7 +429,7 @@ class ApplySessionScheduleTests(TestCase):
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(resp.json()["count"], 0)
 
-    # -- Missing key in session dict ---------------------------------
+    # Missing key in session dict 
     def test_missing_key_skipped(self):
         session = self._create_session()
         resp = self.client.post(self.url, {
@@ -465,13 +438,13 @@ class ApplySessionScheduleTests(TestCase):
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(resp.json()["count"], 0)
 
-    # -- Empty sessions list -----------------------------------------
+    # Empty sessions list 
     def test_empty_sessions_list(self):
         resp = self.client.post(self.url, {"sessions": json.dumps([])})
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(resp.json()["count"], 0)
 
-    # -- Auth guards -------------------------------------------------
+    # Auth guards
     def test_unauthenticated_redirects(self):
         self.client.logout()
         resp = self.client.post(self.url, {"sessions": "[]"})
@@ -482,12 +455,7 @@ class ApplySessionScheduleTests(TestCase):
         resp = self.client.get(self.url)
         self.assertEqual(resp.status_code, 405)
 
-
-# ======================================================================
 # subscribe_event view tests
-# ======================================================================
-
-
 class SubscribeEventTests(TestCase):
     """Tests for the subscribe_event AJAX endpoint."""
 
@@ -509,7 +477,7 @@ class SubscribeEventTests(TestCase):
     def _url(self, pk):
         return reverse("subscribe_event", kwargs={"pk": pk})
 
-    # -- Success path ------------------------------------------------
+    # Success path 
     def test_subscribe_success(self):
         resp = self.client.post(self._url(self.public_event.pk))
         self.assertEqual(resp.status_code, 200)
@@ -518,21 +486,21 @@ class SubscribeEventTests(TestCase):
             Event.objects.filter(creator=self.subscriber, title="Public Lecture").exists()
         )
 
-    # -- Owner cannot subscribe to own event -------------------------
+    # Owner cannot subscribe to own event -
     def test_owner_cannot_subscribe(self):
         self.client.login(username="owner", password="pass1234")
         resp = self.client.post(self._url(self.public_event.pk))
         self.assertEqual(resp.status_code, 400)
         self.assertFalse(resp.json()["success"])
 
-    # -- Duplicate subscription --------------------------------------
+    # Duplicate subscription 
     def test_already_subscribed(self):
         self.client.post(self._url(self.public_event.pk))
         resp = self.client.post(self._url(self.public_event.pk))
         self.assertEqual(resp.status_code, 400)
         self.assertIn("Already", resp.json()["error"])
 
-    # -- Private event returns 404 -----------------------------------
+    # Private event returns 404 
     def test_private_event_404(self):
         private_event = Event.objects.create(
             creator=self.owner,
@@ -545,12 +513,12 @@ class SubscribeEventTests(TestCase):
         resp = self.client.post(self._url(private_event.pk))
         self.assertEqual(resp.status_code, 404)
 
-    # -- Nonexistent event returns 404 -------------------------------
+    # Nonexistent event returns 404 
     def test_nonexistent_event_404(self):
         resp = self.client.post(self._url(99999))
         self.assertEqual(resp.status_code, 404)
 
-    # -- Auth guards -------------------------------------------------
+    # Auth guards 
     def test_unauthenticated_redirects(self):
         self.client.logout()
         resp = self.client.post(self._url(self.public_event.pk))
