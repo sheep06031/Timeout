@@ -71,9 +71,7 @@ function completeDeadline(eventId, checkbox) {
           var remaining = panel.querySelectorAll('.dl-item').length;
           var activeBtn = document.querySelector('.dl-tab-btn--active .dl-tab-count');
           if (activeBtn) activeBtn.textContent = remaining;
-          if (remaining === 0) location.reload();
-        }
-      }, 400);
+          if (remaining === 0) location.reload(); }}, 400);
     }
   })
   .catch(function(err) {

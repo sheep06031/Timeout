@@ -169,8 +169,7 @@ function _handleUnfollowResult(data, btn) {
     const list = document.getElementById('following-list');
     if (list && !list.querySelector('.user-item')) {
       list.innerHTML = '<p class="text-center text-muted py-3">No users yet.</p>';
-    }
-  } else {
+    }} else {
     btn.disabled = false;
     btn.textContent = 'Unfollow';
   }
