@@ -113,58 +113,152 @@
     if (pageModeActive) requestAnimationFrame(paginateContent);
   });
 
-  /**
-   * Initialize page mode (paged view) with automatic page break markers and numbering.
-   */
+  /* Page mode*/
+
   const pageModeSelect = document.getElementById('pageMode');
   const qlContainer = document.querySelector('.ql-container');
   const editorMainEl = document.getElementById('editorMain');
   let pageModeActive = config.notePageMode === 'paged';
   let lastSavedPageMode = config.notePageMode || '';
 
-  /* Apply class on load so CSS switches editor height mode */
   if (pageModeActive) editorMainEl.classList.add('paged-active');
 
   const PAGE_HEIGHT = 1056;
+  const GAP_HEIGHT = 40;
+  let isPaginating = false;
 
   /**
-   * Remove all page break lines and page number labels from editor.
+   * Return editor HTML stripped of pagination margin artifacts.
+   * Pagination adds temporary margin-top styles to push blocks across page
+   * boundaries — these must not be persisted when saving.
    */
-  function clearPageMarkers() {
-    qlContainer.querySelectorAll('.page-break-line, .page-number-label').forEach(function(el) { el.remove(); });
+  function getCleanContent() {
+    var pushed = quill.root.querySelectorAll('[data-page-break]');
+    var saved = [];
+    pushed.forEach(function(el) {
+      saved.push({ el: el, margin: el.style.marginTop });
+      el.style.marginTop = '';
+    });
+    var html = quill.root.innerHTML;
+    saved.forEach(function(s) { s.el.style.marginTop = s.margin; });
+    return html;
   }
 
   /**
-   * Calculate pages and render page break lines with page number labels based on content height.
+   * Remove all page visual elements and reset block margin adjustments.
+   */
+  function clearPageMarkers() {
+    qlContainer.querySelectorAll('.page-card, .page-gap, .page-number-label').forEach(function(el) { el.remove(); });
+    quill.root.querySelectorAll('[data-page-break]').forEach(function(el) {
+      el.style.marginTop = '';
+      el.removeAttribute('data-page-break');
+    });
+  }
+
+  /**
+   * Paginate editor content into distinct pages separated by visible gaps.
+   *
+   * Phase 1 — Measure every block's position before any modifications.
+   * Phase 2 — Walk blocks in order; when a block would span a page boundary
+   *           and fits on a single page, push it to the next page via margin-top.
+   * Phase 3 — Render white page-card backgrounds and gray gap separators
+   *           with centered page numbers.
    */
   function paginateContent() {
+    if (isPaginating) return;
+    isPaginating = true;
     clearPageMarkers();
-    if (!pageModeActive) return;
+
+    if (!pageModeActive) {
+      isPaginating = false;
+      return;
+    }
 
     qlContainer.style.position = 'relative';
+    void quill.root.offsetHeight; /* force reflow after clearing */
 
-    var contentHeight = quill.root.scrollHeight;
-    var totalPages = Math.max(1, Math.ceil(contentHeight / PAGE_HEIGHT));
+    /* Phase 1 — snapshot every child block's position */
+    var editorRect = quill.root.getBoundingClientRect();
+    var scrollTop = quill.root.scrollTop;
+    var blocks = Array.from(quill.root.children).map(function(el) {
+      var r = el.getBoundingClientRect();
+      return { el: el, top: r.top - editorRect.top + scrollTop, height: r.height };
+    });
 
-    for (var i = 1; i < totalPages; i++) {
-      var line = document.createElement('div');
-      line.className = 'page-break-line';
-      line.style.top = (i * PAGE_HEIGHT) + 'px';
-      qlContainer.appendChild(line);
-    }
+    /* Phase 2 — decide which blocks to push past the page boundary */
+    var pushes = [];
+    var offset = 0;
+    var nextBreak = PAGE_HEIGHT;
 
-    for (var i = 0; i < totalPages; i++) {
-      var label = document.createElement('div');
-      label.className = 'page-number-label';
-      label.textContent = (i + 1) + ' / ' + totalPages;
-      var labelTop = (i + 1) * PAGE_HEIGHT - 22;
-      /* Last page may be shorter — cap label at actual content bottom */
-      if (i === totalPages - 1 && labelTop > contentHeight - 22) {
-        labelTop = contentHeight - 22;
+    for (var i = 0; i < blocks.length; i++) {
+      var b = blocks[i];
+      var adjTop = b.top + offset;
+      var adjBottom = adjTop + b.height;
+
+      /* advance past page breaks the block is already beyond */
+      while (nextBreak <= adjTop) nextBreak += PAGE_HEIGHT + GAP_HEIGHT;
+
+      /* block spans the boundary and fits on one page → push it */
+      if (adjTop < nextBreak && adjBottom > nextBreak && b.height <= PAGE_HEIGHT) {
+        var push = nextBreak - adjTop + GAP_HEIGHT;
+        pushes.push({ el: b.el, push: push });
+        offset += push;
+        nextBreak += PAGE_HEIGHT + GAP_HEIGHT;
       }
-      label.style.top = labelTop + 'px';
-      qlContainer.appendChild(label);
     }
+
+    /* apply margin pushes */
+    for (var j = 0; j < pushes.length; j++) {
+      pushes[j].el.style.marginTop = pushes[j].push + 'px';
+      pushes[j].el.setAttribute('data-page-break', 'true');
+    }
+
+    /* Phase 3 — render page cards and gap separators */
+    void quill.root.offsetHeight; /* reflow with new margins */
+    var totalHeight = quill.root.scrollHeight;
+    var totalPages = Math.max(1, pushes.length + 1);
+
+    /* walk through the height placing cards and gaps */
+    var y = 0;
+    for (var p = 0; p < totalPages; p++) {
+      var pageH = Math.min(PAGE_HEIGHT, totalHeight - y);
+      if (pageH <= 0) break;
+
+      /* white page card behind content */
+      var card = document.createElement('div');
+      card.className = 'page-card';
+      card.style.top = y + 'px';
+      card.style.height = pageH + 'px';
+      qlContainer.appendChild(card);
+
+      y += pageH;
+
+      /* gap between pages */
+      if (p < totalPages - 1 && y < totalHeight) {
+        var gap = document.createElement('div');
+        gap.className = 'page-gap';
+        gap.style.top = y + 'px';
+        qlContainer.appendChild(gap);
+
+        var label = document.createElement('div');
+        label.className = 'page-number-label';
+        label.textContent = (p + 1) + ' / ' + totalPages;
+        label.style.top = y + 'px';
+        qlContainer.appendChild(label);
+
+        y += GAP_HEIGHT;
+      }
+    }
+
+    /* page number on last page (bottom-right) */
+    var lastLabel = document.createElement('div');
+    lastLabel.className = 'page-number-label page-number-last';
+    lastLabel.textContent = totalPages + ' / ' + totalPages;
+    lastLabel.style.top = Math.max(0, totalHeight - 24) + 'px';
+    qlContainer.appendChild(lastLabel);
+
+    /* release flag after mutations settle */
+    requestAnimationFrame(function() { isPaginating = false; });
   }
 
   pageModeSelect.addEventListener('change', function() {
@@ -178,15 +272,18 @@
   }
 
   quill.on('text-change', function() {
+    if (isPaginating) return;
     if (pageModeActive) requestAnimationFrame(paginateContent);
   });
+
+  /*  Form sync & autosave  */
 
   /**
    * Sync editor content and title to hidden form fields on manual submit.
    */
   const editForm = document.getElementById('noteEditForm');
   editForm.addEventListener('submit', function() {
-    hiddenInput.value = quill.root.innerHTML;
+    hiddenInput.value = getCleanContent();
     document.getElementById('hiddenTitle').value = document.getElementById('noteTitleInput').value;
     document.getElementById('hiddenPageMode').value = pageModeSelect.value;
   });
@@ -231,9 +328,9 @@
    * Only saves if content differs from last saved version.
    */
   function doAutosave() {
-    const currentContent = quill.root.innerHTML;
-    const currentTitle = document.getElementById('noteTitleInput').value;
-    const currentPageMode = pageModeSelect.value;
+    var currentContent = getCleanContent();
+    var currentTitle = document.getElementById('noteTitleInput').value;
+    var currentPageMode = pageModeSelect.value;
 
     if (currentContent === lastSavedContent && currentTitle === lastSavedTitle && currentPageMode === lastSavedPageMode) return;
 
@@ -257,11 +354,14 @@
    * Debounce autosave trigger to 2 seconds to reduce unnecessary API calls.
    */
   function scheduleAutosave() {
+    if (isPaginating) return;
     clearTimeout(autosaveTimer);
     autosaveTimer = setTimeout(doAutosave, 2000);
   }
 
-  quill.on('text-change', scheduleAutosave);
+  quill.on('text-change', function() {
+    if (!isPaginating) scheduleAutosave();
+  });
   document.getElementById('noteTitleInput').addEventListener('input', scheduleAutosave);
   pageModeSelect.addEventListener('change', scheduleAutosave);
 
@@ -269,10 +369,10 @@
    * Save content on page unload using sendBeacon if unsaved changes exist.
    */
   window.addEventListener('beforeunload', function() {
-    const currentContent = quill.root.innerHTML;
-    const currentTitle = document.getElementById('noteTitleInput').value;
+    var currentContent = getCleanContent();
+    var currentTitle = document.getElementById('noteTitleInput').value;
     if (currentContent !== lastSavedContent || currentTitle !== lastSavedTitle || pageModeSelect.value !== lastSavedPageMode) {
-      const formData = new FormData();
+      var formData = new FormData();
       formData.append('content', currentContent);
       formData.append('title', currentTitle);
       formData.append('page_mode', pageModeSelect.value);
