@@ -14,6 +14,7 @@ from django.core.exceptions import ValidationError
 from django.db.models import Q
 from timeout.views.ai_workload import get_ai_workload_warning
 from timeout.views.deadline_warning import get_deadline_study_warnings
+from timeout.models import DismissedAlert
 
 MONTH_NAMES = [ # months names for calendar display
     "", "January", "February", "March", "April", "May", "June",
@@ -189,29 +190,41 @@ def build_day(day, month, today, events_by_date):
 def get_data(request, events_by_date=None):
     """Helper function to gather data needed for upcoming deadlines and reschedule prompts"""
     now = timezone.now()
-    upcoming_deadlines = Event.objects.filter(creator=request.user,event_type__in=[Event.EventType.DEADLINE, Event.EventType.EXAM],
-        start_datetime__gte=now,
+    today_str = now.date().isoformat()
+    dismissed_keys = set(
+        DismissedAlert.objects.filter(user=request.user).values_list('alert_key', flat=True)
+    )
+    upcoming_deadlines = Event.objects.filter(creator=request.user, event_type__in=[Event.EventType.DEADLINE, Event.EventType.EXAM], start_datetime__gte=now,
     ).order_by('start_datetime')[:20]
-    missed_sessions = Event.objects.filter(creator=request.user,event_type=Event.EventType.STUDY_SESSION,
-        status=Event.EventStatus.UPCOMING,
-        end_datetime__lt=now,
-        is_completed=False,)
+    missed_sessions = Event.objects.filter(creator=request.user,event_type=Event.EventType.STUDY_SESSION, status=Event.EventStatus.UPCOMING, end_datetime__lt=now, is_completed=False,)
     reschedule_prompts = [
         {
             'id': e.pk,
             'title': e.title,
             'duration_minutes': int((e.end_datetime - e.start_datetime).total_seconds() / 60),
             'reason': 'missed',
+            'alert_key': f'reschedule_{e.pk}_missed',
         }
         for e in missed_sessions
+        if f'reschedule_{e.pk}_missed' not in dismissed_keys
+
     ]
-    reschedule_prompts += request.session.pop('reschedule_prompts', [])
+    reschedule_prompts += [
+        p for p in request.session.pop('reschedule_prompts', [])
+        if f"reschedule_{p['id']}_{p.get('reason', 'missed')}" not in dismissed_keys
+    ]
+    all_warnings = get_deadline_study_warnings(request.user)
+    warnings = [w for w in all_warnings if w['key'] not in dismissed_keys]
+    workload_key = f'workload_{request.user.id}_{today_str}'
     today_events = (events_by_date or {}).get(now.date(), [])
+    raw_workload = get_ai_workload_warning(request.user, today_events)
+    workload_warning = raw_workload if raw_workload and workload_key not in dismissed_keys else None
     return {
         "upcoming_deadlines": upcoming_deadlines,
         "reschedule_prompts": reschedule_prompts,
-        "warnings": get_deadline_study_warnings(request.user),
-        "workload_warning": get_ai_workload_warning(request.user, today_events),
+        "warnings": warnings,
+        "workload_warning": workload_warning,
+        "workload_alert_key": workload_key,
     }
 
 
@@ -340,3 +353,13 @@ def event_create(request):
         messages.error(request, '; '.join(e.messages))
 
     return redirect("calendar")
+
+@login_required
+@require_POST
+def dismiss_alert(request):
+    from timeout.models import DismissedAlert
+    key = request.POST.get('key', '').strip()
+    if not key:
+        return JsonResponse({'success': False}, status=400)
+    DismissedAlert.objects.get_or_create(user=request.user, alert_key=key)
+    return JsonResponse({'success': True})
