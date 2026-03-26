@@ -1,0 +1,397 @@
+/* Notes — Overlays, Toasts, Urgency, FAB */
+
+/* Focus Mode Overlay */
+
+.nt-focus-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1100;
+  display: flex;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.nt-focus-bar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  color: #fff;
+  padding: 10px 24px;
+  border-radius: 0 0 14px 14px;
+  box-shadow: 0 4px 20px rgba(239, 68, 68, 0.3);
+  pointer-events: all;
+}
+
+.nt-focus-bar-label {
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.nt-focus-bar-timer {
+  font-size: 14px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  background: rgba(255, 255, 255, 0.2);
+  padding: 3px 10px;
+  border-radius: 6px;
+}
+
+.nt-focus-exit-btn {
+  padding: 6px 14px;
+  border: 2px solid rgba(255, 255, 255, 0.5);
+  border-radius: 6px;
+  background: transparent;
+  color: #fff;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.18s;
+}
+
+.nt-focus-exit-btn:hover {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: #fff;
+}
+
+/* Body class when focus is active */
+body.nt-focus-active .container {
+  max-width: 100%;
+  padding: 0 20px;
+}
+
+body.nt-focus-active main {
+  margin-top: 60px !important;
+}
+
+
+/* Inactivity Warning Overlay */
+
+.nt-warn-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  animation: warnFadeIn 0.3s ease;
+}
+
+@keyframes warnFadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.nt-warn-card {
+  background: #fff;
+  border-radius: 16px;
+  padding: 40px 32px;
+  text-align: center;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+  max-width: 380px;
+  width: 90%;
+  animation: warnBounce 0.4s ease;
+}
+
+@keyframes warnBounce {
+  0%   { transform: scale(0.8); opacity: 0; }
+  60%  { transform: scale(1.05); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.nt-warn-icon {
+  font-size: 48px;
+  margin-bottom: 12px;
+}
+
+.nt-warn-title {
+  font-size: 20px;
+  font-weight: 800;
+  color: #1A1F36;
+  margin: 0 0 8px;
+}
+
+.nt-warn-text {
+  font-size: 14px;
+  color: #5a6a85;
+  margin: 0 0 20px;
+  line-height: 1.5;
+}
+
+.nt-warn-dismiss {
+  display: inline-flex;
+  align-items: center;
+  padding: 10px 28px;
+  background: linear-gradient(135deg, #5B73E8, #4ECDC4);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+
+.nt-warn-dismiss:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(91, 115, 232, 0.3);
+}
+
+
+/* XP Toast */
+
+.nt-xp-toast {
+  position: fixed;
+  bottom: 32px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1300;
+  display: flex;
+  align-items: center;
+  padding: 10px 20px;
+  background: linear-gradient(135deg, #5B73E8, #4ECDC4);
+  color: #fff;
+  border-radius: 10px;
+  box-shadow: 0 6px 24px rgba(91, 115, 232, 0.35);
+  font-weight: 800;
+  font-size: 15px;
+}
+
+.nt-xp-toast--show {
+  animation: xpSlideUp 0.4s ease forwards;
+}
+
+.nt-xp-toast--hide {
+  animation: xpSlideDown 0.4s ease forwards;
+}
+
+@keyframes xpSlideUp {
+  from { opacity: 0; transform: translateX(-50%) translateY(20px); }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+@keyframes xpSlideDown {
+  from { opacity: 1; transform: translateX(-50%) translateY(0); }
+  to   { opacity: 0; transform: translateX(-50%) translateY(20px); }
+}
+
+
+/* Urgency Indicators */
+
+.nt-urgency {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 0.62rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.nt-urgency--overdue {
+  background: rgba(239, 68, 68, 0.12);
+  color: #dc2626;
+  animation: urgencyPulse 2s ease-in-out infinite;
+}
+
+.nt-urgency--urgent {
+  background: rgba(245, 158, 11, 0.12);
+  color: #d97706;
+}
+
+.nt-urgency--soon {
+  background: rgba(59, 130, 246, 0.10);
+  color: #2563eb;
+}
+
+.nt-urgency--upcoming {
+  background: rgba(34, 197, 94, 0.10);
+  color: #16a34a;
+}
+
+@keyframes urgencyPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+.nt-meta--due { color: #d97706; font-weight: 600; }
+.nt-meta--overdue { color: #dc2626 !important; }
+.nt-meta--time { color: #5b5ddf; font-weight: 600; }
+
+
+/* Mobile FAB */
+
+.nt-fab {
+  display: none;
+  position: fixed;
+  bottom: 24px;
+  right: 20px;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: #5b5ddf;
+  color: #fff;
+  font-size: 1.5rem;
+  border: none;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 16px rgba(91, 93, 223, 0.4);
+  z-index: 50;
+  cursor: pointer;
+}
+
+.nt-fab:hover { background: #3f54ba; }
+
+/* Daily Goals Widget */
+
+.nt-goals-bar {
+  background: #fff;
+  border: 1px solid rgba(91, 93, 223, 0.10);
+  border-radius: 14px;
+  padding: 16px 22px;
+  margin-bottom: 16px;
+  box-shadow: 0 1px 6px rgba(91, 93, 223, 0.06);
+}
+
+.nt-goals-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.nt-goals-title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.nt-goals-icon { font-size: 18px; }
+.nt-goals-title { font-size: 14px; font-weight: 700; color: #1A1F36; margin: 0; }
+
+.nt-goals-complete-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  background: linear-gradient(135deg, #22c55e, #16a34a);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  border-radius: 20px;
+  animation: goalsBadgePop 0.4s ease;
+}
+
+@keyframes goalsBadgePop {
+  0% { transform: scale(0.5); opacity: 0; }
+  60% { transform: scale(1.1); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.nt-goals-toggle {
+  background: none;
+  border: none;
+  font-size: 14px;
+  color: #8892B0;
+  cursor: pointer;
+  padding: 4px 8px;
+}
+
+.nt-goals-body { margin-top: 14px; }
+
+.nt-goals-grid {
+  display: flex;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+
+.nt-goal-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  min-width: 140px;
+}
+
+.nt-goal-ring-wrap {
+  position: relative;
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+}
+
+.nt-goal-ring {
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+
+.nt-goal-ring-bg {
+  fill: none;
+  stroke: rgba(91, 93, 223, 0.10);
+  stroke-width: 3;
+}
+
+.nt-goal-ring-fill {
+  fill: none;
+  stroke-width: 3;
+  stroke-linecap: round;
+  transition: stroke-dashoffset 0.6s ease;
+}
+
+.nt-goal-ring--pomo { stroke: #5B73E8; }
+.nt-goal-ring--notes { stroke: #4ECDC4; }
+.nt-goal-ring--focus { stroke: #f59e0b; }
+.nt-goal-ring--done { filter: brightness(1.2); }
+
+.nt-goal-ring-icon {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 14px;
+}
+
+.nt-goal-info { display: flex; flex-direction: column; }
+
+.nt-goal-progress {
+  font-size: 14px;
+  font-weight: 700;
+  color: #1A1F36;
+}
+
+.nt-goal-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #8892B0;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.nt-goals-edit-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 12px;
+  padding: 5px 12px;
+  border: 1px solid #dde3ee;
+  border-radius: 6px;
+  background: #fff;
+  color: #8892B0;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.18s;
+}
+
+.nt-goals-edit-btn:hover {
+  border-color: #5b5ddf;
+  color: #5b5ddf;
+}
