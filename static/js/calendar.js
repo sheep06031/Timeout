@@ -4,6 +4,25 @@
  * and highlighting currently active events.
  */
 
+function persistDismissAlert(key) {
+    const meta = document.querySelector('meta[name="dismiss-alert-url"]');
+    const csrf = document.querySelector('meta[name="csrf-token"]');
+    if (!meta || !csrf) return;
+    fetch(meta.content, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'X-CSRFToken': csrf.content,
+        },
+        body: `key=${encodeURIComponent(key)}`,
+    });
+}
+
+function dismissAlert(key, btn) {
+    const alertEl = btn.closest('.alert');
+    if (alertEl) alertEl.remove();
+    persistDismissAlert(key);
+}
 
 /**
  * Open add event modal prefilled with start and end times for a specific date.

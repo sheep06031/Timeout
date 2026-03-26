@@ -18,6 +18,7 @@ urlpatterns = [
     path('calendar/ai-reschedule/', ai_reschedule_views.ai_suggest_reschedule, name='ai_reschedule'),
     path('calendar/reschedule-study-sessions/', ai_reschedule_views.reschedule_study_sessions, name='reschedule_study_sessions'),
     path('calendar/apply-session-schedule/', cal_views.apply_session_schedule, name='apply_session_schedule'),
+    path('calendar/dismiss-alert/', cal_views.dismiss_alert, name='dismiss_alert'),
     path('deadlines/', deadline_views.deadline_list_view, name='deadline_list'),
     path('deadlines/<int:event_id>/complete/', deadline_views.deadline_mark_complete, name='deadline_mark_complete'),
     
