@@ -15,6 +15,8 @@ def get_busy_slots(user, start, end):
 
 def get_free_slots(user, start, end, min_hours):
     """Return list of free slot dicts within 8am–10pm each day."""
+    if end <= start:
+        return []
     busy = get_busy_slots(user, start, end)
     free = []
     day = start.replace(hour=8, minute=0, second=0, microsecond=0)
@@ -34,30 +36,28 @@ def pick_evenly_spaced_slots(free_slots, num_sessions, start, end):
     if not free_slots or num_sessions <= 0:
         return free_slots
 
+    by_date = _group_slots_by_date(free_slots)
     total_days = (end.date() - start.date()).days or 1
     interval = total_days / num_sessions
 
-    # Group slots by date for fast lookup
-    by_date = {}
-    for slot in free_slots:
-        d = slot['start'][:10]
-        by_date.setdefault(d, []).append(slot)
-
     chosen = []
     for i in range(num_sessions):
-        # Target day index for this session (centre of each interval)
         target_offset = interval * (i + 0.5)
         target_date = (start + timedelta(days=target_offset)).date()
-
-        # Search outward from target date for a free slot
         slot = _nearest_slot(by_date, target_date, end.date())
         if slot:
-            # Remove used date so we don't double-book
-            d = slot['start'][:10]
-            by_date.pop(d, None)
+            by_date.pop(slot['start'][:10], None)
             chosen.append(slot)
 
     return chosen if chosen else free_slots[:num_sessions]
+
+
+def _group_slots_by_date(free_slots):
+    """Group free slot dicts by their date string."""
+    by_date = {}
+    for slot in free_slots:
+        by_date.setdefault(slot['start'][:10], []).append(slot)
+    return by_date
 
 
 def _nearest_slot(by_date, target, deadline):
