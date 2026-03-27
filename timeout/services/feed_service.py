@@ -3,6 +3,16 @@ from timeout.models import Post, Block
 
 PAGE_SIZE = 15
 
+
+def _finalise_feed_qs(qs, cursor):
+    """Apply cursor filter, eager loading, ordering, and page size slice."""
+    if cursor:
+        qs = qs.filter(id__lt=cursor)
+    return qs.select_related('author', 'event').prefetch_related(
+        'likes', 'comments', 'bookmarks'
+    ).order_by('-created_at')[:PAGE_SIZE + 1]
+
+
 def _get_blocked_ids(user):
     """Return (blocked_by_me_ids, blocking_me_ids) for a user."""
     blocked_by_me = Block.objects.filter(blocker=user).values_list('blocked_id', flat=True)
@@ -26,14 +36,7 @@ class FeedService:
                           .exclude(author_id__in=blocked_by_me)
                           .exclude(author_id__in=blocking_me))
 
-        if cursor:
-            qs = qs.filter(id__lt=cursor)
-
-        qs = qs.select_related('author', 'event').prefetch_related(
-            'likes', 'comments', 'bookmarks'
-        ).order_by('-created_at')[:PAGE_SIZE + 1]
-
-        posts = [p for p in qs if p.can_view(user)]
+        posts = [p for p in _finalise_feed_qs(qs, cursor) if p.can_view(user)]
         return posts
 
     @staticmethod
@@ -51,14 +54,7 @@ class FeedService:
                     .exclude(author_id__in=blocked_by_me)
                     .exclude(author_id__in=blocking_me))
 
-        if cursor:
-            qs = qs.filter(id__lt=cursor)
-
-        qs = qs.select_related('author', 'event').prefetch_related(
-            'likes', 'comments', 'bookmarks'
-        ).order_by('-created_at')[:PAGE_SIZE + 1]
-
-        return list(qs)
+        return list(_finalise_feed_qs(qs, cursor))
 
     @staticmethod
     def get_user_posts(user, viewer, cursor=None):
@@ -66,14 +62,7 @@ class FeedService:
         if not (viewer.is_authenticated and viewer.is_staff):
             qs = qs.exclude(author__is_banned=True)
 
-        if cursor:
-            qs = qs.filter(id__lt=cursor)
-
-        qs = qs.select_related('author', 'event').prefetch_related(
-            'likes', 'comments', 'bookmarks'
-        ).order_by('-created_at')[:PAGE_SIZE + 1]
-
-        return [p for p in qs if p.can_view(viewer)]
+        return [p for p in _finalise_feed_qs(qs, cursor) if p.can_view(viewer)]
 
     @staticmethod
     def get_bookmarked_posts(user, cursor=None):
@@ -89,11 +78,4 @@ class FeedService:
                           .exclude(author_id__in=blocked_by_me)
                           .exclude(author_id__in=blocking_me))
 
-        if cursor:
-            qs = qs.filter(id__lt=cursor)
-
-        qs = qs.select_related('author', 'event').prefetch_related(
-            'likes', 'comments', 'bookmarks'
-        ).order_by('-created_at')[:PAGE_SIZE + 1]
-
-        return [p for p in qs if p.can_view(user)]
+        return [p for p in _finalise_feed_qs(qs, cursor) if p.can_view(user)]

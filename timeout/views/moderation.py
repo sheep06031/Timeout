@@ -32,8 +32,8 @@ def flag_post(request, post_id):
 @require_POST
 def approve_flag(request, flag_id):
     """Approve a flag: delete the post and notify its author (staff only)."""
-    if not request.user.is_staff:
-        return JsonResponse({'error': 'Staff access required.'}, status=403)
+    if denied := _deny_non_staff(request):
+        return denied
 
     flag = get_object_or_404(PostFlag, id=flag_id)
     author = flag.post.author
@@ -51,8 +51,8 @@ def approve_flag(request, flag_id):
 @require_POST
 def deny_flag(request, flag_id):
     """Deny a flag: dismiss it and keep the post (staff only)."""
-    if not request.user.is_staff:
-        return JsonResponse({'error': 'Staff access required.'}, status=403)
+    if denied := _deny_non_staff(request):
+        return denied
 
     flag = get_object_or_404(PostFlag, id=flag_id)
     flag.delete()
@@ -64,14 +64,21 @@ def _is_ajax(request):
     return request.headers.get('X-Requested-With') == 'XMLHttpRequest'
 
 
+def _deny_non_staff(request):
+    """Return a 403 response if user is not staff, else None."""
+    if request.user.is_staff:
+        return None
+    if _is_ajax(request):
+        return JsonResponse({'error': 'Staff access required.'}, status=403)
+    return HttpResponseForbidden('Staff access required.')
+
+
 @login_required
 @require_POST
 def ban_user(request, username):
     """Ban a user (staff only). Returns JSON for AJAX calls, redirect otherwise."""
-    if not request.user.is_staff:
-        if _is_ajax(request):
-            return JsonResponse({'error': 'Staff access required.'}, status=403)
-        return HttpResponseForbidden('Staff access required.')
+    if denied := _deny_non_staff(request):
+        return denied
 
     target = get_object_or_404(User, username=username)
 
@@ -97,10 +104,8 @@ def ban_user(request, username):
 @require_POST
 def unban_user(request, username):
     """Unban a user (staff only). Returns JSON for AJAX calls, redirect otherwise."""
-    if not request.user.is_staff:
-        if _is_ajax(request):
-            return JsonResponse({'error': 'Staff access required.'}, status=403)
-        return HttpResponseForbidden('Staff access required.')
+    if denied := _deny_non_staff(request):
+        return denied
 
     target = get_object_or_404(User, username=username)
     target.is_banned = False

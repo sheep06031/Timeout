@@ -5,17 +5,6 @@
  */
 
 /**
- * Open add event modal prefilled with start and end times for a specific date.
- * @param {string} dateStr - Date string in YYYY-MM-DD format.
- */
-function openAddEvent(dateStr) {
-  document.getElementById('eventStart').value = dateStr + 'T09:00';
-  document.getElementById('eventEnd').value = dateStr + 'T10:00';
-  var modal = new bootstrap.Modal(document.getElementById('addEventModal'));
-  modal.show();
-}
-
-/**
  * Initialize deadline checkbox event listeners on page load.
  * Sets up handlers for marking deadlines complete and incomplete.
  */

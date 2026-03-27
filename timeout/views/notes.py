@@ -38,6 +38,18 @@ def _get_filtered_notes(user, query, category, sort):
     return notes
 
 
+def _user_xp_context(user):
+    """Return XP/streak fields shared across note page contexts."""
+    return {
+        'xp': user.xp,
+        'level': user.level,
+        'xp_progress_pct': user.xp_progress_pct,
+        'xp_for_next_level': user.xp_for_next_level,
+        'note_streak': user.note_streak,
+        'longest_streak': user.longest_note_streak,
+    }
+
+
 def _build_note_list_context(user, notes, category, query, sort):
     """Assemble context dict for the note list page."""
     user_notes_simple = list(
@@ -53,12 +65,7 @@ def _build_note_list_context(user, notes, category, query, sort):
         'search_query': query,
         'active_sort': sort,
         'sort_options': [(k, v[1]) for k, v in SORT_OPTIONS.items()],
-        'xp': user.xp,
-        'level': user.level,
-        'xp_progress_pct': user.xp_progress_pct,
-        'xp_for_next_level': user.xp_for_next_level,
-        'note_streak': user.note_streak,
-        'longest_streak': user.longest_note_streak,
+        **_user_xp_context(user),
         'daily_progress': NoteService.get_daily_progress(user),
         'user_notes_json': json.dumps(user_notes_simple),
     }
@@ -130,12 +137,7 @@ def note_edit(request, note_id):
     context = {
         'form': form,
         'note': note,
-        'xp': user.xp,
-        'level': user.level,
-        'xp_progress_pct': user.xp_progress_pct,
-        'xp_for_next_level': user.xp_for_next_level,
-        'note_streak': user.note_streak,
-        'longest_streak': user.longest_note_streak,
+        **_user_xp_context(user),
     }
     return render(request, 'pages/note_edit.html', context)
 
