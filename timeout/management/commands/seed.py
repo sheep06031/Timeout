@@ -294,6 +294,26 @@ POST_TEMPLATES = [
 ]
 
 
+JOHNDOE_STUDY_MEETINGS = [
+    ('Algorithms Revision', 'study_session', 'Library, KCL', 15, 14, 2),
+    ('ML Past Papers', 'study_session', 'Library, KCL', 40, 10, 3),
+    ('DB Exam Prep', 'study_session', 'Library, KCL', 28, 16, 2),
+    ('Group Study \u2013 SEG', 'study_session', 'Library, KCL', 5, 15, 2),
+    ('Algorithms Mock Exam', 'study_session', 'Library, KCL', 50, 10, 3),
+    ('ML Group Revision', 'study_session', 'Library, KCL', 65, 14, 2),
+    ('DB Query Practice', 'study_session', 'Library, KCL', 78, 11, 2),
+    ('SEG Demo Prep', 'study_session', 'Library, KCL', 88, 15, 2),
+    ('Algorithms Final Revision', 'study_session', 'Library, KCL', 100, 10, 3),
+    ('SEG Team Meeting', 'meeting', 'Bush House, KCL', 3, 11, 1),
+    ('Supervisor Check-in', 'meeting', 'Bush House, KCL', 10, 14, 1),
+    ('Career Fair Prep', 'meeting', 'Bush House, KCL', 6, 13, 1),
+    ('SEG Sprint Review', 'meeting', 'Bush House, KCL', 30, 11, 1),
+    ('Supervisor Check-in 2', 'meeting', 'Bush House, KCL', 55, 14, 1),
+    ('SEG Final Demo', 'meeting', 'Bush House, KCL', 80, 10, 2),
+    ('Career Mentoring Session', 'meeting', 'Bush House, KCL', 95, 13, 1),
+]
+
+
 def _days_offset(n, hour=9, minute=0, duration_h=1):
     """Return (start, end) datetimes offset by n days from now."""
     start = timezone.now().replace(hour=hour, minute=minute, second=0, microsecond=0) + timedelta(days=n)
@@ -639,33 +659,17 @@ class Command(BaseCommand):
 
     def _johndoe_study_meetings(self, johndoe):
         """Generate study sessions and meetings for johndoe."""
-        items = [
-            ('Algorithms Revision', 'study_session', 'Library, KCL', 15, 14, 2),
-            ('ML Past Papers', 'study_session', 'Library, KCL', 40, 10, 3),
-            ('DB Exam Prep', 'study_session', 'Library, KCL', 28, 16, 2),
-            ('Group Study – SEG', 'study_session', 'Library, KCL', 5, 15, 2),
-            ('Algorithms Mock Exam', 'study_session', 'Library, KCL', 50, 10, 3),
-            ('ML Group Revision', 'study_session', 'Library, KCL', 65, 14, 2),
-            ('DB Query Practice', 'study_session', 'Library, KCL', 78, 11, 2),
-            ('SEG Demo Prep', 'study_session', 'Library, KCL', 88, 15, 2),
-            ('Algorithms Final Revision', 'study_session', 'Library, KCL', 100, 10, 3),
-            ('SEG Team Meeting', 'meeting', 'Bush House, KCL', 3, 11, 1),
-            ('Supervisor Check-in', 'meeting', 'Bush House, KCL', 10, 14, 1),
-            ('Career Fair Prep', 'meeting', 'Bush House, KCL', 6, 13, 1),
-            ('SEG Sprint Review', 'meeting', 'Bush House, KCL', 30, 11, 1),
-            ('Supervisor Check-in 2', 'meeting', 'Bush House, KCL', 55, 14, 1),
-            ('SEG Final Demo', 'meeting', 'Bush House, KCL', 80, 10, 2),
-            ('Career Mentoring Session', 'meeting', 'Bush House, KCL', 95, 13, 1),
-        ]
-        events = []
-        for title, etype, loc, day, hour, dur in items:
-            start, end = _days_offset(day, hour, 0, dur)
-            events.append(dict(
-                creator=johndoe, title=title, event_type=etype,
-                start_datetime=start, end_datetime=end,
-                location=loc, visibility='private', status='upcoming',
-            ))
-        return events
+        return [self._johndoe_event(johndoe, item) for item in JOHNDOE_STUDY_MEETINGS]
+
+    def _johndoe_event(self, johndoe, item):
+        """Build a single johndoe study/meeting event dict."""
+        title, etype, loc, day, hour, dur = item
+        start, end = _days_offset(day, hour, 0, dur)
+        return dict(
+            creator=johndoe, title=title, event_type=etype,
+            start_datetime=start, end_datetime=end,
+            location=loc, visibility='private', status='upcoming',
+        )
 
     def _create_global_events(self):
         """Create traditional recurring global events."""

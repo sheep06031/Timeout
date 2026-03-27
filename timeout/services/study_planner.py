@@ -62,15 +62,22 @@ def _group_slots_by_date(free_slots):
 
 def _nearest_slot(by_date, target, deadline):
     """Return the closest free slot to target date, searching outward."""
-    from datetime import date, timedelta as td
-    for offset in range(0, 60):
-        for delta in ([td(days=-offset), td(days=offset)] if offset else [td(0)]):
-            candidate = target + delta
-            if candidate > deadline:
-                continue
-            key = candidate.isoformat()
-            if key in by_date and by_date[key]:
-                return by_date[key][0]
+    from datetime import timedelta as td
+
+    deltas = [td(0)]
+    for offset in range(1, 60):
+        deltas.append(td(days=-offset))
+        deltas.append(td(days=offset))
+
+    for delta in deltas:
+        candidate = target + delta
+        if candidate > deadline:
+            continue
+
+        key = candidate.isoformat()
+        if key in by_date and by_date[key]:
+            return by_date[key][0]
+
     return None
 
 

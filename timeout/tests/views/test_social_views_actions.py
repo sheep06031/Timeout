@@ -10,19 +10,10 @@ User = get_user_model()
 
 
 class SocialViewsActionsTest(TestCase):
-    """
-    Integration-style tests for social views.
-
-    - Post CRUD permissions (author vs non-author)
-    - Like/Bookmark toggle endpoints (JSON responses)
-    - Privacy enforcement for followers-only posts
-    - Comment creation + replies (parent_id)
-    - Follow/unfollow toggling + self-follow rejection
-    - Feed tab switching (following/discover/unknown)
-    - Bookmarks page and user profile page basic rendering
-    """
+    """Integration-style tests for social views. """
 
     def setUp(self):
+        """Set up test users and posts for the social views actions tests, creating an author user who creates both a public and a followers-only post, and another user who will interact with these posts in the tests, allowing for testing of permissions, liking, bookmarking, commenting, and following functionality in the social views."""
         self.author = User.objects.create_user(username="author", password="pass123")
         self.other = User.objects.create_user(username="other", password="pass123")
 
@@ -42,8 +33,8 @@ class SocialViewsActionsTest(TestCase):
         ok = self.client.login(username=user.username, password="pass123")
         self.assertTrue(ok)
 
-    # Creating a valid post should redirect and persist the post
     def test_create_post(self):
+        """Test that an authenticated user can create a new post via the create_post view, ensuring that the view correctly handles post creation and redirects appropriately, and that the new post is saved in the database with the correct author and content."""
         self.login(self.author)
         res = self.client.post(
             reverse("create_post"),
@@ -52,22 +43,22 @@ class SocialViewsActionsTest(TestCase):
         self.assertEqual(res.status_code, 302)
         self.assertTrue(Post.objects.filter(author=self.author, content="new").exists())
 
-    # Non-author should not be able to delete a post (403 + post remains)
     def test_delete_post_permission_denied_for_non_author(self):
+        """Test that a user who is not the author of a post cannot delete it via the delete_post view, ensuring that the view enforces permissions correctly by returning a 403 Forbidden status code and that the post remains in the database after the attempted deletion."""
         self.login(self.other)
         res = self.client.post(reverse("delete_post", args=[self.post_public.id]))
         self.assertEqual(res.status_code, 403)
         self.assertTrue(Post.objects.filter(id=self.post_public.id).exists())
 
-    # Author should be able to delete own post (redirect + post removed)
     def test_delete_post_ok_for_author(self):
+        """Test that the author of a post can delete it via the delete_post view, ensuring that the view correctly handles post deletion by returning a redirect status code and that the post is removed from the database."""
         self.login(self.author)
         res = self.client.post(reverse("delete_post", args=[self.post_public.id]))
         self.assertEqual(res.status_code, 302)
         self.assertFalse(Post.objects.filter(id=self.post_public.id).exists())
 
-    # Like endpoint should toggle like state and return JSON
     def test_like_toggle_public_post(self):
+        """Test that liking a public post toggles the like state and returns the correct JSON response."""
         self.login(self.other)
         url = reverse("like_post", args=[self.post_public.id])
 
@@ -88,8 +79,8 @@ class SocialViewsActionsTest(TestCase):
             0,
         )
 
-    # Bookmark endpoint should toggle bookmark state and return JSON
     def test_bookmark_toggle_public_post(self):
+        """Test that bookmarking a public post toggles the bookmark state and returns the correct JSON response."""
         self.login(self.other)
         url = reverse("bookmark_post", args=[self.post_public.id])
 
@@ -110,21 +101,21 @@ class SocialViewsActionsTest(TestCase):
             0,
         )
 
-    # Liking a followers-only post should be forbidden unless the user follows the author
     def test_like_private_post_forbidden_if_not_follower(self):
+        """Test that attempting to like a followers-only post without following the author returns a 403 Forbidden status code, ensuring that the like_post view correctly enforces permissions based on the post's privacy settings and the user's relationship to the author."""
         self.login(self.other)
         res = self.client.post(reverse("like_post", args=[self.post_private.id]))
         self.assertEqual(res.status_code, 403)
 
-    # Once following the author, liking a followers-only post should succeed
     def test_like_private_post_ok_if_follower(self):
+        """Test that liking a followers-only post succeeds if the user follows the author, ensuring that the like_post view correctly enforces permissions based on the post's privacy settings and the user's relationship to the author."""
         self.other.following.add(self.author)
         self.login(self.other)
         res = self.client.post(reverse("like_post", args=[self.post_private.id]))
         self.assertEqual(res.status_code, 200)
 
-    # Adding a comment and then a reply should create a parent/child relationship
     def test_add_comment_and_reply(self):
+        """Test that an authenticated user can add a comment to a public post and then reply to that comment, ensuring that the add_comment view correctly handles both creating a new comment and creating a reply to an existing comment, and that the comments are saved in the database with the correct relationships."""
         self.login(self.other)
 
         res1 = self.client.post(
@@ -142,8 +133,8 @@ class SocialViewsActionsTest(TestCase):
         reply = Comment.objects.get(post=self.post_public, author=self.other, content="reply")
         self.assertEqual(reply.parent_id, c1.id)
 
-    # Follow endpoint should toggle follow state and return JSON
     def test_follow_toggle(self):
+        """Test that following a user toggles the follow state and returns the correct JSON response."""
         self.login(self.other)
         url = reverse("follow_user", args=[self.author.username])
 
@@ -158,21 +149,21 @@ class SocialViewsActionsTest(TestCase):
         self.assertFalse(data2["following"])
         self.assertFalse(self.other.following.filter(id=self.author.id).exists())
 
-    # A user should not be allowed to follow themselves
     def test_follow_self_rejected(self):
+        """Test that a user cannot follow themselves, ensuring that the follow_user view correctly handles this edge case."""
         self.login(self.author)
         url = reverse("follow_user", args=[self.author.username])
         res = self.client.post(url)
         self.assertEqual(res.status_code, 400)
 
-    # Feed page should render with discover tab selected
     def test_feed_discover_tab(self):
+        """Test that the feed page renders correctly with the discover tab selected."""
         self.login(self.other)
         res = self.client.get(reverse("social_feed") + "?tab=discover")
         self.assertEqual(res.status_code, 200)
 
-    # Invalid post submission should still redirect (view likely flashes message)
     def test_create_post_invalid(self):
+        """Test that attempting to create a post with invalid data (empty content) does not create a new post and returns the correct status code, ensuring that the create_post view correctly validates input and handles errors."""
         self.login(self.author)
         res = self.client.post(
             reverse("create_post"),
@@ -180,20 +171,20 @@ class SocialViewsActionsTest(TestCase):
         )
         self.assertEqual(res.status_code, 302)
 
-    # Bookmarking a followers-only post should be forbidden unless follower
     def test_bookmark_private_post_forbidden_if_not_follower(self):
+        """Test that attempting to bookmark a followers-only post without following the author returns a 403 Forbidden status code, ensuring that the bookmark_post view correctly enforces permissions based on the post's privacy settings and the user's relationship to the author."""
         self.login(self.other)
         res = self.client.post(reverse("bookmark_post", args=[self.post_private.id]))
         self.assertEqual(res.status_code, 403)
 
-    # Bookmarks page should render for an authenticated user
     def test_bookmarks_view_ok(self):
+        """Test that the bookmarks page renders correctly for an authenticated user."""
         self.login(self.other)
         res = self.client.get(reverse("bookmarks"))
         self.assertEqual(res.status_code, 200)
 
-    # Commenting on a followers-only post should be forbidden unless follower
     def test_add_comment_forbidden_on_private_post_if_not_follower(self):
+        """Test that attempting to add a comment to a followers-only post without following the author returns a 403 Forbidden status code, ensuring that the add_comment view correctly enforces permissions based on the post's privacy settings and the user's relationship to the author."""
         self.login(self.other)
         res = self.client.post(
             reverse("add_comment", args=[self.post_private.id]),
@@ -201,8 +192,8 @@ class SocialViewsActionsTest(TestCase):
         )
         self.assertEqual(res.status_code, 403)
 
-    # Invalid comment form should still redirect (view likely flashes message)
     def test_add_comment_invalid_form(self):
+        """"""
         self.other.following.add(self.author)
         self.login(self.other)
         res = self.client.post(
@@ -211,15 +202,15 @@ class SocialViewsActionsTest(TestCase):
         )
         self.assertEqual(res.status_code, 302)
 
-    # User profile page should render for an authenticated viewer
     def test_user_profile_view_ok(self):
+        """Test that the user profile page renders correctly for an authenticated viewer."""
         self.other.following.add(self.author)
         self.login(self.other)
         res = self.client.get(reverse("user_profile", args=[self.author.username]))
         self.assertEqual(res.status_code, 200)
 
-    # Unknown tab should fall back to default behaviour (still renders)
     def test_feed_unknown_tab_defaults(self):
+        """Test that accessing the feed with an unknown tab parameter defaults to the main feed view without errors, ensuring that the social_feed view can handle unexpected tab values gracefully and still render the page successfully."""
         self.login(self.other)
         res = self.client.get(reverse("social_feed") + "?tab=wtf")
         self.assertEqual(res.status_code, 200)

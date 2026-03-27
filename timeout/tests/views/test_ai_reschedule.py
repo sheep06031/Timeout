@@ -27,6 +27,7 @@ def make_session(creator, title='Study Session', hours_from_now=24, duration_hou
 
 
 def make_mock_openai(content):
+    """Return a patched OpenAI class whose client returns `content` as the AI message."""
     mock_client = MagicMock()
     mock_resp = MagicMock()
     mock_resp.choices[0].message.content = content
@@ -36,26 +37,28 @@ def make_mock_openai(content):
 
 @override_settings(OPENAI_API_KEY='test-key')
 class RescheduleStudySessionsTests(TestCase):
+    """Tests for the reschedule_study_sessions view."""
 
     def setUp(self):
+        """Create a test user and store the reschedule URL."""
         self.client = Client()
         self.user = User.objects.create_user(username='testuser', password='pass1234')
         self.url = reverse('reschedule_study_sessions')
 
-    # authentication 
     def test_login_required(self):
+        """Unauthenticated POST redirects to the login page."""
         response = self.client.post(self.url)
         self.assertEqual(response.status_code, 302)
         self.assertIn('/login/', response['Location'])
 
-    # http method 
     def test_get_not_allowed(self):
+        """GET request to the endpoint returns 405."""
         self.client.login(username='testuser', password='pass1234')
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 405)
 
-    # no sessions 
     def test_no_sessions_returns_400(self):
+        """POST with no upcoming sessions returns 400 with an appropriate error."""
         self.client.login(username='testuser', password='pass1234')
         response = self.client.post(self.url)
         self.assertEqual(response.status_code, 400)
@@ -63,6 +66,7 @@ class RescheduleStudySessionsTests(TestCase):
         self.assertIn('No upcoming study sessions found', response.json()['error'])
 
     def test_cancelled_sessions_not_counted(self):
+        """Cancelled sessions are excluded and trigger the no-sessions 400 response."""
         session = make_session(self.user)
         session.status = Event.EventStatus.CANCELLED
         session.save()
@@ -71,13 +75,14 @@ class RescheduleStudySessionsTests(TestCase):
         self.assertEqual(response.status_code, 400)
 
     def test_sessions_beyond_21_days_excluded(self):
+        """Sessions more than 21 days away are excluded and trigger the no-sessions 400 response."""
         make_session(self.user, hours_from_now=22 * 24)  # 22 days away
         self.client.login(username='testuser', password='pass1234')
         response = self.client.post(self.url)
         self.assertEqual(response.status_code, 400)
 
-    # successful reschedule 
     def test_successful_reschedule_returns_suggestions(self):
+        """Valid AI response returns 200 with suggestions and original session data."""
         session = make_session(self.user)
         ai_suggestions = json.dumps([{
             'id': session.pk,
@@ -95,6 +100,7 @@ class RescheduleStudySessionsTests(TestCase):
         self.assertIn('original', data)
 
     def test_original_contains_session_data(self):
+        """The original field in the response contains the session's id, title, start, and end."""
         session = make_session(self.user, title='Maths Revision')
         ai_suggestions = json.dumps([{
             'id': session.pk,
@@ -112,8 +118,8 @@ class RescheduleStudySessionsTests(TestCase):
         self.assertIn('start', original[0])
         self.assertIn('end', original[0])
 
-    # error handling 
     def test_invalid_json_returns_500(self):
+        """Non-JSON AI response returns 500 with an appropriate error message."""
         make_session(self.user)
         self.client.login(username='testuser', password='pass1234')
         with patch('openai.OpenAI', make_mock_openai('not valid json')):
@@ -122,6 +128,7 @@ class RescheduleStudySessionsTests(TestCase):
         self.assertIn('AI returned an invalid response', response.json()['error'])
 
     def test_openai_exception_returns_500(self):
+        """An exception raised by the OpenAI client returns 500 with an AI error message."""
         make_session(self.user)
         self.client.login(username='testuser', password='pass1234')
         mock_openai = MagicMock(side_effect=Exception('API down'))
@@ -130,8 +137,8 @@ class RescheduleStudySessionsTests(TestCase):
         self.assertEqual(response.status_code, 500)
         self.assertIn('AI error', response.json()['error'])
 
-    # markdown stripping (lines 95-97)
     def test_markdown_fenced_response_is_parsed(self):
+        """AI response wrapped in ```json fences is correctly parsed."""
         session = make_session(self.user)
         ai_suggestions = json.dumps([{
             'id': session.pk,
@@ -149,8 +156,10 @@ class RescheduleStudySessionsTests(TestCase):
 
 @override_settings(OPENAI_API_KEY='test-key')
 class AiSuggestRescheduleTests(TestCase):
+    """Tests for the ai_reschedule view."""
 
     def setUp(self):
+        """Create two users, a study session owned by the first, and store the URL and valid AI response."""
         self.client = Client()
         self.user = User.objects.create_user(username='testuser', password='pass1234')
         self.other = User.objects.create_user(username='other', password='pass1234')
@@ -170,49 +179,50 @@ class AiSuggestRescheduleTests(TestCase):
             'reason': 'Free slot found in the morning',
         })
 
-    # Authentication 
     def test_login_required(self):
+        """Unauthenticated POST redirects to the login page."""
         response = self.client.post(self.url, {'event_id': self.session.pk})
         self.assertEqual(response.status_code, 302)
         self.assertIn('/login/', response['Location'])
 
-    # HTTP method 
     def test_get_not_allowed(self):
+        """GET request to the endpoint returns 405."""
         self.client.login(username='testuser', password='pass1234')
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 405)
 
-    # Input validation 
     def test_missing_event_id_returns_400(self):
+        """POST without an event_id returns 400 with an appropriate error."""
         self.client.login(username='testuser', password='pass1234')
         response = self.client.post(self.url, {})
         self.assertEqual(response.status_code, 400)
         self.assertFalse(response.json()['success'])
         self.assertIn('No event ID provided', response.json()['error'])
 
-    # API key 
     @override_settings(OPENAI_API_KEY='')
     def test_no_api_key_returns_500(self):
+        """Missing OpenAI API key returns 500 with a descriptive error."""
         self.client.login(username='testuser', password='pass1234')
         response = self.client.post(self.url, {'event_id': self.session.pk})
         self.assertEqual(response.status_code, 500)
         self.assertIn('OpenAI API key not configured', response.json()['error'])
 
-    # Event lookup 
     def test_nonexistent_event_returns_404(self):
+        """Requesting a reschedule for a non-existent event ID returns 404."""
         self.client.login(username='testuser', password='pass1234')
         response = self.client.post(self.url, {'event_id': 99999})
         self.assertEqual(response.status_code, 404)
         self.assertFalse(response.json()['success'])
 
     def test_other_users_event_returns_404(self):
+        """Requesting a reschedule for another user's event returns 404."""
         self.client.login(username='other', password='pass1234')
         response = self.client.post(self.url, {'event_id': self.session.pk})
         self.assertEqual(response.status_code, 404)
         self.assertFalse(response.json()['success'])
 
-    # successful suggestion 
     def test_successful_suggestion_returns_200(self):
+        """Valid AI response returns 200 with a suggestion field."""
         self.client.login(username='testuser', password='pass1234')
         with patch('openai.OpenAI', make_mock_openai(self.valid_ai_response)):
             response = self.client.post(self.url, {'event_id': self.session.pk})
@@ -222,6 +232,7 @@ class AiSuggestRescheduleTests(TestCase):
         self.assertIn('suggestion', data)
 
     def test_suggestion_contains_correct_fields(self):
+        """Suggestion includes title, start_datetime, end_datetime, reason, and event_type."""
         self.client.login(username='testuser', password='pass1234')
         with patch('openai.OpenAI', make_mock_openai(self.valid_ai_response)):
             response = self.client.post(self.url, {'event_id': self.session.pk})
@@ -233,21 +244,22 @@ class AiSuggestRescheduleTests(TestCase):
         self.assertEqual(suggestion['event_type'], 'study_session')
 
     def test_suggestion_uses_event_title(self):
+        """Suggestion title matches the original event title."""
         self.client.login(username='testuser', password='pass1234')
         with patch('openai.OpenAI', make_mock_openai(self.valid_ai_response)):
             response = self.client.post(self.url, {'event_id': self.session.pk})
         self.assertEqual(response.json()['suggestion']['title'], self.session.title)
 
-    # markdown stripping 
     def test_markdown_fenced_response_is_parsed(self):
+        """AI response wrapped in ```json fences is correctly parsed."""
         fenced = f'```json\n{self.valid_ai_response}\n```'
         self.client.login(username='testuser', password='pass1234')
         with patch('openai.OpenAI', make_mock_openai(fenced)):
             response = self.client.post(self.url, {'event_id': self.session.pk})
         self.assertTrue(response.json()['success'])
 
-    # error handling 
     def test_invalid_json_returns_500(self):
+        """Non-JSON AI response returns 500 with an appropriate error message."""
         self.client.login(username='testuser', password='pass1234')
         with patch('openai.OpenAI', make_mock_openai('not valid json at all')):
             response = self.client.post(self.url, {'event_id': self.session.pk})
@@ -255,6 +267,7 @@ class AiSuggestRescheduleTests(TestCase):
         self.assertIn('AI returned an invalid response', response.json()['error'])
 
     def test_openai_exception_returns_500(self):
+        """An exception raised by the OpenAI client returns 500 with an AI error message."""
         self.client.login(username='testuser', password='pass1234')
         mock_openai = MagicMock(side_effect=Exception('Timeout'))
         with patch('openai.OpenAI', mock_openai):

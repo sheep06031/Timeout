@@ -7,6 +7,8 @@ from timeout.views.calendar import advance_date, event_status
 
 
 class AdvanceDateTests(TestCase):
+    """Tests for the advance_date helper function."""
+
     def test_daily(self):
         """Advancing a date with 'daily' recurrence should add one day."""
         self.assertEqual(advance_date(date(2025, 3, 15), 'daily'), date(2025, 3, 16))
@@ -26,6 +28,8 @@ class AdvanceDateTests(TestCase):
 
 
 class EventStatusTests(TestCase):
+    """Tests for the event_status helper function."""
+
     def test_ongoing(self):
         """An event that started in the past and ends in the future should be classified as 'Ongoing'."""
         now = timezone.now()

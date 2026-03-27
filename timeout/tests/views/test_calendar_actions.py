@@ -13,7 +13,10 @@ User = get_user_model()
 
 
 class EventCreateTests(TestCase):
+    """Tests for the event_create view."""
+
     def setUp(self):
+        """Create a user, log in, and store the event_create URL."""
         self.client = Client()
         self.user = User.objects.create_user(username="creator", password="pass1234")
         self.client.login(username="creator", password="pass1234")
@@ -114,7 +117,10 @@ class EventCreateTests(TestCase):
 
 
 class ApplySessionScheduleTests(TestCase):
+    """Tests for the apply_session_schedule view."""
+
     def setUp(self):
+        """Create a user, log in, and store the apply_session_schedule URL."""
         self.client = Client()
         self.user = User.objects.create_user(username="scheduser", password="pass1234")
         self.client.login(username="scheduser", password="pass1234")
@@ -191,7 +197,10 @@ class ApplySessionScheduleTests(TestCase):
 
 
 class SubscribeEventTests(TestCase):
+    """Tests for the subscribe_event view."""
+
     def setUp(self):
+        """Create an owner and a subscriber user, log in as subscriber, and create a public event."""
         self.client = Client()
         self.owner = User.objects.create_user(username="owner", password="pass1234")
         self.subscriber = User.objects.create_user(username="subscriber", password="pass1234")

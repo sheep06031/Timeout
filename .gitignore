@@ -151,3 +151,4 @@ credentials.json
 
 find_unused.py
 check_size.py
+find_nested_loops.py

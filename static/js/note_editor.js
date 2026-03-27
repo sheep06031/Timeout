@@ -144,49 +144,29 @@
   }
 
   /**
-   * Paginate editor content into distinct pages separated by visible gaps.
-   *
-   * Phase 1 — Measure every block's position before any modifications.
-   * Phase 2 — Walk blocks in order; when a block would span a page boundary
-   *           and fits on a single page, push it to the next page via margin-top.
-   * Phase 3 — Render white page-card backgrounds and gray gap separators
-   *           with centered page numbers.
+   * Snapshot every child block's position relative to the editor.
    */
-  function paginateContent() {
-    if (isPaginating) return;
-    isPaginating = true;
-    clearPageMarkers();
-
-    if (!pageModeActive) {
-      isPaginating = false;
-      return;
-    }
-
-    qlContainer.style.position = 'relative';
-    void quill.root.offsetHeight; /* force reflow after clearing */
-
-    /* Phase 1 — snapshot every child block's position */
+  function snapshotBlocks() {
     var editorRect = quill.root.getBoundingClientRect();
     var scrollTop = quill.root.scrollTop;
-    var blocks = Array.from(quill.root.children).map(function(el) {
+    return Array.from(quill.root.children).map(function(el) {
       var r = el.getBoundingClientRect();
       return { el: el, top: r.top - editorRect.top + scrollTop, height: r.height };
     });
+  }
 
-    /* Phase 2 — decide which blocks to push past the page boundary */
+  /**
+   * Walk blocks and compute margin pushes needed to avoid page-boundary splits.
+   */
+  function computePushes(blocks) {
     var pushes = [];
     var offset = 0;
     var nextBreak = PAGE_HEIGHT;
-
     for (var i = 0; i < blocks.length; i++) {
       var b = blocks[i];
       var adjTop = b.top + offset;
       var adjBottom = adjTop + b.height;
-
-      /* advance past page breaks the block is already beyond */
       while (nextBreak <= adjTop) nextBreak += PAGE_HEIGHT + GAP_HEIGHT;
-
-      /* block spans the boundary and fits on one page → push it */
       if (adjTop < nextBreak && adjBottom > nextBreak && b.height <= PAGE_HEIGHT) {
         var push = nextBreak - adjTop + GAP_HEIGHT;
         pushes.push({ el: b.el, push: push });
@@ -194,58 +174,80 @@
         nextBreak += PAGE_HEIGHT + GAP_HEIGHT;
       }
     }
+    return pushes;
+  }
 
-    /* apply margin pushes */
+  /**
+   * Apply computed margin pushes to blocks crossing page boundaries.
+   */
+  function applyPushes(pushes) {
     for (var j = 0; j < pushes.length; j++) {
       pushes[j].el.style.marginTop = pushes[j].push + 'px';
       pushes[j].el.setAttribute('data-page-break', 'true');
     }
+  }
 
-    /* Phase 3 — render page cards and gap separators */
-    void quill.root.offsetHeight; /* reflow with new margins */
+  /**
+   * Render white page cards, gray gap separators, and page number labels.
+   */
+  function renderPageCards(totalPages) {
     var totalHeight = quill.root.scrollHeight;
-    var totalPages = Math.max(1, pushes.length + 1);
-
-    /* walk through the height placing cards and gaps */
     var y = 0;
     for (var p = 0; p < totalPages; p++) {
       var pageH = Math.min(PAGE_HEIGHT, totalHeight - y);
       if (pageH <= 0) break;
-
-      /* white page card behind content */
       var card = document.createElement('div');
       card.className = 'page-card';
       card.style.top = y + 'px';
       card.style.height = pageH + 'px';
       qlContainer.appendChild(card);
-
       y += pageH;
-
-      /* gap between pages */
       if (p < totalPages - 1 && y < totalHeight) {
-        var gap = document.createElement('div');
-        gap.className = 'page-gap';
-        gap.style.top = y + 'px';
-        qlContainer.appendChild(gap);
-
-        var label = document.createElement('div');
-        label.className = 'page-number-label';
-        label.textContent = (p + 1) + ' / ' + totalPages;
-        label.style.top = y + 'px';
-        qlContainer.appendChild(label);
-
-        y += GAP_HEIGHT;
+        y += renderPageGap(y, p + 1, totalPages);
       }
     }
-
-    /* page number on last page (bottom-right) */
     var lastLabel = document.createElement('div');
     lastLabel.className = 'page-number-label page-number-last';
     lastLabel.textContent = totalPages + ' / ' + totalPages;
     lastLabel.style.top = Math.max(0, totalHeight - 24) + 'px';
     qlContainer.appendChild(lastLabel);
+  }
 
-    /* release flag after mutations settle */
+  /**
+   * Create a single page gap separator with a page number label. Returns GAP_HEIGHT.
+   */
+  function renderPageGap(y, pageNum, totalPages) {
+    var gap = document.createElement('div');
+    gap.className = 'page-gap';
+    gap.style.top = y + 'px';
+    qlContainer.appendChild(gap);
+    var label = document.createElement('div');
+    label.className = 'page-number-label';
+    label.textContent = pageNum + ' / ' + totalPages;
+    label.style.top = y + 'px';
+    qlContainer.appendChild(label);
+    return GAP_HEIGHT;
+  }
+
+  /**
+   * Paginate editor content into distinct pages separated by visible gaps.
+   */
+  function paginateContent() {
+    if (isPaginating) return;
+    isPaginating = true;
+    clearPageMarkers();
+    if (!pageModeActive) { isPaginating = false; return; }
+
+    qlContainer.style.position = 'relative';
+    void quill.root.offsetHeight;
+
+    var blocks = snapshotBlocks();
+    var pushes = computePushes(blocks);
+    applyPushes(pushes);
+
+    void quill.root.offsetHeight;
+    renderPageCards(Math.max(1, pushes.length + 1));
+
     requestAnimationFrame(function() { isPaginating = false; });
   }
 

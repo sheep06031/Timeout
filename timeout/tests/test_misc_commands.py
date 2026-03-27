@@ -123,23 +123,6 @@ class EmailServiceTests(TestCase):
             result = EmailService.send_reset_code('user@example.com', '999999')
         self.assertFalse(result)
 
-    @patch('timeout.services.email_service.settings')
-    def test_send_reset_code_logs_on_failure(self, mock_settings):
-        """Test that the send_reset_code method logs an error when the SendGrid API call raises an exception, simulating an API failure."""
-        mock_settings.SENDGRID_FROM_EMAIL = 'noreply@example.com'
-        mock_settings.SENDGRID_API_KEY = 'SG.fake_key'
-        mock_sg_instance = MagicMock()
-        mock_sg_instance.send.side_effect = Exception('timeout')
-        mock_sg_client = MagicMock(return_value=mock_sg_instance)
-        with patch.dict('sys.modules', {
-            'sendgrid': MagicMock(SendGridAPIClient=mock_sg_client),
-            'sendgrid.helpers': MagicMock(),
-            'sendgrid.helpers.mail': MagicMock(Mail=MagicMock()),
-        }):
-            with patch('timeout.services.email_service.logger') as mock_logger:
-                EmailService.send_reset_code('user@example.com', '000000')
-                mock_logger.error.assert_called_once()
-
 class EventModelPropertyTests(TestCase):
     """Tests for the Event model properties, covering is_past, is_ongoing, and is_upcoming."""
 

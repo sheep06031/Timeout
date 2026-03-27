@@ -8,16 +8,10 @@ User = get_user_model()
 
 
 class SocialViewsAuthTest(TestCase):
-    """
-    Tests that authentication is required for protected social endpoints.
-
-    These tests ensure that unauthenticated users cannot:
-    - Access the main feed
-    - Access the bookmarks page
-    - Perform like actions
-    """
+    """Tests that authentication is required for protected social endpoints. """
 
     def setUp(self):
+        """Set up a test user and test post for the social views authentication tests."""
         self.user = User.objects.create_user(
             username="user",
             password="pass123",
@@ -28,17 +22,17 @@ class SocialViewsAuthTest(TestCase):
             privacy=Post.Privacy.PUBLIC,
         )
 
-    # Feed view should require login
     def test_feed_requires_login(self):
+        """Test that accessing the social feed without authentication redirects to the login page, ensuring that the feed view is protected and only accessible to logged-in users."""
         res = self.client.get(reverse("social_feed"))
         self.assertIn(res.status_code, (302, 401, 403))
 
-    # Bookmarks view should require login
     def test_bookmarks_requires_login(self):
+        """Test that accessing the bookmarks page without authentication redirects to the login page, ensuring that the bookmarks view is protected and only accessible to logged-in users."""
         res = self.client.get(reverse("bookmarks"))
         self.assertIn(res.status_code, (302, 401, 403))
 
-    # Like endpoint should require login
     def test_like_requires_login(self):
+        """Test that attempting to like a post without authentication redirects to the login page, ensuring that the like_post view is protected and only allows logged-in users to like posts."""
         res = self.client.post(reverse("like_post", args=[self.post.id]))
         self.assertIn(res.status_code, (302, 401, 403))

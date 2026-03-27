@@ -33,7 +33,6 @@ class Command(BaseCommand):
         if total_users_before == 0:
             self.stdout.write(self.style.WARNING('Database is already empty.'))
             return
-
         if keep_super:
             self.stdout.write('Mode: Removing seeded data (keeping @johndoe)')
             excluded_users = User.objects.filter(username=SUPERUSER_USERNAME)
@@ -46,7 +45,6 @@ class Command(BaseCommand):
             notes_deleted = Note.objects.all().delete()[0]
             logs_deleted = StudyLog.objects.all().delete()[0]
             User.objects.all().delete()
-
         total_users_after = User.objects.count()
         users_removed = total_users_before - total_users_after
 

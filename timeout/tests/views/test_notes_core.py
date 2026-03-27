@@ -13,7 +13,9 @@ from timeout.services import NoteService
 User = get_user_model()
 
 class NoteUrgencyTest(TestCase):
+    """"Tests for the urgency property of the Note model, which determines how urgent a note is based on its due date."""
     def setUp(self):
+        """Create a user and a note for testing."""
         self.user = User.objects.create_user(username='urgency_user', password='pass123')
         self.note = Note.objects.create(
             owner=self.user, title='Urgency Test', content='', category=Note.Category.OTHER,
@@ -42,7 +44,9 @@ class NoteUrgencyTest(TestCase):
 
 
 class NoteTimeSpentDisplayTest(TestCase):
+    """Tests for the time_spent_display property of the Note model, which formats the time spent on a note in a human-readable way."""
     def setUp(self):
+        """Create a user and a note for testing."""
         self.user = User.objects.create_user(username='display_user', password='pass123')
         self.note = Note.objects.create(
             owner=self.user, title='Display Test', content='', category=Note.Category.OTHER,
@@ -70,7 +74,9 @@ class NoteTimeSpentDisplayTest(TestCase):
 
 
 class NotePermissionsTest(TestCase):
+    """Tests for the can_edit and can_delete methods of the Note model, which determine whether a user has permission to edit or delete a note."""
     def setUp(self):
+        """Create a user, a staff user, and a note for testing."""
         self.owner = User.objects.create_user(username='owner_perm', password='pass123')
         self.other = User.objects.create_user(username='other_perm', password='pass123')
         self.staff = User.objects.create_user(username='staff_perm', password='pass123', is_staff=True)
@@ -93,7 +99,9 @@ class NotePermissionsTest(TestCase):
 
 
 class StudyLogModelTest(TestCase):
+    """Tests for the StudyLog model, which tracks a user's study activity for each day and calculates an activity level based on that activity."""
     def setUp(self):
+        """Create a user for testing."""
         self.user = User.objects.create_user(username='loguser', password='pass123')
         self.today = timezone.localtime(timezone.now()).date()
 
@@ -126,7 +134,9 @@ class StudyLogModelTest(TestCase):
 
 
 class NoteServicePomodoroTest(TestCase):
+    """Tests for the NoteService methods related to logging pomodoros, awarding XP, and calculating daily progress and heatmap data."""
     def setUp(self):
+        """Create a user for testing."""
         self.user = User.objects.create_user(username='svc_pomo', password='pass123')
         self.today = timezone.localtime(timezone.now()).date()
 
@@ -172,7 +182,9 @@ class NoteServicePomodoroTest(TestCase):
 
 
 class NoteServiceStreakTest(TestCase):
+    """Tests for the NoteService method update_streak_and_xp, which updates a user's note streak and awards XP based on note-related activity."""
     def setUp(self):
+        """Create a user for testing."""
         self.user = User.objects.create_user(username='svc_streak', password='pass123')
 
     def test_first_activity_starts_streak_at_1(self):

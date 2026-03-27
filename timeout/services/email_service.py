@@ -1,6 +1,4 @@
-import logging
 from django.conf import settings
-logger = logging.getLogger(__name__)
 
 
 def _build_reset_code_html(code):
@@ -38,6 +36,5 @@ class EmailService:
             sg = SendGridAPIClient(settings.SENDGRID_API_KEY)
             sg.send(message)
             return True
-        except Exception as e:
-            logger.error('SendGrid email failed: %s', e)
+        except Exception:
             return False

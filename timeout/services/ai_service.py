@@ -97,7 +97,6 @@ def openai_prompt(stats):
     Returns a 2 sentence briefing."""
     api_key = getattr(settings, 'OPENAI_API_KEY', None)
     if not api_key:
-        logger.warning('OPENAI_API_KEY not configured. Skipping AI briefing.')
         return None
  
     prompt = (

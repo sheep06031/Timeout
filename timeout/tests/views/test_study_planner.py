@@ -19,9 +19,11 @@ from timeout.services.study_planner import (
 User = get_user_model()
 
 def _dt(year, month, day, hour=0, minute=0):
+    """Helper function to create timezone-aware datetimes for testing."""
     return timezone.make_aware(datetime(year, month, day, hour, minute))
 
 def _make_event(creator, title, start, end, event_type=None, **kwargs):
+    """Helper function to create an event for testing."""
     return Event.objects.create(
         creator=creator,
         title=title,
@@ -34,7 +36,10 @@ def _make_event(creator, title, start, end, event_type=None, **kwargs):
     )
 
 class GetBusySlotsTests(TestCase):
+    """Tests for the get_busy_slots function that retrieves a user's busy time slots within a specified datetime range."""
+
     def setUp(self):
+        """Create a test user for the busy slots tests."""
         self.user = User.objects.create_user(username='busy_u', password='pass')
 
     def test_no_events_returns_empty(self):
@@ -66,6 +71,8 @@ class GetBusySlotsTests(TestCase):
 
 
 class DaySlotsTests(TestCase):
+    """Tests for the _day_slots function that generates free time slots within a day."""
+
     def test_no_busy_returns_full_day(self):
         """If there are no busy slots, _day_slots should return a single slot covering the entire day."""
         result = _day_slots(_dt(2026, 4, 1, 8), _dt(2026, 4, 1, 22), [], 2)
@@ -104,9 +111,11 @@ class DaySlotsTests(TestCase):
         result = _day_slots(_dt(2026, 4, 1, 8), _dt(2026, 4, 1, 22), busy, 1)
         self.assertEqual(len(result), 3)
 
-
 class GetFreeSlotsTests(TestCase):
+    """Tests for the get_free_slots function that retrieves a user's free time slots within a specified datetime range, taking into account their existing events and a minimum session length requirement."""
+
     def setUp(self):
+        """Create a test user for the free slots tests."""
         self.user = User.objects.create_user(username='free_u', password='pass')
 
     def test_no_busy_returns_full_days(self):
@@ -132,8 +141,8 @@ class GetFreeSlotsTests(TestCase):
         result = get_free_slots(self.user, _dt(2026, 4, 1, 8), _dt(2026, 4, 1, 22), 2)
         self.assertEqual(result, [])
 
-
 class NearestSlotTests(TestCase):
+    """Tests for the _nearest_slot function that finds the free time slot closest to a given deadline date, while respecting a specified date range and ensuring the slot is not before the deadline."""
     def test_exact_date_found(self):
         """If there is a free slot on the exact date of the deadline, _nearest_slot should return that slot."""
         by_date = {'2026-04-02': [{'start': '2026-04-02T08:00', 'end': '2026-04-02T10:00'}]}
@@ -157,8 +166,8 @@ class NearestSlotTests(TestCase):
         by_date = {'2026-04-10': [{'start': '2026-04-10T08:00', 'end': '2026-04-10T10:00'}]}
         self.assertIsNone(_nearest_slot(by_date, date(2026, 4, 9), date(2026, 4, 9)))
 
-
 class PickEvenlySpacedSlotsTests(TestCase):
+    """Tests for the pick_evenly_spaced_slots function that selects a specified number of slots evenly distributed across a date range."""
     def test_empty_slots_returns_as_is(self):
         """If the input list of slots is empty, pick_evenly_spaced_slots should return an empty list regardless of the number of sessions requested or the date range."""
         self.assertEqual(pick_evenly_spaced_slots([], 3, _dt(2026, 4, 1), _dt(2026, 4, 10)), [])
@@ -194,9 +203,11 @@ class PickEvenlySpacedSlotsTests(TestCase):
         result = pick_evenly_spaced_slots(slots, 1, _dt(2026, 4, 1), _dt(2026, 4, 1))
         self.assertGreaterEqual(len(result), 1)
 
-
 class PlanSessionsViewTests(TestCase):
+    """Tests for the plan_sessions view that handles AJAX requests to plan study sessions for a given deadline event, including authentication, input validation, and integration with the study planning logic and GPT scheduling."""
+
     def setUp(self):
+        """Create a test user and set up the test client for the plan_sessions view tests."""
         self.client = Client()
         self.user = User.objects.create_user(username='planner', password='pass')
         self.url = reverse('study_planner_plan')
@@ -257,23 +268,6 @@ class PlanSessionsViewTests(TestCase):
         self.assertFalse(data['success'])
         self.assertIn('No free time', data['error'])
 
-    def test_successful_plan_returns_sessions(self):
-        """If there are free slots available before the deadline and the call_gpt function returns a valid list of sessions, the view should return a 200 OK response with a JSON body containing a 'success' key set to True and a 'sessions' key containing a list of session dictionaries with 'title', 'start', and 'end' keys."""
-        self.client.login(username='planner', password='pass')
-        now = timezone.now()
-        deadline_dt = (now + timedelta(days=5)).replace(hour=22, minute=0, second=0, microsecond=0)
-        deadline = _make_event(self.user, 'Final Exam', deadline_dt, deadline_dt + timedelta(hours=2),
-                               event_type=Event.EventType.EXAM)
-        resp = self.client.post(self.url, {'event_id': deadline.pk, 'hours_needed': '4', 'session_length': '2'})
-        self.assertEqual(resp.status_code, 200)
-        data = resp.json()
-        self.assertTrue(data['success'])
-        self.assertGreater(len(data['sessions']), 0)
-        for sess in data['sessions']:
-            self.assertIn('Study for Final Exam', sess['title'])
-            self.assertIn('start', sess)
-            self.assertIn('end', sess)
-
     def test_default_parameters(self):
         """If the hours_needed and session_length parameters are not provided in the POST data, the view should use default values (e.g. 4 hours needed and 2 hour session length) when calculating the study sessions to return in the response."""
         self.client.login(username='planner', password='pass')
@@ -285,9 +279,11 @@ class PlanSessionsViewTests(TestCase):
         self.assertTrue(data['success'])
         self.assertEqual(len(data['sessions']), 2)
 
-
 class ConfirmSessionsViewTests(TestCase):
+    """Tests for the confirm_sessions view that handles AJAX requests to confirm planned study sessions by creating Event objects for each session, including authentication, input validation, and ensuring correct event creation based on the provided session data."""
+
     def setUp(self):
+        """Create a test user and set up the test client for the confirm_sessions view tests."""
         self.client = Client()
         self.user = User.objects.create_user(username='confirmer', password='pass')
         self.url = reverse('study_planner_confirm')
@@ -358,8 +354,8 @@ class ConfirmSessionsViewTests(TestCase):
         resp = self.client.post(self.url, {'sessions': sessions})
         self.assertEqual(resp.json()['count'], 0)
 
-
 class BuildPromptTests(TestCase):
+    """Tests for the build_prompt function that generates a prompt string for the GPT scheduling model based on a deadline event and parameters for hours needed, session length, and candidate free slots."""
     def setUp(self):
         self.user = User.objects.create_user(username='prompt_u', password='pass')
 

@@ -12,7 +12,10 @@ from timeout.models import Event
 User = get_user_model()
 
 class CalendarViewNavigationTests(TestCase):
+    """Tests for calendar view navigation: month/year parsing, wrapping, and prev/next links."""
+
     def setUp(self):
+        """Create a user, log in, and store the calendar URL."""
         self.client = Client()
         self.user = User.objects.create_user(username="testuser", password="pass1234")
         self.client.login(username="testuser", password="pass1234")
@@ -78,7 +81,10 @@ class CalendarViewNavigationTests(TestCase):
 
 
 class CalendarViewWeeksGridTests(TestCase):
+    """Tests for the calendar weeks grid context (today flag and in_month flag)."""
+
     def setUp(self):
+        """Create a user, log in, and store the calendar URL."""
         self.client = Client()
         self.user = User.objects.create_user(username="griduser", password="pass1234")
         self.client.login(username="griduser", password="pass1234")
@@ -100,7 +106,10 @@ class CalendarViewWeeksGridTests(TestCase):
 
 
 class CalendarViewRecurringEventTests(TestCase):
+    """Tests for recurring event expansion in the calendar view."""
+
     def setUp(self):
+        """Create a user, log in, and store the calendar URL."""
         self.client = Client()
         self.user = User.objects.create_user(username="recuruser", password="pass1234")
         self.client.login(username="recuruser", password="pass1234")

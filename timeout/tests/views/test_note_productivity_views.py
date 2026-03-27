@@ -12,7 +12,9 @@ User = get_user_model()
 
 
 class _ViewTestBase(TestCase):
+    """Base test case class for note productivity views, providing common setup and helper methods."""
     def setUp(self):
+        """Create a user, another user, and a note owned by the first user for testing."""
         self.user = User.objects.create_user(username='viewuser', password='pass123')
         self.other = User.objects.create_user(username='viewother', password='pass123')
         self.note = Note.objects.create(
@@ -30,6 +32,7 @@ class _ViewTestBase(TestCase):
 
 
 class PomodoroCompleteViewTest(_ViewTestBase):
+    """Tests for the pomodoro_complete view."""
     def test_pomodoro_without_note_id(self):
         """Completing a pomodoro without providing a note_id should still award XP and return daily progress in the response."""
         self.login()
@@ -67,6 +70,7 @@ class PomodoroCompleteViewTest(_ViewTestBase):
 
 
 class NoteShareViewTest(_ViewTestBase):
+    """Tests for the note_share view."""
     def test_share_creates_public_post_with_content(self):
         """Sharing a note should create a new Post with the note's title, category, and content, formatted appropriately, and set the post's privacy to public."""
         self.login()
@@ -81,6 +85,7 @@ class NoteShareViewTest(_ViewTestBase):
 
 
 class UpdateDailyGoalsViewTest(_ViewTestBase):
+    """Tests for the update_daily_goals view."""
     def test_valid_data_updates_goals(self):
         """Updating daily goals with valid data should update the user's daily_pomo_goal, daily_notes_goal, and daily_focus_goal accordingly and return a JSON response with status 'ok'."""
         self.login()
@@ -114,6 +119,7 @@ class UpdateDailyGoalsViewTest(_ViewTestBase):
 
 
 class JsonViewsTest(_ViewTestBase):
+    """Tests for various JSON-returning views related to note productivity and stats."""
     def test_daily_progress(self):
         """The daily_progress view should return a JSON response containing the user's current progress towards their daily goals, including the number of pomodoros completed, notes edited, focus minutes, and whether all goals are complete."""
         self.login()
@@ -139,6 +145,7 @@ class JsonViewsTest(_ViewTestBase):
 
 
 class NoteEditViewTest(_ViewTestBase):
+    """Tests for the note_edit view."""
     def test_invalid_form_redirects_with_error(self):
         """Submitting an invalid form (e.g. empty title) should redirect back to the notes page and should not update the note's title or content."""
         self.login()
@@ -161,6 +168,7 @@ class NoteEditViewTest(_ViewTestBase):
 
 
 class NoteDeleteViewTest(_ViewTestBase):
+    """Tests for the note_delete view."""
     def test_owner_can_delete(self):
         """The owner of a note should be able to delete it, which should remove the note from the database and redirect to the notes page."""
         self.login()
@@ -184,6 +192,7 @@ class NoteDeleteViewTest(_ViewTestBase):
 
 
 class NoteTogglePinViewTest(_ViewTestBase):
+    """Tests for the note_toggle_pin view."""
     def test_toggle_pin_on(self):
         """Toggling the pin state of a note that is currently not pinned should set it to pinned, return a JSON response with 'pinned': true, and update the note's is_pinned field in the database accordingly."""
         self.login()
