@@ -19,8 +19,8 @@
     Mark Complete
   </button>
   <button type="button" class="btn-close ms-1"
-          onclick="dismissReschedule({{ prompt.id }}, '{{ prompt.reason }}', this)"
-          aria-label="Dismiss"></button>
+        onclick="dismissReschedule({{ prompt.id }}, '{{ prompt.reason }}', this); persistDismissAlert('{{ prompt.alert_key }}')"
+        aria-label="Dismiss"></button>
 </div>
 {% endfor %}
 

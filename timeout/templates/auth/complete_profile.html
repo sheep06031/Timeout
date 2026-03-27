@@ -101,17 +101,5 @@
     </div>
   </div>
 
-  <script>
-    ;(function () {
-      var choice = document.getElementById('id_university_choice')
-      var otherWrap = document.getElementById('universityOtherWrap')
-      if (!choice || !otherWrap) return
-    
-      function toggle() {
-        otherWrap.style.display = choice.value === '__other__' ? '' : 'none'
-      }
-      toggle()
-      choice.addEventListener('change', toggle)
-    })()
-  </script>
+  <script src="{% static 'js/complete_profile.js' %}"></script>
 {% endblock %}

@@ -7,36 +7,25 @@ from timeout.models import Event
 from timeout.forms import ProfileEditForm, ChangeUsernameForm
 
 
+def _find_event(user, status, **filters):
+    """Query for a single event matching filters; return (event, status) or None."""
+    event = Event.objects.filter(creator=user, **filters).first()
+    return (event, status) if event else None
+
+
 def get_profile_event(user):
     """Return the most relevant event: current → upcoming → recent."""
     now = timezone.now()
     two_hours = timedelta(hours=2)
-
-    event = Event.objects.filter(
-        creator=user,
-        start_datetime__lte=now,
-        end_datetime__gte=now,
-    ).first()
-    if event:
-        return event, 'active'
-
-    event = Event.objects.filter(
-        creator=user,
-        start_datetime__gt=now,
-        start_datetime__lte=now + two_hours,
-    ).order_by('start_datetime').first()
-    if event:
-        return event, 'upcoming'
-
-    event = Event.objects.filter(
-        creator=user,
-        end_datetime__lt=now,
-        end_datetime__gte=now - two_hours,
-    ).order_by('-end_datetime').first()
-    if event:
-        return event, 'recent'
-
-    return None, None
+    return (
+        _find_event(user, 'active',
+                    start_datetime__lte=now, end_datetime__gte=now)
+        or _find_event(user, 'upcoming',
+                       start_datetime__gt=now, start_datetime__lte=now + two_hours)
+        or _find_event(user, 'recent',
+                       end_datetime__lt=now, end_datetime__gte=now - two_hours)
+        or (None, None)
+    )
 
 
 @login_required

@@ -3,7 +3,12 @@ from django.db import models
 
 
 class FollowRequest(models.Model):
-    """Pending follow request from one user to another (private accounts)."""
+    """
+    Model representing a pending follow request from one user to another.
+
+    This ensures that a user can request to follow another user, and the 
+    recipient can accept or delete the request. 
+    """
 
     from_user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -18,10 +23,17 @@ class FollowRequest(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        """Ensure one request per pair and order by most recent first."""
+        """
+        Metadata for the FollowRequest model:
+        - Ensures that each user pair has at most one request
+        - Orders requests so the most recent appear first
+        """
+
         unique_together = ('from_user', 'to_user')
         ordering = ['-created_at']
 
     def __str__(self):
-        """Return a string representation showing who requested to follow whom."""
+        """
+        Return a string representation showing who requested to follow whom.
+        """
         return f'{self.from_user.username} → {self.to_user.username}'

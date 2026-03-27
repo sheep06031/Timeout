@@ -5,8 +5,6 @@
 <div class="modal fade" id="eventDetailsModal" tabindex="-1" aria-labelledby="eventDetailsModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-lg modal-dialog-centered">
     <div class="modal-content event-modal-content">
-
-      <!-- Colour bar at top changes per event type -->
       <div class="event-modal-bar" id="eventModalBar"></div>
 
       <!-- Header -->
@@ -25,7 +23,7 @@
       <!-- Body -->
       <div class="event-modal-body">
 
-        <!-- Key info grid -->
+        <!-- Event details -->
         <div class="event-modal-grid">
           <div class="event-modal-cell">
             <span class="event-modal-cell-label">📍 Location</span>
@@ -58,13 +56,6 @@
         <a href="#" id="editEventBtn" class="event-modal-btn event-modal-btn--primary">
           ✏️ Edit
         </a>
-        <form id="cancelEventForm" method="post" style="margin:0;">
-          {% csrf_token %}
-          <button type="submit" id="cancelEventBtn" class="event-modal-btn event-modal-btn--warning"
-                  onclick="return confirm('Mark this event as cancelled?');">
-            🚫 Cancel Event
-          </button>
-        </form>
         <a href="#" id="deleteEventBtn"
            onclick="return confirm('Are you sure you want to delete this event?');"
            class="event-modal-btn event-modal-btn--danger">
@@ -79,132 +70,6 @@
   </div>
 </div>
 
-<script>
-  /* Colour map per event type */
-  const EVENT_TYPE_COLORS = {
-    'deadline':      '#5b5ddf',
-    'exam':          '#e53935',
-    'class':         '#43a047',
-    'meeting':       '#8e24aa',
-    'study_session': '#00acc1',
-    'other':         '#78909c',
-  };
-
-  const eventDetailsModal = document.getElementById('eventDetailsModal');
-
-  eventDetailsModal.addEventListener('show.bs.modal', function (event) {
-    const btn = event.relatedTarget;
-    if (!btn) return;
-
-    const eventId   = btn.getAttribute('data-event-id');
-    const eventType = (btn.getAttribute('data-event-type') || '').toLowerCase().replace(' ', '_');
-    const color     = EVENT_TYPE_COLORS[eventType] || '#5b5ddf';
-
-    /* Declare start/end up here so everything below can use them */
-    const start = btn.getAttribute('data-event-start') || '';
-    const end   = btn.getAttribute('data-event-end')   || '';
-
-    /* Colour bar */
-    document.getElementById('eventModalBar').style.background = color;
-
-    /* Type badge */
-    const typeBadge = document.getElementById('eventBadge');
-    typeBadge.textContent = btn.getAttribute('data-event-type') || '';
-    typeBadge.style.background = color;
-
-    /* Visibility badge */
-    const vis = btn.getAttribute('data-event-visibility') || 'private';
-    const visBadge = document.getElementById('eventVisibilityBadge');
-    visBadge.textContent = vis.charAt(0).toUpperCase() + vis.slice(1);
-    visBadge.style.background = vis === 'public' ? '#e8f5e9' : '#f0f2f8';
-    visBadge.style.color       = vis === 'public' ? '#2e7d32' : '#5a6a85';
-
-    /* Status badge */
-    const statusBadge = document.getElementById('eventStatusBadge');
-    const status = btn.getAttribute('data-event-status') || '';
-    statusBadge.textContent = status;
-    const statusColors = {
-      'Past':     { bg: '#f5f5f5', color: '#9e9e9e' },
-      'Upcoming': { bg: '#e3f2fd', color: '#1565c0' },
-      'Ongoing':  { bg: '#e8f5e9', color: '#2e7d32' },
-    };
-    const sc = statusColors[status] || { bg: '#f0f2f8', color: '#5a6a85' };
-    statusBadge.style.background = sc.bg;
-    statusBadge.style.color = sc.color;
-
-    /* Title & time */
-    document.getElementById('eventDetailsModalLabel').textContent = btn.getAttribute('data-event-title') || '';
-    document.getElementById('eventTime').textContent =
-      '🕒 ' + start + ' → ' + end;
-
-    /* Grid cells */
-    document.getElementById('eventLocation').textContent   = btn.getAttribute('data-event-location')   || '—';
-    document.getElementById('eventRecurrence').textContent = btn.getAttribute('data-event-recurrence') || '—';
-
-    /* Duration */
-    if (start && end) {
-      const startD    = new Date(start.replace(' ', 'T'));
-      const endD      = new Date(end.replace(' ', 'T'));
-      const totalMins = Math.round((endD - startD) / 60000);
-      const hours     = Math.floor(totalMins / 60);
-      const mins      = totalMins % 60;
-      let durationStr = '';
-      if (hours > 0 && mins > 0)  durationStr = `${hours}h ${mins}m`;
-      else if (hours > 0)         durationStr = `${hours}h`;
-      else if (mins > 0)          durationStr = `${mins}m`;
-      else                        durationStr = 'All day';
-      document.getElementById('eventDuration').textContent = durationStr;
-    } else {
-      document.getElementById('eventDuration').textContent = '—';
-    }
-
-    /* Countdown */
-    if (start && end) {
-      const now       = new Date();
-      const startD    = new Date(start.replace(' ', 'T'));
-      const endD      = new Date(end.replace(' ', 'T'));
-      let countdownStr = '';
-
-      if (now < startD) {
-        const totalMins = Math.round((startD - now) / 60000);
-        const days  = Math.floor(totalMins / 1440);
-        const hours = Math.floor((totalMins % 1440) / 60);
-        const mins  = totalMins % 60;
-        if (days > 0)       countdownStr = `Starts in ${days}d ${hours}h`;
-        else if (hours > 0) countdownStr = `Starts in ${hours}h ${mins}m`;
-        else                countdownStr = `Starts in ${mins}m`;
-      } else if (now <= endD) {
-        const totalMins = Math.round((endD - now) / 60000);
-        const hours = Math.floor(totalMins / 60);
-        const mins  = totalMins % 60;
-        if (hours > 0) countdownStr = `Ongoing — ends in ${hours}h ${mins}m`;
-        else           countdownStr = `Ongoing — ends in ${mins}m`;
-      } else {
-        const totalMins = Math.round((now - endD) / 60000);
-        const days  = Math.floor(totalMins / 1440);
-        const hours = Math.floor((totalMins % 1440) / 60);
-        if (days > 0)       countdownStr = `Ended ${days}d ago`;
-        else if (hours > 0) countdownStr = `Ended ${hours}h ago`;
-        else                countdownStr = `Just ended`;
-      }
-      document.getElementById('eventCountdown').textContent = countdownStr;
-    } else {
-      document.getElementById('eventCountdown').textContent = '—';
-    }
-
-    /* Description */
-    const desc = btn.getAttribute('data-event-description') || '';
-    const descWrap = document.getElementById('eventDescriptionWrap');
-    if (desc) {
-      document.getElementById('eventDescription').textContent = desc;
-      descWrap.style.display = 'flex';
-    } else {
-      descWrap.style.display = 'none';
-    }
-
-    /* Action links */
-    document.getElementById('editEventBtn').href      = '/event/' + eventId + '/edit/';
-    document.getElementById('deleteEventBtn').href    = '/event/' + eventId + '/delete/';
-    document.getElementById('cancelEventForm').action = '/calendar/' + eventId + '/cancel/';
-  });
+<script 
+  src="{% static 'js/event_details.js' %}">
 </script>

@@ -3,7 +3,12 @@ from django.db import models
 
 
 class PostFlag(models.Model):
-    """A flag/report on a post submitted by a user."""
+    """
+    Represents a user-submitted report/flag on a post.
+
+    Each flag includes the reporter, reason, optional description, and timestamp.
+    Only one flag per post-reporter pair is allowed.
+    """
 
     class Reason(models.TextChoices):
         """Reasons for flagging a post for moderation."""

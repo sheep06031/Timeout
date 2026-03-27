@@ -2,7 +2,6 @@ from django.urls import path
 from timeout.views import calendar as cal_views
 from timeout.views import deadlines as deadline_views
 from timeout.views import ai_calendar as ai_cal_views
-from timeout.views import event_cancel as event_cancel_views
 from timeout.views import ai_reschedule as ai_reschedule_views
 from timeout.views import event_edit as edit_views
 from timeout.views import event_details as detail_views
@@ -19,7 +18,7 @@ urlpatterns = [
     path('calendar/ai-reschedule/', ai_reschedule_views.ai_suggest_reschedule, name='ai_reschedule'),
     path('calendar/reschedule-study-sessions/', ai_reschedule_views.reschedule_study_sessions, name='reschedule_study_sessions'),
     path('calendar/apply-session-schedule/', cal_views.apply_session_schedule, name='apply_session_schedule'),
-    path('calendar/<int:pk>/cancel/', event_cancel_views.event_cancel, name='event_cancel'),
+    path('calendar/dismiss-alert/', cal_views.dismiss_alert, name='dismiss_alert'),
     path('deadlines/', deadline_views.deadline_list_view, name='deadline_list'),
     path('deadlines/<int:event_id>/complete/', deadline_views.deadline_mark_complete, name='deadline_mark_complete'),
     

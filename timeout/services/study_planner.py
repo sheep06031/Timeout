@@ -33,26 +33,20 @@ def pick_evenly_spaced_slots(free_slots, num_sessions, start, end):
     """Pick exactly num_sessions slots evenly distributed across the period."""
     if not free_slots or num_sessions <= 0:
         return free_slots
-
     total_days = (end.date() - start.date()).days or 1
     interval = total_days / num_sessions
 
-    # Group slots by date for fast lookup
-    by_date = {}
+    by_date = {} # Group slots by date for fast lookup
     for slot in free_slots:
         d = slot['start'][:10]
         by_date.setdefault(d, []).append(slot)
 
     chosen = []
-    for i in range(num_sessions):
-        # Target day index for this session (centre of each interval)
+    for i in range(num_sessions): # Target day index for this session (centre of each interval)
         target_offset = interval * (i + 0.5)
         target_date = (start + timedelta(days=target_offset)).date()
-
-        # Search outward from target date for a free slot
         slot = _nearest_slot(by_date, target_date, end.date())
-        if slot:
-            # Remove used date so we don't double-book
+        if slot: # Remove used date so we don't double-book
             d = slot['start'][:10]
             by_date.pop(d, None)
             chosen.append(slot)

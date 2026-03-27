@@ -4,6 +4,12 @@ from django.utils import timezone
 
 
 class Notification(models.Model):
+    """
+    Represents a user notification for various activities.
+
+    Notifications can relate to events, posts, messages, or social interactions.
+    Each notification tracks read/deleted status.
+    """
 
     class Type(models.TextChoices):
         DEADLINE =      "deadline",      "Deadline"
@@ -23,20 +29,16 @@ class Notification(models.Model):
         on_delete=models.CASCADE,
         related_name="notifications"
     )
-
     title = models.CharField(max_length=255)
     message = models.TextField()
-
     type = models.CharField(
         max_length=20,
         choices=Type.choices,
         default=Type.DEADLINE
     )
-
     is_read = models.BooleanField(default=False)
     is_dismissed = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
-
     conversation = models.ForeignKey(
         'Conversation',
         null=True,
@@ -44,7 +46,6 @@ class Notification(models.Model):
         on_delete=models.CASCADE,
         related_name='notifications',
     )
-
     post = models.ForeignKey(
         'Post',
         null=True,
@@ -52,7 +53,6 @@ class Notification(models.Model):
         on_delete=models.CASCADE,
         related_name='notifications',
     )
-
     deadline = models.ForeignKey(
         'Event',
         null=True,

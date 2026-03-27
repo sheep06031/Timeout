@@ -22,8 +22,7 @@ class User(AbstractUser):
         max_length=10,
         choices=Status.choices,
         default=Status.INACTIVE,
-)
-    # Profile fields
+    )
     middle_name = models.CharField(max_length=50, blank=True)
     bio = models.TextField(max_length=500, blank=True)
     university = models.CharField(max_length=150, blank=True)
@@ -33,11 +32,7 @@ class User(AbstractUser):
         blank=True,
     )
     academic_interests = models.CharField(max_length=300, blank=True)
-
-    # Focus timer
     focus_started_at = models.DateTimeField(null=True, blank=True)
-
-    # Settings
     privacy_private = models.BooleanField(default=False)
     management_style = models.CharField(
         max_length=10,
@@ -45,7 +40,6 @@ class User(AbstractUser):
         default=ManagementStyle.EARLY_BIRD,
     )
 
-    # Appearance / Accessibility
     class Theme(models.TextChoices):
         """Class that shows the theme options"""
         LIGHT  = 'light',  'Light'
@@ -79,25 +73,25 @@ class User(AbstractUser):
     )
     daily_study_reminder = models.TimeField(null=True, blank=True)
 
-    # Daily Study Goals
+    # Daily Study Goals 
     daily_pomo_goal = models.PositiveSmallIntegerField(default=4)
     daily_notes_goal = models.PositiveSmallIntegerField(default=3)
     daily_focus_goal = models.PositiveSmallIntegerField(default=120)  # minutes
 
-    # Status preferences
+    # Status preferences 
     auto_online = models.BooleanField(default=False)
 
-    # Gamification
+    # Gamification 
     xp = models.PositiveIntegerField(default=0)
     note_streak = models.PositiveIntegerField(default=0)
     longest_note_streak = models.PositiveIntegerField(default=0)
     last_note_date = models.DateField(null=True, blank=True)
 
-    # Moderation
+    # Moderation 
     is_banned = models.BooleanField(default=False)
     ban_reason = models.CharField(max_length=300, blank=True)
 
-    # Social
+    # Social 
     following = models.ManyToManyField(
         'self',
         symmetrical=False,

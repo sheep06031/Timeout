@@ -4,7 +4,12 @@ from django.utils import timezone
 
 
 class Note(models.Model):
-    """Personal note with optional event link and category."""
+    """
+    Model representing a personal note for a user.
+
+    Notes can be linked to an Event and categorized for organization.
+    Has pinned notes, deadlines, time tracking, and editor page modes.
+    """
 
     class Category(models.TextChoices):
         """Available note category types for organizing user notes."""
@@ -65,7 +70,12 @@ class Note(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        """Order pinned notes first, then by creation date. Indexes optimize owner, pin, and category queries."""
+        """
+        Metadata for the Note model:
+        - Orders pinned notes first, then by creation date
+        - Indexes optimize queries by owner, pin status, and category
+        """
+
         ordering = ['-is_pinned', '-created_at']
         indexes = [
             models.Index(
@@ -94,9 +104,17 @@ class Note(models.Model):
 
     @property
     def urgency(self):
-        """Return urgency level based on due_date proximity.
-        Returns: 'overdue', 'urgent', 'soon', 'upcoming', or None.
         """
+        Determine urgency level based on proximity to due_date.
+
+        Returns:
+        - 'overdue': past due
+        - 'urgent': due within 24 hours
+        - 'soon': due within 3 days
+        - 'upcoming': due later
+        - None: no due_date
+        """
+    
         if not self.due_date:
             return None
         now = timezone.now()
@@ -112,7 +130,15 @@ class Note(models.Model):
 
     @property
     def time_spent_display(self):
-        """Format time_spent_minutes as human-readable string."""
+        """
+        Format time_spent_minutes as human-readable string.
+
+        Examples:
+        - 0 minutes -> ''
+        - 45 minutes -> '45m'
+        - 120 minutes -> '2h'
+        """
+
         if self.time_spent_minutes == 0:
             return ''
         hours = self.time_spent_minutes // 60

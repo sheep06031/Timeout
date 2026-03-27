@@ -32,10 +32,14 @@
 
     <!-- Custom CSS -->
     <link rel="stylesheet" href="{% static 'css/custom.css' %}" />
+    <link rel="stylesheet" href="{% static 'css/dark-theme.css' %}" />
+    <link rel="stylesheet" href="{% static 'css/dark-theme-pages.css' %}" />
+    <link rel="stylesheet" href="{% static 'css/dark-theme-features.css' %}" />
 
     {% block extra_css %}
-
     {% endblock %}
+
+    {% block extra_head %}{% endblock %}
   </head>
 
   <body class="d-flex flex-column min-vh-100" data-user-status="{{ request.user.status }}">
@@ -79,39 +83,7 @@
 
     {% endblock %}
 
-<script>
-document.addEventListener('DOMContentLoaded', () => {
-  const badge = document.querySelector('.nav-link .badge');
-
-  async function updateNotifications() {
-    if (document.body.dataset.userStatus === 'focus') {
-        fetch("{% url 'poll_notifications' %}").catch(() => {});
-        return;
-    }
-    try {
-      const response = await fetch("{% url 'poll_notifications' %}");
-      if (!response.ok) return;
-
-      const data = await response.json();
-      if (data.unread_count > 0) {
-        if (badge) {
-          badge.textContent = data.unread_count;
-          badge.style.display = 'inline-block';
-        }
-      } else if (badge) {
-        badge.style.display = 'none';
-      }
-    } catch (err) {
-      console.error('Notification polling error:', err);
-    }
-  }
-
-  // Update immediately and then every 10 seconds
-  updateNotifications();
-  window.addEventListener('focusModeEnded', updateNotifications);
-  setInterval(updateNotifications, 10000); 
-});
-</script>
+<script src="{% static 'js/notification_poll.js' %}" data-poll-url="{% url 'poll_notifications' %}"></script>
   <!-- Footer -->
   {% include 'partials/_footer.html' %}
   </body>

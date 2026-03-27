@@ -1,4 +1,6 @@
 import json
+import logging
+from datetime import datetime, timedelta
 
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
@@ -11,28 +13,61 @@ from django.views.decorators.http import require_POST
 from timeout.models import Event
 from timeout.services.study_planner import get_free_slots, pick_evenly_spaced_slots
 
+logger = logging.getLogger(__name__)
+
 
 @login_required
 @require_POST
 def plan_sessions(request):
     """AJAX endpoint to plan study sessions for a given deadline."""
     event_id = request.POST.get('event_id')
-    hours_needed = float(request.POST.get('hours_needed', 4))
-    session_length = float(request.POST.get('session_length', 2))
+    try:
+        hours_needed = float(request.POST.get('hours_needed', 4))
+        session_length = float(request.POST.get('session_length', 2))
+    except (TypeError, ValueError):
+        return JsonResponse({'success': False, 'error': 'Invalid hours or session length.'}, status=400)
 
     deadline = get_object_or_404(Event, id=event_id, creator=request.user)
     now = timezone.now()
     free_slots = get_free_slots(request.user, now, deadline.start_datetime, session_length)
-
     if not free_slots:
         return JsonResponse({'success': False, 'error': 'No free time found before this deadline.'}, status=400)
 
     num_sessions = max(1, int(hours_needed / session_length))
     candidates = pick_evenly_spaced_slots(free_slots, num_sessions, now, deadline.start_datetime)
 
-    title = f'Study for {deadline.title}'
-    sessions = [{**slot, 'title': title} for slot in candidates]
+    gpt_sessions = call_gpt(deadline, hours_needed, session_length, candidates)
+    if gpt_sessions:
+        sessions = gpt_sessions
+    else:
+        title = f'Study for {deadline.title}'
+        sessions = [
+            {
+                'title': title,
+                'start': slot['start'].strftime('%Y-%m-%dT%H:%M'),
+                'end': slot['end'].strftime('%Y-%m-%dT%H:%M'),
+            }
+            for slot in candidates
+        ]
+
     return JsonResponse({'success': True, 'sessions': sessions})
+
+
+def _create_study_session(user, session_data):
+    """Create a single study session event from session data dict."""
+    start_dt = datetime.fromisoformat(session_data['start'])
+    end_dt = datetime.fromisoformat(session_data['end'])
+    event = Event(
+        creator=user,
+        title=session_data['title'],
+        event_type=Event.EventType.STUDY_SESSION,
+        start_datetime=start_dt,
+        end_datetime=end_dt,
+        visibility=Event.Visibility.PRIVATE,
+        allow_conflict=True,
+    )
+    event.full_clean()
+    event.save()
 
 
 @login_required
@@ -41,33 +76,24 @@ def confirm_sessions(request):
     """AJAX endpoint to confirm and create study sessions after GPT scheduling."""
     try:
         sessions = json.loads(request.POST.get('sessions', '[]'))
-    except json.JSONDecodeError:
+        if not isinstance(sessions, list):
+            raise ValueError
+    except (json.JSONDecodeError, ValueError):
         return JsonResponse({'success': False, 'error': 'Invalid session data.'}, status=400)
 
-    created = 0
-    for s in sessions:
+    created, errors = 0, []
+    for i, s in enumerate(sessions):
         try:
-            event = Event(
-                creator=request.user,
-                title=s['title'],
-                event_type=Event.EventType.STUDY_SESSION,
-                start_datetime=s['start'],
-                end_datetime=s['end'],
-                visibility=Event.Visibility.PRIVATE,
-                allow_conflict=True,
-            )
-            event.full_clean()
-            event.save()
+            _create_study_session(request.user, s)
             created += 1
-        except (ValidationError, KeyError):
-            continue
+        except (ValidationError, KeyError, ValueError) as e:
+            errors.append({'index': i, 'error': str(e)})
+    return JsonResponse({'success': True, 'count': created, 'errors': errors})
 
-    return JsonResponse({'success': True, 'count': created})
 
-
-def call_gpt(deadline, hours_needed, session_length, free_slots):
+def call_gpt(deadline, hours_needed, session_length, candidates):
     """Call GPT to schedule sessions based on the deadline and free slots."""
-    prompt = build_prompt(deadline, hours_needed, session_length, free_slots)
+    prompt = build_prompt(deadline, hours_needed, session_length, candidates)
     try:
         from openai import OpenAI
         client = OpenAI(api_key=settings.OPENAI_API_KEY)
@@ -83,14 +109,15 @@ def call_gpt(deadline, hours_needed, session_length, free_slots):
             if raw.startswith('json'):
                 raw = raw[4:]
         return json.loads(raw)
-    except Exception:
+    except Exception as e:
+        logger.exception("GPT scheduling failed")
         return None
 
 
 def build_prompt(deadline, hours_needed, session_length, candidates):
     """Build a prompt for GPT to schedule study sessions."""
-    now = timezone.now().strftime('%Y-%m-%d %H:%M')
-    due = deadline.start_datetime.strftime('%Y-%m-%d %H:%M')
+    now = timezone.localtime().strftime('%Y-%m-%d %H:%M %Z')
+    due = timezone.localtime(deadline.start_datetime).strftime('%Y-%m-%d %H:%M %Z')
     num_sessions = len(candidates)
     return f"""Today is {now}.
 The user needs to prepare for: "{deadline.title}" due {due}.
@@ -105,6 +132,7 @@ Return ONLY a valid JSON array of exactly {num_sessions} sessions, no markdown:
 
 Rules to follow:
 1) Use exactly one session per slot
-2) Start time must be within the slot's start–end window
+2) Start time must be within the slot's start-end window
 3) End time = start + {session_length} hours
-4) Do not schedule in the final 24 hours before the deadline"""
+4) Do not schedule in the final 24 hours before the deadline
+"""

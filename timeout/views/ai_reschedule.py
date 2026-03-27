@@ -199,25 +199,20 @@ def ai_suggest_reschedule(request):
     event_id = request.POST.get('event_id')
     if not event_id:
         return JsonResponse({'success': False, 'error': 'No event ID provided.'}, status=400)
-
     if not settings.OPENAI_API_KEY:
         return JsonResponse({'success': False, 'error': 'OpenAI API key not configured.'}, status=500)
-
     try:
         event = Event.objects.get(pk=event_id, creator=request.user)
     except Event.DoesNotExist:
         return JsonResponse({'success': False, 'error': 'Event not found.'}, status=404)
-
     now = timezone.now()
     duration_minutes = int((event.end_datetime - event.start_datetime).total_seconds() / 60)
     events_context = _get_upcoming_context(request.user, now)
     system_prompt = _build_suggest_prompt(event, events_context, now, duration_minutes)
-
     try:
         data = _call_openai_with_system(system_prompt, 'Suggest the best reschedule slot.')
     except json.JSONDecodeError:
         return JsonResponse({'success': False, 'error': 'AI returned an invalid response. Please try again.'}, status=500)
     except Exception as e:
         return JsonResponse({'success': False, 'error': f'AI error: {str(e)}'}, status=500)
-
     return _suggestion_response(event, data)

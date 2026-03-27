@@ -19,11 +19,16 @@
             You have <span id="page-unread-count">{{ unread_count }}</span> unread notifications
         </p>
     </div>
-    {% if current_filter == 'unread' %}
-        <a href="{% url 'notifications' %}" class="notif-clear-btn" style="text-decoration:none;">Show all</a>
-    {% else %}
-        <a href="{% url 'notifications' %}?filter=unread" class="notif-clear-btn" style="text-decoration:none;">Show unread</a>
-    {% endif %}
+    <div style="display:flex; gap:8px; align-items:center;">
+        <button id="mark-all-read-btn" class="notif-clear-btn">Mark all read</button>
+        <button id="mark-all-unread-btn" class="notif-clear-btn">Mark all unread</button>
+        <button id="delete-all-btn" class="notif-clear-btn">Delete all</button>
+        {% if current_filter == 'unread' %}
+            <a href="{% url 'notifications' %}" class="notif-clear-btn" style="text-decoration:none;">Show all</a>
+        {% else %}
+            <a href="{% url 'notifications' %}?filter=unread" class="notif-clear-btn" style="text-decoration:none;">Show unread</a>
+        {% endif %}
+    </div>
 </div>
 
 <div class="chart-card">
@@ -54,13 +59,15 @@
 
             <div class="notification-actions">
                 {% if n.follow_request_username %}
-                <button class="accept-follow-btn notif-btn notif-btn-read" data-id="{{ n.id }}" data-username="{{ n.follow_request_username }}">Accept</button>
-                <button class="reject-follow-btn notif-btn notif-btn-delete" data-id="{{ n.id }}" data-username="{{ n.follow_request_username }}">Reject</button>
+                    <button class="accept-follow-btn notif-btn notif-btn-read" data-id="{{ n.id }}" data-username="{{ n.follow_request_username }}">Accept</button>
+                    <button class="reject-follow-btn notif-btn notif-btn-delete" data-id="{{ n.id }}" data-username="{{ n.follow_request_username }}">Reject</button>
                 {% else %}
-                {% if not n.is_read %}
-                <button class="mark-read-btn notif-btn notif-btn-read" data-id="{{ n.id }}">Read</button>
-                {% endif %}
-                <button class="delete-notif-btn notif-btn notif-btn-delete" data-id="{{ n.id }}">Delete</button>
+                    {% if not n.is_read %}
+                        <button class="mark-read-btn notif-btn notif-btn-read" data-id="{{ n.id }}">Read</button>
+                    {% else %}
+                        <button class="mark-unread-btn notif-btn" data-id="{{ n.id }}">Unread</button>
+                    {% endif %}
+                    <button class="delete-notif-btn notif-btn notif-btn-delete" data-id="{{ n.id }}">Delete</button>
                 {% endif %}
             </div>
 
@@ -68,21 +75,20 @@
         {% endfor %}
     </div>
 
-    <div class="pagination-container mt-4">
-    {% if notifications.has_previous %}
-    <a href="?page={{ notifications.previous_page_number }}{% if current_filter %}&filter={{ current_filter }}{% endif %}" 
-       class="btn btn-sm btn-outline-secondary">Previous</a>
-    {% endif %}
-    <span class="mx-2 text-muted">Page {{ notifications.number }} of {{ notifications.paginator.num_pages }}</span>
-    {% if notifications.has_next %}
-    <a href="?page={{ notifications.next_page_number }}{% if current_filter %}&filter={{ current_filter }}{% endif %}" 
-       class="btn btn-sm btn-outline-secondary">Next</a>
-    {% endif %}
-</div>
+    <div id="scroll-sentinel" style="height:1px;"></div>
+    <div id="loading-indicator" style="display:none; text-align:center; padding:12px;">
+        <span class="text-muted" style="font-size:0.8rem;">Loading...</span>
+    </div>
 
 </div>
 
 {% include "pages/_event_details_modal.html" %}
-<div id="notifications-config" data-csrf-token="{{ csrf_token }}"></div>
+<div id="notifications-config"
+     data-csrf-token="{{ csrf_token }}"
+     data-current-page="{{ notifications.number }}"
+     data-has-next="{{ notifications.has_next|yesno:'true,false' }}"
+     data-current-filter="{{ current_filter|default:'' }}">
+</div>
+
 <script src="{% static 'js/notifications.js' %}"></script>
 {% endblock %}

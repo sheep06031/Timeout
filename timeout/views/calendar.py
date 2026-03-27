@@ -13,9 +13,11 @@ from timeout.models import Event
 from django.core.exceptions import ValidationError
 from django.db.models import Q
 from timeout.views.ai_workload import get_ai_workload_warning
+from timeout.views.ai_suggestions import get_ai_suggestions
 from timeout.views.deadline_warning import get_deadline_study_warnings
+from timeout.models import DismissedAlert
 
-MONTH_NAMES = [ # months names for calendar display
+MONTH_NAMES = [ 
     "", "January", "February", "March", "April", "May", "June",
     "July", "August", "September", "October", "November", "December",
 ]
@@ -24,25 +26,23 @@ MONTH_NAMES = [ # months names for calendar display
 def calendar_view(request):
     """Renders a monthly calendar grid with events in day cells, including recurring events."""
     today = timezone.now().date() # get today's date for default
-    year, month = check_month_year(*get_date(request, today)) # parse month/year from url, with error handling
+    year, month = check_month_year(*get_date(request, today)) 
     nav = get_months(year, month) # get previous and next month/year for navigation links
 
     cal_obj = cal.Calendar(firstweekday=0)
     weeks_raw = cal_obj.monthdatescalendar(year, month)
-    last_visible = weeks_raw[-1][-1] # get the last visible date for event filtering
+    last_visible = weeks_raw[-1][-1] 
 
-    events_qs = visible_events(request.user, last_visible) # fetch events for visible range, including recurring
-    events_by_date = index_events(events_qs, last_visible) # index events by date for easy lookup in template
-    weeks = build_weeks(weeks_raw, month, today, events_by_date) # build the final weeks structure for the template
-    context = calendar_context(year, month, nav, weeks) # build the context dict for the template
-    context.update(get_data(request, events_by_date)) # add data for upcoming deadlines and reschedule prompts
+    events_qs = visible_events(request.user, last_visible)
+    events_by_date = index_events(events_qs, last_visible) 
+    weeks = build_weeks(weeks_raw, month, today, events_by_date) 
+    context = calendar_context(year, month, nav, weeks) 
+    context.update(get_data(request, events_by_date)) 
     return render(request, "pages/calendar.html", context)
-
-
 
 def calendar_context(year, month, nav, weeks):
     """Helper function to build the context dict for the calendar template"""
-    prev_month, prev_year, next_month, next_year = nav # unpack data from nav
+    prev_month, prev_year, next_month, next_year = nav 
     return {
         "weeks": weeks,
         "month": month,
@@ -55,14 +55,13 @@ def calendar_context(year, month, nav, weeks):
         "weekdays": ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
     }
 
-# Parsing through dates helpers
 def get_date(request, today):
     """Helper function to parse through the month and year from url, fallaback to today"""
     try:
         year = int(request.GET.get("year", today.year))
         month = int(request.GET.get("month", today.month))
     except (ValueError, TypeError):
-        year, month = today.year, today.month # Error handling, fallback to today
+        year, month = today.year, today.month
     return year, month
 
 def check_month_year(year, month):
@@ -87,11 +86,10 @@ def get_months(year, month):
         next_year = year + 1
     return prev_month, prev_year, next_month, next_year
 
-
 def visible_events(user, last_visible):
     """Helper function to fetch events for the visible date range, including recurring events"""
-    last_day = timezone.make_aware(datetime.combine(last_visible, time.max)) # gets the last visible dayas a datetime for filters
-    events_qs = Event.objects.filter( # Fetch global or user events up to the last day visible
+    last_day = timezone.make_aware(datetime.combine(last_visible, time.max)) 
+    events_qs = Event.objects.filter( 
         Q(creator=user) | Q(is_global=True),
         start_datetime__lte=last_day,
     ).order_by("start_datetime")
@@ -107,9 +105,9 @@ def index_events(events_qs, last_visible):
         events_by_date.setdefault(ev.start_datetime.date(), []).append(data) # add the event to the list for its start date
 
         if ev.recurrence != 'none':
-            create_recurrence(ev, last_visible, now_date, events_by_date) # if the event is recurring, expand it into future occurrences within the visible range
+            create_recurrence(ev, last_visible, now_date, events_by_date) 
 
-    return events_by_date # return the indexed events
+    return events_by_date 
 
 def create_dict(ev, start_dt, end_dt, now_date):
     """Helper function to create a dict for an event that can be used by template"""
@@ -130,8 +128,6 @@ def create_dict(ev, start_dt, end_dt, now_date):
         'status_display': event_status(start_dt, end_dt, now_date),
     }
 
-# to-do add recurrence helpers
-# ask expand_recurrence and advance_date
 def create_recurrence(ev, last_visible, now_date, events_by_date):
     """Generate pseudo-event dicts for recurring occurrences within the visible range."""
     current_date = ev.start_datetime.date()
@@ -150,7 +146,6 @@ def create_recurrence(ev, last_visible, now_date, events_by_date):
         data = create_dict(ev, start_dt, end_dt, now_date)
         events_by_date.setdefault(current_date, []).append(data)
 
-
 def advance_date(current_date, recurrence):
     """Return the next occurrence date. Returns None if the recurrence is not recognized."""
     if recurrence == 'daily':
@@ -166,7 +161,6 @@ def advance_date(current_date, recurrence):
         return date(year_num, month_num, day_num)
     return None
 
-# build days and weeks
 def build_weeks(weeks_raw, month, today, events_by_date):
     """Helper function to convert raw weeks from calendar into a structure for the template"""
     return[
@@ -184,36 +178,53 @@ def build_day(day, month, today, events_by_date):
         "events": events_by_date.get(day, []), # get events for this day
     }
 
+def _get_reschedule_prompts(user, now, dismissed_keys, session_prompts):
+    """Build reschedule prompts from missed sessions and session-stored prompts."""
+    missed = Event.objects.filter(
+        creator=user, event_type=Event.EventType.STUDY_SESSION,
+        status=Event.EventStatus.UPCOMING, end_datetime__lt=now, is_completed=False,
+    )
+    prompts = [{
+        'id': e.pk, 'title': e.title, 'reason': 'missed_sessions',
+        'alert_key': f'reschedule_{e.pk}_missed',
+        'duration_minutes': int((e.end_datetime - e.start_datetime).total_seconds() / 60),
+    } for e in missed if f'reschedule_{e.pk}_missed' not in dismissed_keys]
+    prompts += [p for p in session_prompts
+                if f"reschedule_{p['id']}_{p.get('reason', 'missed_sessions')}" not in dismissed_keys]
+    return prompts
 
-# helpers to gather data
+
+def _get_workload_and_suggestions(user, events_by_date, now, dismissed_keys):
+    """Return workload warning, its alert key, and AI suggestions."""
+    today_str = now.date().isoformat()
+    workload_key = f'workload_{user.id}_{today_str}'
+    today_events = (events_by_date or {}).get(now.date(), [])
+    raw_workload = get_ai_workload_warning(user, today_events)
+    workload_warning = raw_workload if raw_workload and workload_key not in dismissed_keys else None
+    return workload_warning, workload_key, get_ai_suggestions(user, today_events)
+
+
 def get_data(request, events_by_date=None):
     """Helper function to gather data needed for upcoming deadlines and reschedule prompts"""
     now = timezone.now()
-    upcoming_deadlines = Event.objects.filter(creator=request.user,event_type__in=[Event.EventType.DEADLINE, Event.EventType.EXAM],
-        start_datetime__gte=now,
-    ).order_by('start_datetime')[:20]
-    missed_sessions = Event.objects.filter(creator=request.user,event_type=Event.EventType.STUDY_SESSION,
-        status=Event.EventStatus.UPCOMING,
-        end_datetime__lt=now,
-        is_completed=False,)
-    reschedule_prompts = [
-        {
-            'id': e.pk,
-            'title': e.title,
-            'duration_minutes': int((e.end_datetime - e.start_datetime).total_seconds() / 60),
-            'reason': 'missed',
-        }
-        for e in missed_sessions
-    ]
-    reschedule_prompts += request.session.pop('reschedule_prompts', [])
-    today_events = (events_by_date or {}).get(now.date(), [])
+    dismissed_keys = set(DismissedAlert.objects.filter(
+        user=request.user).values_list('alert_key', flat=True))
+    upcoming_deadlines = Event.objects.filter(
+        creator=request.user, event_type__in=[Event.EventType.DEADLINE, Event.EventType.EXAM],
+        start_datetime__gte=now).order_by('start_datetime')[:20]
+    reschedule_prompts = _get_reschedule_prompts(
+        request.user, now, dismissed_keys, request.session.pop('reschedule_prompts', []))
+    all_warnings = get_deadline_study_warnings(request.user)
+    warnings = [w for w in all_warnings if w['key'] not in dismissed_keys]
+    workload_warning, workload_key, suggestions = _get_workload_and_suggestions(
+        request.user, events_by_date, now, dismissed_keys)
     return {
         "upcoming_deadlines": upcoming_deadlines,
         "reschedule_prompts": reschedule_prompts,
-        "warnings": get_deadline_study_warnings(request.user),
-        "workload_warning": get_ai_workload_warning(request.user, today_events),
-    }
-
+        "warnings": warnings,
+        "workload_warning": workload_warning,
+        "workload_alert_key": workload_key,
+        "ai_suggestions": suggestions}
 
 def event_status(start_dt, end_dt, now):
     """Helper function to derive a human-readable status"""
@@ -223,7 +234,6 @@ def event_status(start_dt, end_dt, now):
         return 'Past'
     else:
         return 'Upcoming'
-
 
 @login_required
 @require_POST
@@ -242,8 +252,6 @@ def apply_session_schedule(request):
                 creator=request.user,
                 event_type=Event.EventType.STUDY_SESSION,
             )
-            #event.start_datetime = s['start']
-            #event.end_datetime = s['end']
             event.start_datetime = timezone.make_aware(datetime.fromisoformat(s['start'])) #added datetime format to clear the warnings
             event.end_datetime = timezone.make_aware(datetime.fromisoformat(s['end']))
             event.save()
@@ -252,7 +260,6 @@ def apply_session_schedule(request):
             continue
 
     return JsonResponse({'success': True, 'count': updated})
-
 
 @login_required
 @require_POST
@@ -264,8 +271,7 @@ def subscribe_event(request, pk):
     already = Event.objects.filter(
         creator=request.user,
         title=original.title,
-        start_datetime=original.start_datetime,
-    ).exists()
+        start_datetime=original.start_datetime).exists()
     if already:
         return JsonResponse({'success': False, 'error': 'Already subscribed.'}, status=400)
     Event.objects.create(
@@ -279,10 +285,8 @@ def subscribe_event(request, pk):
         visibility=Event.Visibility.PRIVATE,
         is_all_day=original.is_all_day,
         recurrence=original.recurrence,
-        allow_conflict=True,
-    )
+        allow_conflict=True)
     return JsonResponse({'success': True})
-
 
 def _parse_event_datetimes(request, is_all_day):
     """Parse and validate start/end datetimes from POST data."""
@@ -302,41 +306,41 @@ def _parse_event_datetimes(request, is_all_day):
 
     return start_datetime, end_datetime
 
-
 @login_required
 @require_POST
 def event_create(request):
     """Create a new calendar event from form POST data."""
     is_all_day = request.POST.get("is_all_day") == "on"
     allow_conflict = request.POST.get("allow_conflict") == "on"
-
     start_datetime, end_datetime = _parse_event_datetimes(request, is_all_day)
-    if start_datetime is None:
-        return redirect("calendar")
+    if start_datetime is None: return redirect("calendar")
 
     event = Event(
         creator=request.user,
         title=request.POST["title"],
         event_type=request.POST.get("event_type", "other"),
-        start_datetime=timezone.make_aware(
-            datetime.fromisoformat(start_datetime)
-        ),
-        end_datetime=timezone.make_aware(
-            datetime.fromisoformat(end_datetime)
-        ),
+        start_datetime=timezone.make_aware(datetime.fromisoformat(start_datetime)),
+        end_datetime=timezone.make_aware(datetime.fromisoformat(end_datetime)),
         location=request.POST.get("location", ""),
         description=request.POST.get("description", ""),
         allow_conflict=allow_conflict,
         visibility=request.POST.get("visibility", "public"),
         is_all_day=is_all_day,
-        recurrence=request.POST.get("recurrence", "none"),
-    )
-
+        recurrence=request.POST.get("recurrence", "none"))
     try:
         event.full_clean()
         event.save()
         messages.success(request, f'"{event.title}" added to calendar.')
     except ValidationError as e:
         messages.error(request, '; '.join(e.messages))
-
     return redirect("calendar")
+
+@login_required
+@require_POST
+def dismiss_alert(request):
+    from timeout.models import DismissedAlert
+    key = request.POST.get('key', '').strip()
+    if not key:
+        return JsonResponse({'success': False}, status=400)
+    DismissedAlert.objects.get_or_create(user=request.user, alert_key=key)
+    return JsonResponse({'success': True})

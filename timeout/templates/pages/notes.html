@@ -5,6 +5,8 @@
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'css/notes.css' %}">
+<link rel="stylesheet" href="{% static 'css/notes-overlays.css' %}">
+<link rel="stylesheet" href="{% static 'css/notes-cards.css' %}">
 <link rel="stylesheet" href="{% static 'css/information.css' %}">
 {% endblock %}
 
@@ -421,4 +423,6 @@
   };
 </script>
 <script src="{% static 'js/notes.js' %}"></script>
+<script src="{% static 'js/pomodoro.js' %}"></script>
+<script src="{% static 'js/focus_mode.js' %}"></script>
 {% endblock %}

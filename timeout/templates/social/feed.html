@@ -6,6 +6,8 @@
 {% block extra_css %}
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
 <link rel="stylesheet" href="{% static 'css/social.css' %}">
+<link rel="stylesheet" href="{% static 'css/social-posts.css' %}">
+<link rel="stylesheet" href="{% static 'css/social-messaging.css' %}">
 {% endblock %}
 
 {% block content %}
@@ -163,5 +165,6 @@
 
 {% block extra_js %}
 <script src="{% static 'js/social.js' %}"></script>
+<script src="{% static 'js/social_messaging.js' %}"></script>
 {% if user.is_staff %}<script src="{% static 'js/moderation.js' %}"></script>{% endif %}
 {% endblock %}

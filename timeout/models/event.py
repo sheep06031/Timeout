@@ -4,8 +4,18 @@ from django.utils import timezone
 from django.core.exceptions import ValidationError
 
 class Event(models.Model):
-    """Calendar event model."""
+    """
+    Model representing a calendar event.
 
+    Events can represent deadlines, exams, classes, meetings, or study sessions.
+    Each event includes scheduling information, visibility settings, and optional
+    recurrence rules.
+
+    The model ensures that certain types of events do not overlap in time for the
+    same user, unless explicitly allowed. It also supports linking study sessions
+    to other events (such as deadlines), and integrates with the social system by
+    creating or removing posts based on event visibility.
+    """
     class Visibility(models.TextChoices):
         """Event visibility choices."""
         PUBLIC = 'public', 'Public'
@@ -40,7 +50,6 @@ class Event(models.Model):
         WEEKLY = 'weekly', 'Weekly'
         MONTHLY = 'monthly', 'Monthly'
 
-
     creator = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
@@ -48,7 +57,6 @@ class Event(models.Model):
         null=True,
         blank=True
     )
-
     title = models.CharField(max_length=200)
     description = models.TextField(max_length=1000, blank=True)
     event_type = models.CharField(
@@ -56,25 +64,21 @@ class Event(models.Model):
         choices=EventType.choices,
         default=EventType.OTHER
     )
-
     status = models.CharField(
         max_length=20,
         choices=EventStatus.choices,
         default=EventStatus.UPCOMING
     )
-
     recurrence = models.CharField(
         max_length=10,
         choices=EventRecurrence.choices,
         blank=True,
         default=EventRecurrence.NONE,
     )
-
     allow_conflict = models.BooleanField(
         default=False,
         help_text='if true, event overlaps with others'
     )
-
     visibility = models.CharField(
         max_length=10,
         choices=Visibility.choices,
@@ -100,8 +104,14 @@ class Event(models.Model):
     
 
     class Meta:
-        ordering = ['-start_datetime']
-        indexes = [
+         """
+         Metadata for the Event model:
+         - Orders events by most recent start time first
+         - Adds indexes to optimise queries by creator and start time
+         """
+
+         ordering = ['-start_datetime']
+         indexes = [
             models.Index(
                 fields=['creator', '-start_datetime'],
                 name='timeout_eve_creator_idx'
@@ -110,81 +120,53 @@ class Event(models.Model):
                 fields=['start_datetime'],
                 name='timeout_eve_start_idx'
             ),
-        ]
+         ]
 
     def clean(self):
-        """
-        Prevent overlapping events for the same user unless allowed.
-        """
-
-        # Basic time validation
+        """Prevent overlapping events for the same user unless allowed.
+        - Ensures end time is after start time and prevents overlapping  for certain events"""
         if self.start_datetime >= self.end_datetime:
             raise ValidationError("End time must be after start time.")
-
-        # Define which types cannot overlap
         non_overlapping_types = [
             self.EventType.CLASS,
             self.EventType.STUDY_SESSION,
             self.EventType.EXAM,
-            self.EventType.MEETING,
-        ]
-
-        # Only check conflicts if the event type is in non_overlapping_types
+            self.EventType.MEETING]
         if self.event_type not in non_overlapping_types:
             return  # deadlines & "other" can overlap freely
-
-        # Ignore cancelled events
         if self.status == self.EventStatus.CANCELLED:
             return
-
-        # Check for overlapping events for this user
-        overlapping_events = Event.objects.filter(
-            creator=self.creator,
+        overlapping_events = Event.objects.filter(creator=self.creator,
             start_datetime__lt=self.end_datetime,
-            end_datetime__gt=self.start_datetime,
-        ).exclude(pk=self.pk).filter(event_type__in=non_overlapping_types)
-
+            end_datetime__gt=self.start_datetime).exclude(pk=self.pk).filter(event_type__in=non_overlapping_types)
         if overlapping_events.exists():
             conflict = overlapping_events.first()
-            raise ValidationError(
-                f'This event conflicts with "{conflict.title}" '
+            raise ValidationError(f'This event conflicts with "{conflict.title}" '
                 f'({conflict.start_datetime:%d %b %H:%M} - '
-                f'{conflict.end_datetime:%H:%M}).'
-            )
+                f'{conflict.end_datetime:%H:%M}).')
+
     def save(self, *args, **kwargs):
-        """Save event and auto-sync visibility with social post. PUBLIC events create/update posts, PRIVATE ones delete posts."""
-        is_new = self.pk is None
-
+        """Save the event and synchronise it with a social post.
+        - PUBLIC events create or update a corresponding post
+        - PRIVATE events do not create or update posts"""
         super().save(*args, **kwargs)
-
         from .post import Post 
-
-        # If event is PUBLIC then ensure post exists
         if self.visibility == self.Visibility.PUBLIC and self.creator:
-
             existing_post = self.posts.first()
-
             post_content = (
                 f"📅 {self.title}\n\n"
                 f"{self.description}\n\n"
-                f"🕒 {self.start_datetime:%d %b %Y %H:%M}"
-            )
-
-            if existing_post:
-                # Update existing post
+                f"🕒 {self.start_datetime:%d %b %Y %H:%M}")
+            if existing_post: # Update existing post
                 existing_post.content = post_content
                 existing_post.save()
-            else:
-                # Create new post
+            else: # Create new post
                 Post.objects.create(
                     author=self.creator,
                     content=post_content,
                     event=self,
-                    privacy=Post.Privacy.PUBLIC,
-                )
-
-        # If event is PRIVATE then delete any linked post
-        else:
+                    privacy=Post.Privacy.PUBLIC)
+        else: 
             self.posts.all().delete()
 
     def delete(self, *args, **kwargs):
