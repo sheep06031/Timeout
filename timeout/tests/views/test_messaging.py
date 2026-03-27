@@ -289,6 +289,10 @@ class SendMessageViewTest(TestCase):
         self.conv  = Conversation.objects.create()
         self.conv.participants.add(self.alice, self.bob)
 
+    def _url(self):
+        """Helper method to get the URL for sending a message in the conversation."""
+        return reverse("send_message", args=[self.conv.id])
+
     def test_redirects_when_not_logged_in(self):
         """The send_message view should redirect to login for unauthenticated users."""
         response = self.client.post(self._url(), {"content": "hi"})

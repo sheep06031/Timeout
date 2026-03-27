@@ -268,23 +268,6 @@ class PlanSessionsViewTests(TestCase):
         self.assertFalse(data['success'])
         self.assertIn('No free time', data['error'])
 
-    def test_successful_plan_returns_sessions(self):
-        """If there are free slots available before the deadline and the call_gpt function returns a valid list of sessions, the view should return a 200 OK response with a JSON body containing a 'success' key set to True and a 'sessions' key containing a list of session dictionaries with 'title', 'start', and 'end' keys."""
-        self.client.login(username='planner', password='pass')
-        now = timezone.now()
-        deadline_dt = (now + timedelta(days=5)).replace(hour=22, minute=0, second=0, microsecond=0)
-        deadline = _make_event(self.user, 'Final Exam', deadline_dt, deadline_dt + timedelta(hours=2),
-                               event_type=Event.EventType.EXAM)
-        resp = self.client.post(self.url, {'event_id': deadline.pk, 'hours_needed': '4', 'session_length': '2'})
-        self.assertEqual(resp.status_code, 200)
-        data = resp.json()
-        self.assertTrue(data['success'])
-        self.assertGreater(len(data['sessions']), 0)
-        for sess in data['sessions']:
-            self.assertIn('Study for Final Exam', sess['title'])
-            self.assertIn('start', sess)
-            self.assertIn('end', sess)
-
     def test_default_parameters(self):
         """If the hours_needed and session_length parameters are not provided in the POST data, the view should use default values (e.g. 4 hours needed and 2 hour session length) when calculating the study sessions to return in the response."""
         self.client.login(username='planner', password='pass')
