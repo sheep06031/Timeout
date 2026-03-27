@@ -16,18 +16,3 @@ def ai_suggestions(request):
 
     suggestions = get_ai_suggestions(request.user, events_today)
     return {"ai_suggestions": suggestions}
-
-def unread_notifications_count(request):
-    """Context processor to provide count of unread notifications and latest notification ID."""
-    if request.user.is_authenticated:
-        qs = Notification.objects.filter(user=request.user, is_read=False)
-        count = qs.count()
-        latest = Notification.objects.filter(user=request.user, is_dismissed=False).first()
-        latest_notif_id = latest.id if latest else 0
-    else:
-        count = 0
-        latest_notif_id = 0
-    return {
-        'unread_count': count,
-        'latest_notif_id': latest_notif_id,
-    }
