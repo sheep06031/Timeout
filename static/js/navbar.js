@@ -15,49 +15,25 @@ document.addEventListener("DOMContentLoaded", function () {
 
   let currentUnread = parseInt(_nav?.dataset.unreadCount) || 0;
 
-  
-  badge.textContent = currentUnread > 99 ? "99+" : currentUnread;
 
   /**
    * Update notification badge display with the current unread count.
    */
   function updateNotifBadge(count) {
-    if (!badge) return;
-    currentUnread = count;
-    if (count > 0) {
-      badge.style.display = "inline-block";
-      badge.textContent = count;
-    } else {
-      badge.style.display = "none";}}
+      if (!badge) return;
+      currentUnread = count;
+      if (count > 0) {
+          badge.style.display = "inline-block";
+          badge.textContent = count > 99 ? "99+" : count;
+      } else {
+          badge.style.display = "none";
+      }
+  }
 
   // Set initial badge state from server-rendered count
   if (document.body.dataset.userStatus !== 'focus') {
     updateNotifBadge(currentUnread);
   }
-
-  /**
-   * Display a temporary tooltip near the notification badge announcing a new notification.
-   */
-  function showNewNotificationTooltip() {
-    if (!badge) return;
-    badge.classList.add("new-notif-pulse");
-    let tooltip = document.getElementById("notif-tooltip");
-    if (!tooltip) {
-      tooltip = document.createElement("div");
-      tooltip.id = "notif-tooltip";
-      tooltip.className = "new-notif-tooltip";
-      tooltip.textContent = "New notification!";
-      document.body.appendChild(tooltip);}
-    const rect = badge.getBoundingClientRect();
-    tooltip.style.top = rect.bottom + window.scrollY + 4 + "px";
-    tooltip.style.left = rect.left + window.scrollX + rect.width / 2 + "px";
-    tooltip.style.display = "block";
-    setTimeout(() => tooltip.classList.add("show"), 50);
-    setTimeout(() => {
-      tooltip.classList.remove("show");
-      tooltip.style.display = "none";
-      badge.classList.remove("new-notif-pulse");
-    }, 3000);}
 
 
   let lastNotifId = parseInt(_nav?.dataset.latestNotifId) || 0;
@@ -80,7 +56,6 @@ document.addEventListener("DOMContentLoaded", function () {
         // Only count genuinely unread ones
         const newUnread = newNotifs.filter(n => !n.is_read).length;
         if (newUnread > 0) {
-          showNewNotificationTooltip();
           updateNotifBadge(currentUnread + newUnread);}})
       .catch(err => console.error("Polling error:", err));}
       

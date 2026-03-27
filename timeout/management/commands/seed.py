@@ -26,11 +26,11 @@ from timeout.models import Event, Post, Comment, Like, Bookmark, FocusSession, N
 User = get_user_model()
 fake = Faker()
 
-NUM_USERS = 25
-NUM_EVENTS = 15
-NUM_POSTS = 40
-NUM_NOTES_PER_USER = (5, 50)  # min, max notes per user
-HEATMAP_WEEKS = 12
+NUM_USERS = 80
+NUM_EVENTS = 50
+NUM_POSTS = 200
+NUM_NOTES_PER_USER = (8, 60)  # min, max notes per user
+HEATMAP_WEEKS = 16
 SUPERUSER_USERNAME = 'johndoe'
 SUPERUSER_PASSWORD = 'Password123'
 SUPERUSER_EMAIL = 'john.doe@email.com'
@@ -51,6 +51,31 @@ UNIVERSITIES = [
     'University of Bath',
     'Newcastle University',
     'Durham University',
+    'University of Bristol',
+    'University of Leeds',
+    'University of Sheffield',
+    'University of Nottingham',
+    'University of Birmingham',
+    'University of Southampton',
+    'University of Liverpool',
+    'University of St Andrews',
+    'University of Exeter',
+    'University of York',
+    'Cardiff University',
+    'Queen Mary University of London',
+    'University of Sussex',
+    'University of Leicester',
+    'University of Reading',
+    'Brunel University London',
+    'Royal Holloway University of London',
+    'University of Surrey',
+    'Lancaster University',
+    'University of Aberdeen',
+    'Loughborough University',
+    'University of East Anglia',
+    'Swansea University',
+    'Aston University',
+    'University of Kent',
 ]
 
 INTERESTS = [
@@ -69,6 +94,21 @@ INTERESTS = [
     'Music',
     'Political Science',
     'Data Science',
+    'Artificial Intelligence',
+    'Cybersecurity',
+    'Biomedical Engineering',
+    'Environmental Science',
+    'Business Studies',
+    'Linguistics',
+    'Sociology',
+    'Architecture',
+    'Law',
+    'Medicine',
+    'Neuroscience',
+    'Robotics',
+    'Statistics',
+    'Graphic Design',
+    'Film Studies',
 ]
 
 MANAGEMENT_STYLES = ['early_bird', 'night_owl']
@@ -128,12 +168,30 @@ NOTE_CONTENT_SNIPPETS = [
     'Group decided to split the work: I\'m handling the implementation, Alex does the report.',
     'Interesting approach using {} — could be useful for the final project too.',
     'Don\'t forget to include citations from the {} paper. The professor is strict about referencing.',
+    'Reviewed the past exam papers for {}. The questions follow a clear pattern — focus on theory + application.',
+    'Made flashcards for all the key definitions in {}. Spaced repetition is the way to go.',
+    'Class exercise today was tough but it solidified my understanding of {}.',
+    'Office hours were really productive. The professor clarified the confusing part about {}.',
+    'Watched a great YouTube tutorial on {} that explained it way better than the textbook.',
+    'Mind map complete for {}. Seeing all the connections visually really helps.',
+    'Practice questions done for {}. Got 8/10 — need to revisit the last two topics.',
+    'Summary sheet is ready for {}. Will print it out and use it during revision.',
+    'Paired programming session on {} went really well. Learned some new debugging tricks.',
+    'The guest speaker on {} gave amazing real-world examples. Need to look into those papers.',
+    'Lab report for {} is drafted. Need to clean up the graphs and add the conclusion.',
+    'Broke down the {} coursework into smaller tasks. Should be manageable if I start now.',
+    'Revision session with the study group covered {} really well. We quizzed each other.',
+    'Created a cheat sheet for {} formulas. Everything fits on one A4 page.',
 ]
 
 NOTE_SUBJECTS = [
     'Algorithms', 'Machine Learning', 'Database Systems',
     'Software Engineering', 'Networks', 'Maths', 'Statistics',
     'Operating Systems', 'AI', 'Web Development',
+    'Data Structures', 'Cybersecurity', 'Cloud Computing',
+    'Computer Vision', 'Natural Language Processing', 'Discrete Maths',
+    'Linear Algebra', 'Compilers', 'Human-Computer Interaction',
+    'Distributed Systems', 'Computer Architecture',
 ]
 
 SITE_DOMAIN = '127.0.0.1:8000'
@@ -148,6 +206,30 @@ MESSAGE_PAIRS = [
     ("Library is packed today, found a spot?", "Yeah grab the third floor, it's quieter up there."),
     ("Did the professor extend the deadline?", "Yes, one extra week apparently!"),
     ("Want to grab coffee before the lecture?", "Sounds good, meet at the usual spot?"),
+    ("Any idea what's on the midterm?", "Chapters 3 through 7, plus the lab exercises."),
+    ("I just aced the quiz! 🎉", "Nice one! I need to study harder for the next one."),
+    ("Have you picked a topic for your dissertation?", "Thinking about something in NLP, what about you?"),
+    ("The campus Wi-Fi is so slow today", "Tell me about it, I can barely load anything."),
+    ("Do you want to form a study group for the finals?", "Absolutely, the more the merrier!"),
+    ("Just submitted my coursework, finally free!", "Lucky you, I've still got two more to go."),
+    ("Are you going to the career fair next week?", "Definitely, I've updated my CV and everything."),
+    ("Can you recommend a good textbook for databases?", "The one by Ramakrishnan is solid, it covers everything."),
+    ("Lab session was so confusing today", "Agreed, the instructions were really unclear."),
+    ("Want to practice coding problems together?", "Sure, LeetCode tonight at 8?"),
+    ("I missed today's lecture, was it recorded?", "Yeah, should be on the portal by tomorrow."),
+    ("Did you sign up for the hackathon?", "Yes! Team of four, we still need one more member."),
+    ("How's your revision going?", "Slowly but surely. I made a timetable which helps."),
+    ("The seminar on AI ethics was really interesting", "I know right, it made me rethink my project angle."),
+    ("Are office hours worth going to?", "Definitely, the prof explains things way better one-on-one."),
+    ("I found a great study playlist on Spotify", "Send it over! I need something to focus to."),
+    ("Have you eaten yet? The canteen closes soon", "On my way now, save me a seat!"),
+    ("Just got my exam results back 😬", "How'd it go? I'm still waiting for mine."),
+    ("Project demo is tomorrow, are we ready?", "Mostly, just need to fix that one bug tonight."),
+    ("Do you prefer morning or evening study sessions?", "Mornings for sure, my brain shuts off after 6pm."),
+    ("The new campus café is really nice", "I tried it yesterday, the coffee is great!"),
+    ("Any plans for the reading week?", "Catching up on everything I've fallen behind on."),
+    ("I just discovered a really useful VS Code extension", "Which one? I'm always looking for new tools."),
+    ("Group presentation went well I think!", "We nailed it, great teamwork honestly."),
 ]
 
 POST_TEMPLATES = [
@@ -159,6 +241,38 @@ POST_TEMPLATES = [
     "Can someone explain {}? I'm totally lost 😅",
     "Procrastination level: {} 😴",
     "Best resources for {}?",
+    "Finally submitted my {} assignment! 🙌",
+    "Pro tip: start {} early, it takes longer than you think",
+    "The library is packed because of {}! Where else can I study?",
+    "Does anyone have notes for {}? I missed the lecture",
+    "Aced my {} exam! Hard work pays off 💪",
+    "Who else is cramming for {} right now? 📚",
+    "Just discovered an amazing YouTube channel for {} 🎬",
+    "Study group for {} — meet at the library at 4pm?",
+    "Wish me luck for my {} presentation tomorrow! 🤞",
+    "{} office hours were so helpful today, highly recommend going",
+    "Can't believe {} is already due next week 😭",
+    "Just finished a 3-hour study session on {} — my brain hurts",
+    "Any recommendations for {} textbooks? The required one is awful",
+    "Hot take: {} is actually the most interesting module this year",
+    "Pulled an all-nighter for {} and I regret everything 😵",
+    "The {} coursework feedback was really helpful, I learned a lot",
+    "Thanks to everyone who came to the {} study session! 🙏",
+    "Pomodoro technique + {} = actually productive for once 🍅",
+    "Struggling to balance {} with everything else this term",
+    "That {} guest lecture was mind-blowing 🤯",
+    "Started revising {} today, only 3 weeks until exams",
+    "Late night coding session for {}... coffee is my best friend ☕",
+    "Just hit a milestone on my {} project! Getting there 🚀",
+    "Who's going to the {} workshop this Friday?",
+    "Feeling motivated after today's {} tutorial session",
+    "The {} past papers are brutal, we need to study together",
+    "Taking a well-deserved break after finishing {} 🎮",
+    "Anyone else find {} way harder than expected this semester?",
+    "My {} lab partner is the MVP honestly 🏆",
+    "Really enjoying {} this term, might change my specialisation",
+    "Just set up my study schedule for {} — accountability buddies welcome!",
+    "The deadline for {} snuck up on me, classic 😬",
 ]
 
 
@@ -300,12 +414,14 @@ class Command(BaseCommand):
         """Establish random follow relationships between all users."""
         self.stdout.write('\n[5] Creating follow relationships...')
         all_users = list(User.objects.all())
+        total = len(all_users)
         follow_count = 0
-        for user in all_users:
+        for i, user in enumerate(all_users, 1):
             others = [u for u in all_users if u != user]
-            to_follow = random.sample(others, k=min(random.randint(2, 8), len(others)))
+            to_follow = random.sample(others, k=min(random.randint(10, 40), len(others)))
             user.following.add(*to_follow)
             follow_count += len(to_follow)
+            self.stdout.write(f'  [{i}/{total}] @{user.username} now follows {len(to_follow)} users')
         self.stdout.write(self.style.SUCCESS(f'  Created {follow_count} follow relationships.'))
 
     def _create_events(self, users):
@@ -352,41 +468,72 @@ class Command(BaseCommand):
         """Create comments on posts."""
         self.stdout.write('\n[8] Creating comments...')
         count = 0
-        for post in posts:
-            for _ in range(random.randint(0, 5)):
+        total_posts = len(posts)
+        comment_templates = [
+            'This is so relatable! 😂',
+            'Good luck! You got this 💪',
+            'Same here, let me know if you find a solution!',
+            'Totally agree with this',
+            'Thanks for sharing!',
+            'I needed to hear this today',
+            'Can I join? 🙋',
+            'This is great advice honestly',
+            'Felt this on a spiritual level 😅',
+            'Keep going, almost there!',
+            'Legend for posting this 🙌',
+            'Me every single week lol',
+            'Anyone want to meet up and study together?',
+            'I had the same experience, it gets easier!',
+            'Following this for updates',
+        ]
+        for i, post in enumerate(posts, 1):
+            post_comments = 0
+            for _ in range(random.randint(0, 8)):
+                content = random.choice(comment_templates) if random.random() < 0.5 else fake.sentence(nb_words=random.randint(5, 15))
                 Comment.objects.create(
                     author=random.choice(users), post=post,
-                    content=fake.sentence(nb_words=random.randint(5, 15)),
+                    content=content,
                 )
                 count += 1
+                post_comments += 1
+            self.stdout.write(f'  [{i}/{total_posts}] Added {post_comments} comments to post by @{post.author.username}')
         self.stdout.write(self.style.SUCCESS(f'  Created {count} comments.'))
 
     def _create_likes_and_bookmarks(self, users, posts):
         """Create likes and bookmarks."""
         self.stdout.write('\n[9] Creating likes and bookmarks...')
         like_count, bookmark_count = 0, 0
-        for post in posts:
-            likers = random.sample(users, random.randint(0, min(10, len(users))))
+        total_posts = len(posts)
+        for i, post in enumerate(posts, 1):
+            post_likes, post_bookmarks = 0, 0
+            likers = random.sample(users, random.randint(0, min(30, len(users))))
             for user in likers:
                 Like.objects.get_or_create(user=user, post=post)
                 like_count += 1
-            if random.random() < 0.3:
-                bookmarkers = random.sample(users, min(random.randint(1, 3), len(users)))
+                post_likes += 1
+            if random.random() < 0.45:
+                bookmarkers = random.sample(users, min(random.randint(1, 8), len(users)))
                 for user in bookmarkers:
                     Bookmark.objects.get_or_create(user=user, post=post)
                     bookmark_count += 1
+                    post_bookmarks += 1
+            self.stdout.write(f'  [{i}/{total_posts}] Post by @{post.author.username}: {post_likes} likes, {post_bookmarks} bookmarks')
         self.stdout.write(self.style.SUCCESS(f'  Created {like_count} likes and {bookmark_count} bookmarks.'))
 
     def _create_focus_sessions(self, users):
         """Create focus sessions for johndoe and random users."""
         self.stdout.write('\n[10] Creating focus sessions...')
         johndoe = User.objects.filter(username=SUPERUSER_USERNAME).first()
-        targets = ([johndoe] if johndoe else []) + random.sample(users, min(5, len(users)))
+        targets = ([johndoe] if johndoe else []) + random.sample(users, min(30, len(users)))
+        total = len(targets)
         count, now = 0, timezone.now()
-        for user in targets:
-            for day_offset in range(7):
+        for i, user in enumerate(targets, 1):
+            user_sessions = 0
+            for day_offset in range(14):
                 if random.random() < 0.7:
                     count += self._create_single_focus_session(user, now, day_offset)
+                    user_sessions += 1
+            self.stdout.write(f'  [{i}/{total}] Created {user_sessions} focus sessions for @{user.username}')
         self.stdout.write(self.style.SUCCESS(f'  Created {count} focus sessions.'))
 
     def _create_single_focus_session(self, user, now, day_offset):
@@ -417,11 +564,13 @@ class Command(BaseCommand):
         events.extend(self._johndoe_study_meetings(johndoe))
 
         created = 0
+        total = len(events)
         for ev in events:
             if ev['end_datetime'] <= ev['start_datetime']:
                 ev['end_datetime'] = ev['start_datetime'] + timedelta(hours=1)
             Event.objects.create(**ev)
             created += 1
+            self.stdout.write(f'  [{created}/{total}] Created schedule event: {ev["title"]}')
         self.stdout.write(self.style.SUCCESS(f'  Created {created} events for @{SUPERUSER_USERNAME}.'))
 
     def _johndoe_weekly_classes(self, johndoe):
@@ -529,13 +678,17 @@ class Command(BaseCommand):
         """Create notes with categories and time spent for all users."""
         self.stdout.write('\n[13] Creating notes for all users...')
         all_users = list(User.objects.all())
+        total = len(all_users)
         now, count = timezone.now(), 0
-        for user in all_users:
+        for i, user in enumerate(all_users, 1):
             user_events = list(user.created_events.all()[:10])
+            user_notes = 0
             for _ in range(random.randint(*NUM_NOTES_PER_USER)):
                 self._create_single_note(user, user_events, now)
                 count += 1
-        self.stdout.write(self.style.SUCCESS(f'  Created {count} notes across {len(all_users)} users.'))
+                user_notes += 1
+            self.stdout.write(f'  [{i}/{total}] Created {user_notes} notes for @{user.username}')
+        self.stdout.write(self.style.SUCCESS(f'  Created {count} notes across {total} users.'))
 
     def _create_single_note(self, user, user_events, now):
         """Create one note with random category, title, content, and metadata."""
@@ -588,11 +741,14 @@ class Command(BaseCommand):
         """Create study log entries for heatmap data."""
         self.stdout.write('\n[14] Creating study logs (heatmap data)...')
         all_users = list(User.objects.all())
+        total = len(all_users)
         today = timezone.localtime(timezone.now()).date()
         count = 0
-        for user in all_users:
+        for i, user in enumerate(all_users, 1):
             active_prob = random.choice([0.25, 0.5, 0.75])
-            count += self._create_user_study_logs(user, today, active_prob)
+            user_logs = self._create_user_study_logs(user, today, active_prob)
+            count += user_logs
+            self.stdout.write(f'  [{i}/{total}] Created {user_logs} study log entries for @{user.username}')
         self.stdout.write(self.style.SUCCESS(f'  Created {count} study log entries.'))
 
     def _create_user_study_logs(self, user, today, active_prob):
@@ -624,15 +780,18 @@ class Command(BaseCommand):
             self.stdout.write(self.style.WARNING('  johndoe not found, skipping.'))
             return
         other_users = list(User.objects.exclude(username=SUPERUSER_USERNAME))
-        targets = random.sample(other_users, min(24, len(other_users)))
+        targets = random.sample(other_users, min(50, len(other_users)))
         conv_count, msg_count = 0, 0
+        total = len(targets)
         for i, other in enumerate(targets):
             conv_count += 1
-            msg_count += self._create_conversation(johndoe, other, i)
+            msgs = self._create_conversation(johndoe, other, i)
+            msg_count += msgs
+            self.stdout.write(f'  [{conv_count}/{total}] Conversation with @{other.username} ({msgs} messages)')
         self.stdout.write(self.style.SUCCESS(f'  Created {conv_count} conversations, {msg_count} messages.'))
 
     def _create_conversation(self, johndoe, other_user, index):
-        """Create a single conversation with 1-3 messages."""
+        """Create a single conversation with multiple messages."""
         conv = Conversation.objects.create()
         conv.participants.add(johndoe, other_user)
         opening, reply = MESSAGE_PAIRS[index % len(MESSAGE_PAIRS)]
@@ -640,26 +799,31 @@ class Command(BaseCommand):
             conversation=conv, sender=other_user,
             content=opening, is_read=random.choice([True, False]),
         )
-        if random.random() < 0.7:
+        if random.random() < 0.8:
             Message.objects.create(
                 conversation=conv, sender=johndoe, content=reply, is_read=True,
             )
-        if random.random() < 0.4:
+        # Add extra back-and-forth messages for a more realistic conversation
+        extra_messages = random.randint(0, 5)
+        for _ in range(extra_messages):
+            sender = random.choice([johndoe, other_user])
             Message.objects.create(
-                conversation=conv, sender=other_user,
-                content=fake.sentence(nb_words=random.randint(6, 12)), is_read=False,
+                conversation=conv, sender=sender,
+                content=fake.sentence(nb_words=random.randint(5, 14)),
+                is_read=random.choice([True, False]),
             )
-        self.stdout.write(f'  Conversation with @{other_user.username}')
         return conv.messages.count()
 
     def _set_gamification_stats(self, users):
         """Set XP, streaks, and daily goals for all users."""
         self.stdout.write('\n[16] Setting gamification stats...')
         all_users = list(User.objects.all())
+        total = len(all_users)
         today = timezone.localtime(timezone.now()).date()
-        for user in all_users:
+        for i, user in enumerate(all_users, 1):
             self._set_user_gamification(user, today)
-        self.stdout.write(self.style.SUCCESS(f'  Set gamification stats for {len(all_users)} users.'))
+            self.stdout.write(f'  [{i}/{total}] Set stats for @{user.username} (XP: {user.xp}, streak: {user.note_streak})')
+        self.stdout.write(self.style.SUCCESS(f'  Set gamification stats for {total} users.'))
 
     def _set_user_gamification(self, user, today):
         """Set XP, streak, and goals for a single user."""

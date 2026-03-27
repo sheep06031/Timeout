@@ -1,15 +1,12 @@
 {% extends "base.html" %}
 {% load static %}
-
 {% block title %}Notes — Timeout{% endblock %}
-
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'css/notes.css' %}">
 <link rel="stylesheet" href="{% static 'css/notes-overlays.css' %}">
 <link rel="stylesheet" href="{% static 'css/notes-cards.css' %}">
 <link rel="stylesheet" href="{% static 'css/information.css' %}">
 {% endblock %}
-
 {% block content %}
 <div class="nt-page" id="notesPage">
 
@@ -40,12 +37,12 @@
         <span class="nt-stat-label">pomodoros today</span>
       </div>
     </div>
-
     <div class="nt-stat-actions">
       <button class="nt-focus-toggle" id="focusModeBtn" title="Enter Focus Mode">
         &#127919; Focus Mode
       </button>
     </div>
+
     <!-- Floating page info button -->
     <div class="page-info-button">
       <div class="page-info-tooltip">
@@ -86,7 +83,6 @@
             <span class="nt-goal-label">Pomodoros</span>
           </div>
         </div>
-
         <!-- Notes Goal -->
         <div class="nt-goal-item">
           <div class="nt-goal-ring-wrap">
@@ -102,7 +98,6 @@
             <span class="nt-goal-label">Notes Edited</span>
           </div>
         </div>
-
         <!-- Focus Goal -->
         <div class="nt-goal-item">
           <div class="nt-goal-ring-wrap">
@@ -130,7 +125,6 @@
       <span class="nt-heatmap-subtitle">Last 12 weeks</span>
     </div>
     <div class="nt-heatmap-grid" id="heatmapGrid">
-      <!-- Filled by JS -->
     </div>
     <div class="nt-heatmap-legend">
       <span class="nt-heatmap-legend-label">Less</span>
@@ -142,14 +136,11 @@
       <span class="nt-heatmap-legend-label">More</span>
     </div>
   </div>
-
   <div class="nt-main-layout">
 
     <!-- Left: Notes List  -->
     <div class="nt-content-area">
       <div class="nt-card">
-
-        <!-- Toolbar -->
         <div class="nt-toolbar">
           <div class="nt-toolbar__left">
             <h1 class="nt-title">Notes</h1>
@@ -171,8 +162,7 @@
             name="q"
             class="nt-search"
             placeholder="Search notes..."
-            value="{{ search_query }}"
-          >
+            value="{{ search_query }}">
           <select name="category" class="nt-select" onchange="this.form.submit()">
             <option value="">All categories</option>
             {% for value, label in categories %}
@@ -209,9 +199,7 @@
                       {{ note.get_category_display }}
                     </span>
                   </div>
-
                   <p class="nt-item__preview">{{ note.content|striptags|truncatewords:20 }}</p>
-
                   <div class="nt-item__meta">
                     <span class="nt-meta">{{ note.updated_at|timesince }} ago</span>
                     {% if note.time_spent_display %}
@@ -224,13 +212,8 @@
                 </div>
 
                 <div class="nt-item__actions" onclick="event.preventDefault(); event.stopPropagation();">
-                  <button
-                    class="nt-action-btn"
-                    onclick="togglePin({{ note.id }}, this)"
-                    data-pinned="{{ note.is_pinned|yesno:'true,false' }}"
-                  >
-                    {{ note.is_pinned|yesno:"Unpin,Pin" }}
-                  </button>
+                  <button class="nt-action-btn" onclick="togglePin({{ note.id }}, this)" data-pinned="{{ note.is_pinned|yesno:'true,false' }}">
+                    {{ note.is_pinned|yesno:"Unpin,Pin" }}</button>
                   <form method="post" action="{% url 'note_delete' note.id %}" class="nt-delete-form">
                     {% csrf_token %}
                     <button
@@ -240,7 +223,6 @@
                     >Delete</button>
                   </form>
                 </div>
-
               </a>
             {% endfor %}
           {% else %}
@@ -256,7 +238,6 @@
             </div>
           {% endif %}
         </div>
-
       </div>
     </div>
 
@@ -266,8 +247,6 @@
         <span class="nt-pomo-tomato">&#127813;</span>
         <h3 class="nt-pomo-title">Pomodoro</h3>
       </div>
-
-      <!-- Note Linking Dropdown -->
       <div class="nt-pomo-link">
         <label for="pomoNoteSelect" class="nt-pomo-link-label">Focus on:</label>
         <select id="pomoNoteSelect" class="nt-pomo-link-select">
@@ -284,7 +263,6 @@
         </svg>
         <div class="nt-pomo-time" id="pomoTime">25:00</div>
       </div>
-
       <div class="nt-pomo-phase" id="pomoPhase">Work Session</div>
       <div class="nt-pomo-session-dots" id="pomoDots">
         <span class="nt-pomo-dot"></span>
@@ -292,24 +270,21 @@
         <span class="nt-pomo-dot"></span>
         <span class="nt-pomo-dot"></span>
       </div>
-
       <div class="nt-pomo-controls">
         <button class="nt-pomo-btn nt-pomo-btn--start" id="pomoStartBtn">Start</button>
         <button class="nt-pomo-btn nt-pomo-btn--pause" id="pomoPauseBtn" style="display:none">Pause</button>
         <button class="nt-pomo-btn nt-pomo-btn--skip" id="pomoSkipBtn" title="Skip to next phase">Skip</button>
         <button class="nt-pomo-btn nt-pomo-btn--reset" id="pomoResetBtn" title="Reset timer">Reset</button>
       </div>
-
       <div class="nt-pomo-info">
         <p>{{ request.user.pomo_work_minutes }} min work &middot; {{ request.user.pomo_short_break }} min break</p>
         <p>Long break ({{ request.user.pomo_long_break }} min) after 4 sessions</p>
       </div>
     </div>
-
   </div>
 </div>
 
-<!-- Focus Mode Overlay -->
+<!-- Focus Mode and Inactive Warning Overlays -->
 <div class="nt-focus-overlay" id="focusOverlay" style="display:none">
   <div class="nt-focus-bar">
     <span class="nt-focus-bar-label">&#127919; Focus Mode Active</span>
@@ -317,8 +292,6 @@
     <button class="nt-focus-exit-btn" id="focusExitBtn">Exit Focus Mode</button>
   </div>
 </div>
-
-<!-- Inactivity Warning Overlay -->
 <div class="nt-warn-overlay" id="warnOverlay" style="display:none">
   <div class="nt-warn-card">
     <div class="nt-warn-icon">&#9888;&#65039;</div>
@@ -328,7 +301,7 @@
   </div>
 </div>
 
-<!-- XP Gain Toast -->
+<!-- XP Gain -->
 <div class="nt-xp-toast" id="xpToast" style="display:none">
   <span class="nt-xp-toast-text" id="xpToastText">+25 XP</span>
 </div>
@@ -401,11 +374,9 @@
     </div>
   </div>
 </div>
-
 <button class="nt-fab" data-bs-toggle="modal" data-bs-target="#newNoteModal" aria-label="New note">+</button>
 
 {% endblock %}
-
 {% block extra_js %}
 <script>
   window.NOTES_CONFIG = {
@@ -419,8 +390,9 @@
     pomoShort: {{ request.user.pomo_short_break }},
     pomoLong: {{ request.user.pomo_long_break }},
     sounds: {{ request.user.notification_sounds|yesno:"true,false" }},
-    userNotes: {{ user_notes_json|safe }},
-  };
+    userNotes: {{ user_notes_json|safe }}};
 </script>
 <script src="{% static 'js/notes.js' %}"></script>
+<script src="{% static 'js/pomodoro.js' %}"></script>
+<script src="{% static 'js/focus_mode.js' %}"></script>
 {% endblock %}

@@ -62,31 +62,24 @@ def logout_view(request):
 
 @login_required
 def complete_profile(request):
-    """
-    Let new users (local and social) fill in missing profile fields.
-    Only accessible when the session flag 'needs_profile_completion' is set
-    (i.e. right after signup). Existing users logging in are never shown this.
-    """
+    """Let new users (local and social) fill in missing profile fields. Only accessible when the session 
+    flag 'needs_profile_completion' is set. Existing users logging in are never shown this."""
     if not request.session.get('needs_profile_completion'):
         return redirect('dashboard')
-
     user = request.user
 
     if request.method == 'POST':
         form = CompleteProfileForm(request.POST, instance=user)
         if form.is_valid():
             form.save()
-            # Clear the flag so the user isn't shown this page again
-            request.session.pop('needs_profile_completion', None)
+            request.session.pop('needs_profile_completion', None) # Clear flag so the user isn't shown this page again
             messages.success(request, 'Profile completed successfully!')
             return redirect('dashboard')
     else:
         form = CompleteProfileForm(instance=user)
 
     has_temp_username = user.username.startswith('user_')
-
     context = {
         'form': form,
-        'has_temp_username': has_temp_username,
-    }
+        'has_temp_username': has_temp_username}
     return render(request, 'auth/complete_profile.html', context)

@@ -64,6 +64,7 @@
 {% block extra_js %}
 <!-- Load conversation messaging scripts: social.js handles message display/polling, optional moderation.js for staff actions -->
 <script src="{% static 'js/social.js' %}"></script>
+<script src="{% static 'js/social_messaging.js' %}"></script>
 {% if user.is_staff %}<script src="{% static 'js/moderation.js' %}"></script>{% endif %}
 
 <!-- Initialize conversation configuration object with conversation ID, current user, API endpoints, and CSRF token for message operations -->

@@ -123,87 +123,50 @@ class Event(models.Model):
          ]
 
     def clean(self):
-        """
-        Prevent overlapping events for the same user unless allowed.
-
-        Behaviour:
-        - Ensures the end time is after the start time
-        - Prevents overlapping events for certain event types
-        - Allows deadlines and "other" events to overlap freely
-        """
-
+        """Prevent overlapping events for the same user unless allowed.
+        - Ensures end time is after start time and prevents overlapping  for certain events"""
         if self.start_datetime >= self.end_datetime:
             raise ValidationError("End time must be after start time.")
-
-        # Events that cannot overlap
         non_overlapping_types = [
             self.EventType.CLASS,
             self.EventType.STUDY_SESSION,
             self.EventType.EXAM,
-            self.EventType.MEETING,
-        ]
-
-        # Only check conflicts if the event type is in non_overlapping_types
+            self.EventType.MEETING]
         if self.event_type not in non_overlapping_types:
             return  # deadlines & "other" can overlap freely
-
-        # Ignore cancelled events
         if self.status == self.EventStatus.CANCELLED:
             return
-
-        # Check for overlapping events for this user
-        overlapping_events = Event.objects.filter(
-            creator=self.creator,
+        overlapping_events = Event.objects.filter(creator=self.creator,
             start_datetime__lt=self.end_datetime,
-            end_datetime__gt=self.start_datetime,
-        ).exclude(pk=self.pk).filter(event_type__in=non_overlapping_types)
-
+            end_datetime__gt=self.start_datetime).exclude(pk=self.pk).filter(event_type__in=non_overlapping_types)
         if overlapping_events.exists():
             conflict = overlapping_events.first()
-            raise ValidationError(
-                f'This event conflicts with "{conflict.title}" '
+            raise ValidationError(f'This event conflicts with "{conflict.title}" '
                 f'({conflict.start_datetime:%d %b %H:%M} - '
-                f'{conflict.end_datetime:%H:%M}).'
-            )
+                f'{conflict.end_datetime:%H:%M}).')
+
     def save(self, *args, **kwargs):
-        """
-        Save the event and synchronise it with a social post.
-
-        Behaviour:
+        """Save the event and synchronise it with a social post.
         - PUBLIC events create or update a corresponding post
-        - PRIVATE events do not create or update posts
-        """
-
+        - PRIVATE events do not create or update posts"""
         super().save(*args, **kwargs)
-
         from .post import Post 
-
-        # If event is PUBLIC then ensure post exists
         if self.visibility == self.Visibility.PUBLIC and self.creator:
-
             existing_post = self.posts.first()
-
             post_content = (
                 f"📅 {self.title}\n\n"
                 f"{self.description}\n\n"
-                f"🕒 {self.start_datetime:%d %b %Y %H:%M}"
-            )
-
-            if existing_post:
-                # Update existing post
+                f"🕒 {self.start_datetime:%d %b %Y %H:%M}")
+            if existing_post: # Update existing post
                 existing_post.content = post_content
                 existing_post.save()
-            else:
-                # Create new post
+            else: # Create new post
                 Post.objects.create(
                     author=self.creator,
                     content=post_content,
                     event=self,
-                    privacy=Post.Privacy.PUBLIC,
-                )
-
-        # If event is PRIVATE then delete any linked post
-        else:
+                    privacy=Post.Privacy.PUBLIC)
+        else: 
             self.posts.all().delete()
 
     def delete(self, *args, **kwargs):
