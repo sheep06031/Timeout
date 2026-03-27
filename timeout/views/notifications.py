@@ -14,6 +14,9 @@ def notifications_view(request):
     filter_param = request.GET.get('filter')
     if filter_param == 'unread': notifications_qs = notifications_qs.filter(is_read=False)
     if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        page_number = request.GET.get('page', 1)
+        paginator = Paginator(notifications_qs, 15)
+        page_obj = paginator.get_page(page_number)
         data = [{
             'id': n.id,
             'title': n.title,
@@ -23,8 +26,12 @@ def notifications_view(request):
             'created_at': n.created_at.isoformat(),
             'deadline_id': n.deadline_id,
             'conversation_id': n.conversation_id,
-            'post_id': n.post_id} for n in notifications_qs]
-        return JsonResponse({'notifications': data})
+            'post_id': n.post_id} for n in page_obj]
+        return JsonResponse({
+            'notifications': data,
+            'has_next': page_obj.has_next(),
+            'next_page': page_obj.next_page_number() if page_obj.has_next() else None,
+        })
     return render(request, 'pages/notifications.html', {
         'notifications': notifications_qs,
         'unread_count': unread_count,

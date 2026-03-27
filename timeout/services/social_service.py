@@ -13,6 +13,12 @@ def _get_follow_request_info(user, profile_user):
     incoming = (FollowRequest.objects.filter(to_user=profile_user) if user == profile_user else FollowRequest.objects.none())
     return has_pending, incoming
 
+def are_blocked(user_a, user_b):
+    """Return True if any block exists between two users (either direction)."""
+    if not user_a or not user_b:
+        return False
+    return Block.objects.filter(Q(blocker=user_a, blocked=user_b) | Q(blocker=user_b, blocked=user_a)).exists()
+
 def _get_block_status(user, profile_user):
     """Return (is_blocked, has_blocked_me) between two users."""
     is_blocked = Block.objects.filter(blocker=user, blocked=profile_user).exists()
