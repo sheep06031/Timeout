@@ -1,7 +1,6 @@
 from datetime import datetime
 from django.conf import settings
 from django.core.cache import cache
-from openai import OpenAI
 
 
 def get_ai_workload_warning(user, events):
@@ -43,7 +42,7 @@ def _summarize_events(events):
 
 def _call_openai_workload(event_summaries):
     """Call OpenAI to analyze daily workload and return a warning string."""
-    client = OpenAI(api_key=settings.OPENAI_API_KEY)
+    from timeout.services.openai_service import call_openai
     system_prompt = (
         "You are a helpful assistant. Analyze the user's daily events and determine "
         "if they are overloaded today or have scheduling conflicts. "
@@ -52,13 +51,10 @@ def _call_openai_workload(event_summaries):
         "'Moderate workload, 2 events with minor overlap'."
     )
     user_prompt = "Today's events:\n" + "\n".join(event_summaries)
-    response = client.chat.completions.create(
-        model="gpt-4o-mini",
+    return call_openai(
         messages=[
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": user_prompt},
         ],
-        temperature=0,
         max_tokens=60,
     )
-    return response.choices[0].message.content.strip()

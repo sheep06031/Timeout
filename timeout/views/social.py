@@ -14,6 +14,27 @@ from timeout.services.social_service import (_get_conversation_sidebar,
     _get_follow_request_info, _get_block_status, _can_view_profile,
     _serialize_search_result, _search_users_queryset, are_blocked)
 
+def _get_user_post_relationships(user):
+    """Return liked and bookmarked post ID sets for the given user."""
+    return {
+        'liked_ids': set(Like.objects.filter(user=user).values_list('post_id', flat=True)),
+        'bookmarked_ids': set(Bookmark.objects.filter(user=user).values_list('post_id', flat=True)),
+    }
+
+
+def _toggle_m2m(model, **kwargs):
+    """Toggle a relationship: create if absent, delete if present. Returns True if created."""
+    obj, created = model.objects.get_or_create(**kwargs)
+    if not created:
+        obj.delete()
+    return created
+
+
+def _can_interact_with_post(post, user):
+    """Return True if user can view and is not blocked from interacting with post."""
+    return post.can_view(user) and not are_blocked(user, post.author)
+
+
 def _get_feed_posts(tab, user, cursor=None):
     """Return feed posts"""
     if tab == 'discover': return FeedService.get_discover_feed(user, cursor=cursor)
@@ -33,8 +54,7 @@ def _build_feed_context(tab, posts, flags, user, has_more):
     """Build the template context dict for the feed view."""
     return {'posts': posts, 'flags': flags, 'active_tab': tab, 'has_more': has_more, 'next_cursor': posts[-1].id if has_more and posts else None,
         'post_form': PostForm(user=user), 'conversation_data': _get_conversation_sidebar(user),
-        'bookmarked_ids': set(Bookmark.objects.filter(user=user).values_list('post_id', flat=True)),
-        'liked_ids': set(Like.objects.filter(user=user).values_list('post_id', flat=True))}
+        **_get_user_post_relationships(user)}
 
 @login_required
 def feed(request):
@@ -57,10 +77,9 @@ def feed_more(request):
     posts = _get_feed_posts(tab, request.user, cursor=cursor)
     has_more = len(posts) > PAGE_SIZE
     posts = posts[:PAGE_SIZE]
-    liked_ids = set(Like.objects.filter(user=request.user).values_list('post_id', flat=True))
-    bookmarked_ids = set(Bookmark.objects.filter(user=request.user).values_list('post_id', flat=True))
+    relationships = _get_user_post_relationships(request.user)
     html = ''.join(render_to_string('social/_post_card.html', {'post': post, 'user': request.user,
-            'liked_ids': liked_ids, 'bookmarked_ids': bookmarked_ids}, request=request) for post in posts)
+            **relationships}, request=request) for post in posts)
     return JsonResponse({'html': html, 'has_more': has_more, 'next_cursor': posts[-1].id if has_more and posts else None})
 
 @login_required
@@ -92,14 +111,9 @@ def delete_post(request, post_id):
 def like_post(request, post_id):
     """Like or unlike a post (toggle)."""
     post = get_object_or_404(Post, id=post_id)
-    if not post.can_view(request.user): return JsonResponse({'error': 'Cannot view post'}, status=403)
-    if are_blocked(request.user, post.author):
+    if not _can_interact_with_post(post, request.user):
         return JsonResponse({'error': 'Cannot interact with this post'}, status=403)
-    like, created = Like.objects.get_or_create(user=request.user, post=post)
-    if not created:
-        like.delete()
-        liked = False
-    else: liked = True
+    liked = _toggle_m2m(Like, user=request.user, post=post)
     return JsonResponse({'liked': liked, 'like_count': post.get_like_count()})
 
 @login_required
@@ -107,12 +121,9 @@ def like_post(request, post_id):
 def bookmark_post(request, post_id):
     """Bookmark or unbookmark a post (toggle)."""
     post = get_object_or_404(Post, id=post_id)
-    if not post.can_view(request.user): return JsonResponse({'error': 'Cannot view post'}, status=403)
-    bookmark, created = Bookmark.objects.get_or_create(user=request.user, post=post)
-    if not created:
-        bookmark.delete()
-        bookmarked = False
-    else: bookmarked = True
+    if not _can_interact_with_post(post, request.user):
+        return JsonResponse({'error': 'Cannot interact with this post'}, status=403)
+    bookmarked = _toggle_m2m(Bookmark, user=request.user, post=post)
     return JsonResponse({'bookmarked': bookmarked})
 
 @login_required
@@ -127,8 +138,7 @@ def bookmarks(request):
 def add_comment(request, post_id):
     """Add a comment to a post."""
     post = get_object_or_404(Post, id=post_id)
-    if not post.can_view(request.user): return HttpResponseForbidden('Cannot view post')
-    if are_blocked(request.user, post.author):
+    if not _can_interact_with_post(post, request.user):
         return HttpResponseForbidden('Cannot interact with this post')
     form = CommentForm(request.POST)
     if form.is_valid():

@@ -10,30 +10,16 @@ from django.views.decorators.http import require_POST
 from timeout.models import Event
 
 
-def _strip_code_fence(raw):
-    """Remove markdown code fences from a string."""
-    if raw.startswith('```'):
-        raw = raw.split('```')[1]
-        if raw.startswith('json'):
-            raw = raw[4:]
-    return raw
-
-
 def _call_openai_parse_event(user_input, system_prompt):
     """Call OpenAI to parse natural language into event JSON. Returns dict or raises."""
-    from openai import OpenAI
-    client = OpenAI(api_key=settings.OPENAI_API_KEY)
-    response = client.chat.completions.create(
-        model='gpt-4o-mini',
+    from timeout.services.openai_service import call_openai_json
+    return call_openai_json(
         messages=[
             {'role': 'system', 'content': system_prompt},
             {'role': 'user', 'content': user_input},
         ],
-        temperature=0,
         max_tokens=300,
     )
-    raw = _strip_code_fence(response.choices[0].message.content.strip())
-    return json.loads(raw)
 
 
 def _parse_datetimes(is_all_day, start_str, end_str):

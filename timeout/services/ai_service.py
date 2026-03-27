@@ -139,25 +139,21 @@ def openai_prompt(stats):
         "Write a 2-sentence 'Morning Briefing' that is encouraging and concise. "
         "Mention one specific win. Do not use markdown formatting."
     )
-    return api_call(api_key, prompt)
+    return api_call(prompt)
  
  
-def api_call(api_key, prompt):
+def api_call(prompt):
     """Make the api call to ai with the prompt and return the response"""
+    from timeout.services.openai_service import call_openai
     try:
-        from openai import OpenAI
- 
-        client = OpenAI(api_key=api_key)
-        response = client.chat.completions.create(
-            model='gpt-4o-mini', # model used
-            messages=[ # set the tone and the prompt
+        return call_openai(
+            messages=[
                 {'role': 'system', 'content': 'You are a supportive academic coach. Keep your tone warm, brief, and motivating.'},
                 {'role': 'user', 'content': prompt},
             ],
             temperature=0.7,
             max_tokens=150,
         )
-        return response.choices[0].message.content.strip()
     except Exception as exc:
         logger.warning('OpenAI briefing call failed: %s', exc)
         return None

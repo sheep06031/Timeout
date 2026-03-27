@@ -101,26 +101,30 @@ class NoteService:
     # StudyLog helpers
 
     @staticmethod
-    def log_note_created(user):
-        """Increment today's notes_created counter."""
+    def _get_today_study_log(user):
+        """Get or create today's StudyLog for the given user."""
         today = timezone.localtime(timezone.now()).date()
         log, _ = StudyLog.objects.get_or_create(user=user, date=today)
+        return log
+
+    @staticmethod
+    def log_note_created(user):
+        """Increment today's notes_created counter."""
+        log = NoteService._get_today_study_log(user)
         log.notes_created += 1
         log.save(update_fields=['notes_created'])
 
     @staticmethod
     def log_note_edited(user):
         """Increment today's notes_edited counter."""
-        today = timezone.localtime(timezone.now()).date()
-        log, _ = StudyLog.objects.get_or_create(user=user, date=today)
+        log = NoteService._get_today_study_log(user)
         log.notes_edited += 1
         log.save(update_fields=['notes_edited'])
 
     @staticmethod
     def log_pomodoro(user, minutes):
         """Increment today's pomodoro counter and focus minutes."""
-        today = timezone.localtime(timezone.now()).date()
-        log, _ = StudyLog.objects.get_or_create(user=user, date=today)
+        log = NoteService._get_today_study_log(user)
         log.pomodoros += 1
         log.focus_minutes += minutes
         log.save(update_fields=['pomodoros', 'focus_minutes'])
@@ -152,8 +156,7 @@ class NoteService:
     @staticmethod
     def get_daily_progress(user):
         """Get today's progress vs daily goals."""
-        today = timezone.localtime(timezone.now()).date()
-        log, _ = StudyLog.objects.get_or_create(user=user, date=today)
+        log = NoteService._get_today_study_log(user)
         return {
             'pomodoros': log.pomodoros,
             'pomo_goal': user.daily_pomo_goal,

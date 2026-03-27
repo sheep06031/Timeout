@@ -95,21 +95,9 @@ def _create_session(user, s):
 
 def call_gpt(deadline, hours_needed, session_length, free_slots):
     """Call GPT to schedule sessions based on the deadline and free slots."""
-    from openai import OpenAI
+    from timeout.services.openai_service import call_openai_json
     prompt = build_prompt(deadline, hours_needed, session_length, free_slots)
-    client = OpenAI(api_key=settings.OPENAI_API_KEY)
-    response = client.chat.completions.create(
-        model='gpt-4o-mini',
-        messages=[{'role': 'user', 'content': prompt}],
-        temperature=0,
-        max_tokens=600,
-    )
-    raw = response.choices[0].message.content.strip()
-    if raw.startswith('```'):
-        raw = raw.split('```')[1]
-        if raw.startswith('json'):
-            raw = raw[4:]
-    return json.loads(raw)
+    return call_openai_json([{'role': 'user', 'content': prompt}], max_tokens=600)
 
 
 def build_prompt(deadline, hours_needed, session_length, candidates):

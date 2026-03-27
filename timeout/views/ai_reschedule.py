@@ -10,46 +10,6 @@ from django.views.decorators.http import require_POST
 from timeout.models import Event
 
 
-def _strip_code_fence(raw):
-    """Remove markdown code fences from a string."""
-    if raw.startswith('```'):
-        raw = raw.split('```')[1]
-        if raw.startswith('json'):
-            raw = raw[4:]
-    return raw
-
-
-def _call_openai(prompt, max_tokens=800):
-    """Call OpenAI with a user prompt. Returns parsed JSON or raises."""
-    from openai import OpenAI
-    client = OpenAI(api_key=settings.OPENAI_API_KEY)
-    response = client.chat.completions.create(
-        model='gpt-4o-mini',
-        messages=[{'role': 'user', 'content': prompt}],
-        temperature=0,
-        max_tokens=max_tokens,
-    )
-    raw = _strip_code_fence(response.choices[0].message.content.strip())
-    return json.loads(raw)
-
-
-def _call_openai_with_system(system_prompt, user_msg, max_tokens=150):
-    """Call OpenAI with system + user messages. Returns parsed JSON or raises."""
-    from openai import OpenAI
-    client = OpenAI(api_key=settings.OPENAI_API_KEY)
-    response = client.chat.completions.create(
-        model='gpt-4o-mini',
-        messages=[
-            {'role': 'system', 'content': system_prompt},
-            {'role': 'user', 'content': user_msg},
-        ],
-        temperature=0,
-        max_tokens=max_tokens,
-    )
-    raw = _strip_code_fence(response.choices[0].message.content.strip())
-    return json.loads(raw)
-
-
 def _query_reschedule_events(user, now, lookahead):
     """Query sessions, deadlines, and fixed events for rescheduling."""
     sessions = Event.objects.filter(
@@ -178,8 +138,9 @@ def reschedule_study_sessions(request):
     sessions_data, deadlines_data, fixed_data = _serialize_events(sessions, deadlines, fixed_events)
     prompt = _build_reschedule_prompt(sessions_data, deadlines_data, fixed_data, now, len(sessions_data))
 
+    from timeout.services.openai_service import call_openai_json
     try:
-        suggestions = _call_openai(prompt)
+        suggestions = call_openai_json([{'role': 'user', 'content': prompt}], max_tokens=800)
     except json.JSONDecodeError:
         return JsonResponse({'success': False, 'error': 'AI returned an invalid response. Try again.'}, status=500)
     except Exception as e:
@@ -209,8 +170,12 @@ def ai_suggest_reschedule(request):
     duration_minutes = int((event.end_datetime - event.start_datetime).total_seconds() / 60)
     events_context = _get_upcoming_context(request.user, now)
     system_prompt = _build_suggest_prompt(event, events_context, now, duration_minutes)
+    from timeout.services.openai_service import call_openai_json
     try:
-        data = _call_openai_with_system(system_prompt, 'Suggest the best reschedule slot.')
+        data = call_openai_json(
+            [{'role': 'system', 'content': system_prompt}, {'role': 'user', 'content': 'Suggest the best reschedule slot.'}],
+            max_tokens=150,
+        )
     except json.JSONDecodeError:
         return JsonResponse({'success': False, 'error': 'AI returned an invalid response. Please try again.'}, status=500)
     except Exception as e:
