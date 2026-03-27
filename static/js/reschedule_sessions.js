@@ -64,16 +64,13 @@ function applyReschedule() {
     const btn = document.getElementById('rs-apply-btn');
     btn.disabled = true;
     btn.textContent = 'Applying…';
-
     const formData = new FormData();
     formData.append('sessions', JSON.stringify(rsSuggestions));
     formData.append('csrfmiddlewaretoken', window.AI_CSRF_TOKEN);
-
     fetch(window.RS_APPLY_URL, {
         method: 'POST',
         headers: { 'X-CSRFToken': window.AI_CSRF_TOKEN },
-        body: formData,
-    })
+        body: formData,})
     .then(r => r.json())
     .then(data => {
         if (data.success) {
@@ -83,13 +80,10 @@ function applyReschedule() {
             rsShowError(data.error || 'Could not apply changes.');
             btn.disabled = false;
             btn.textContent = 'Apply Changes';
-        }
-    })
-    .catch(() => {
+        }}) .catch(() => {
         rsShowError('Could not reach the server.');
         btn.disabled = false;
-        btn.textContent = 'Apply Changes';
-    });
+        btn.textContent = 'Apply Changes';});
 }
 
 /**

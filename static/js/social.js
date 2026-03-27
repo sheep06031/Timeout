@@ -478,7 +478,7 @@ function initFabModal() {
     });
 }
 
-// --- Init ---
+// Init
 
 document.addEventListener('DOMContentLoaded', function() {
     initUserSearch();

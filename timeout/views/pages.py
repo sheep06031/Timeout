@@ -68,7 +68,7 @@ def profile(request):
     """Profile page view."""
     posts = FeedService.get_user_posts(request.user, request.user)
     event, event_status = get_profile_event(request.user)
-    friends_count = request.user.following.filter(followers=request.user).count()
+    friends_count = request.user.following.filter(following=request.user).count()
 
     context = {
         'posts': posts,

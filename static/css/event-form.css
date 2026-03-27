@@ -1,0 +1,184 @@
+.select-multiple-wrapper {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 6px 8px;
+  border: 1px solid #ced4da;
+  border-radius: 0.5rem;
+  min-height: 50px;
+  cursor: text;
+  background-color: #fff;
+  transition: border 0.2s, box-shadow 0.2s;
+}
+
+.select-multiple-wrapper.focused {
+  border-color: #6c63ff;
+  box-shadow: 0 0 0 0.2rem rgba(108, 99, 255, 0.25);
+}
+
+.select-multiple-wrapper .selected-item {
+  background-color: #6c63ff;
+  color: white;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 0.875rem;
+}
+
+.select-multiple-wrapper .selected-item .remove-btn {
+  cursor: pointer;
+  font-weight: bold;
+  line-height: 1;
+}
+
+.select-multiple-wrapper .dropdown-arrow {
+  margin-left: auto;
+  font-size: 0.8rem;
+  color: #6c63ff;
+  pointer-events: none;
+}
+
+.select-multiple-dropdown {
+  display: none;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  width: 100%;
+  max-height: 200px;
+  overflow-y: auto;
+  border: 1px solid #ced4da;
+  border-radius: 0.5rem;
+  background: #fff;
+  z-index: 999;
+}
+
+.select-multiple-dropdown.active {
+  display: block;
+}
+
+.select-multiple-dropdown .option {
+  padding: 8px 10px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.select-multiple-dropdown .option:hover {
+  background-color: #f1f1f1;
+}
+
+.select-multiple-dropdown .option.selected {
+  background-color: #6c63ff;
+  color: white;
+}
+
+.cal-card .select-multiple-wrapper {
+  border: 2px solid #6c63ff;
+}
+
+.cal-card .select-multiple-dropdown .option.selected {
+  background-color: #6c63ff !important;
+  color: white !important;
+}
+
+/* Event highlight animation */
+.event-highlight {
+  animation: glowEvent 2.5s ease;
+}
+@keyframes glowEvent {
+  0%   { transform: scale(1);    box-shadow: 0 0 0px rgba(91,115,232,0); }
+  50%  { transform: scale(1.05); box-shadow: 0 0 12px rgba(91,115,232,0.7); }
+  100% { transform: scale(1);    box-shadow: 0 0 0px rgba(91,115,232,0); }
+}
+
+/* Day Events Modal */
+.day-modal-event-item {
+  margin-bottom: 0.5rem;
+  cursor: pointer;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.day-modal-event {
+  padding: 12px 16px;
+  border-radius: 8px;
+  border-left: 4px solid #ccc;
+  background: #f8f9fc;
+  transition: filter 0.15s ease, transform 0.15s ease;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.day-modal-event:hover {
+  filter: brightness(0.96);
+  transform: translateX(2px);
+}
+
+.day-modal-event-title {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #2a3547;
+}
+
+.day-modal-event-time {
+  font-size: 0.72rem;
+  color: #5a6a85;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.day-modal-event-time::before {
+  content: '🕒';
+  font-size: 0.65rem;
+}
+
+.day-modal-event.cal-chip--deadline {
+  border-left-color: #5b5ddf;
+  background: rgba(91, 93, 223, 0.07);
+}
+.day-modal-event.cal-chip--deadline .day-modal-event-title { color: #5b5ddf; }
+
+.day-modal-event.cal-chip--exam {
+  border-left-color: #e53935;
+  background: rgba(229, 57, 53, 0.07);
+}
+.day-modal-event.cal-chip--exam .day-modal-event-title { color: #e53935; }
+
+.day-modal-event.cal-chip--class {
+  border-left-color: #43a047;
+  background: rgba(67, 160, 71, 0.07);
+}
+.day-modal-event.cal-chip--class .day-modal-event-title { color: #43a047; }
+
+.day-modal-event.cal-chip--meeting {
+  border-left-color: #8e24aa;
+  background: rgba(142, 36, 170, 0.07);
+}
+.day-modal-event.cal-chip--meeting .day-modal-event-title { color: #8e24aa; }
+
+.day-modal-event.cal-chip--study_session {
+  border-left-color: #00acc1;
+  background: rgba(0, 172, 193, 0.07);
+}
+.day-modal-event.cal-chip--study_session .day-modal-event-title { color: #00acc1; }
+
+.day-modal-event.cal-chip--other {
+  border-left-color: #78909c;
+  background: rgba(120, 144, 156, 0.07);
+}
+.day-modal-event.cal-chip--other .day-modal-event-title { color: #78909c; }
+
+.cal-chip-hidden { display: none; }
+
+/* Ongoing event glow */
+.cal-chip--ongoing {
+  animation: ongoingGlow 2s ease-in-out infinite;
+  position: relative;
+}
+
+@keyframes ongoingGlow {
+  0%   { box-shadow: 0 0 0px rgba(255, 255, 255, 0); }
+  50%  { box-shadow: 0 0 8px rgba(255, 255, 255, 0.8), 0 0 4px rgba(255,255,255,0.4); }
+  100% { box-shadow: 0 0 0px rgba(255, 255, 255, 0); }
+}

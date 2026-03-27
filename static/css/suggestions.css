@@ -85,8 +85,6 @@
     min-width: 20px;
     text-align: center;
 }
-
-/* Optional: add spacing to the right of the button */
 .nav-ai-btn {
     margin-right: 8px; /* adds space after the button */
 }

@@ -40,7 +40,6 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django.contrib.sites',
-    'django.contrib.sitemaps',
     'django.contrib.humanize',
     # Third-party apps
     'allauth',
@@ -62,7 +61,6 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'allauth.account.middleware.AccountMiddleware',
-    'timeout.middleware.BannedUserMiddleware',
 ]
 
 ROOT_URLCONF = 'timeout_pwa.urls'
@@ -78,8 +76,6 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
-                'timeout.context_processors.ai_suggestions',
-                'timeout.context_processors.unread_notifications_count',
             ],
         },
     },
@@ -114,7 +110,7 @@ AUTHENTICATION_BACKENDS = [
 SITE_ID = 1
 
 
-# Password hashing, Argon2 is the primary hasher
+# Password hashing — Argon2 is the primary hasher
 PASSWORD_HASHERS = [
     'django.contrib.auth.hashers.Argon2PasswordHasher',
     'django.contrib.auth.hashers.PBKDF2PasswordHasher',
@@ -183,9 +179,9 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # OpenAI API Key
 OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY', '')
 
-# SendGrid Email Configuration
+# SendGrid Email
 SENDGRID_API_KEY = os.environ.get('SENDGRID_API_KEY', '')
-SENDGRID_FROM_EMAIL = os.environ.get('SENDGRID_FROM_EMAIL', 'noreply@kcltimeout.com')
+SENDGRID_FROM_EMAIL = os.environ.get('SENDGRID_FROM_EMAIL', '')
 
 
 # Login/Logout URLs
@@ -199,8 +195,8 @@ LOGOUT_REDIRECT_URL = 'landing'
 # =============================================================================
 
 # Account settings
-ACCOUNT_LOGIN_METHODS = {'email', 'username'}
-ACCOUNT_SIGNUP_FIELDS = ['email*', 'username*', 'password1*', 'password2*']
+ACCOUNT_LOGIN_METHODS = {'email'}
+ACCOUNT_SIGNUP_FIELDS = ['email*', 'password1*', 'password2*']
 ACCOUNT_EMAIL_VERIFICATION = 'none'
 ACCOUNT_SIGNUP_REDIRECT_URL = '/complete-profile/'
 # ACCOUNT_USERNAME_REQUIRED = False is expressed via ACCOUNT_SIGNUP_FIELDS above (that setting is deprecated in allauth >= 0.56; SIGNUP_FIELDS is the new API)

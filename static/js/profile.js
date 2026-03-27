@@ -7,6 +7,7 @@ const _cfg = document.getElementById('profile-status-config');
 const FOLLOWERS_URL = _cfg?.dataset.followersUrl ?? '';
 const FOLLOWING_URL = _cfg?.dataset.followingUrl ?? '';
 const FRIENDS_URL   = _cfg?.dataset.friendsUrl   ?? '';
+const BLOCKED_URL   = _cfg?.dataset.blockedUrl   ?? '';
 
 /**
  * Initialize status management with UI updates and event listeners.
@@ -168,8 +169,7 @@ function _handleUnfollowResult(data, btn) {
     const list = document.getElementById('following-list');
     if (list && !list.querySelector('.user-item')) {
       list.innerHTML = '<p class="text-center text-muted py-3">No users yet.</p>';
-    }
-  } else {
+    }} else {
     btn.disabled = false;
     btn.textContent = 'Unfollow';
   }
@@ -267,6 +267,10 @@ function _initModalSearch(input, listEl) {
   };
 }
 
+/**
+ * Load and render followers list when followers modal is opened.
+ * Fetches followers, renders with follow-back options, and initializes search.
+ */
 document.getElementById('followersModal')?.addEventListener('show.bs.modal', () => {
   const input = document.querySelector('[data-modal-search="followers-list"]');
   input.value = '';
@@ -281,6 +285,10 @@ document.getElementById('followersModal')?.addEventListener('show.bs.modal', () 
     });
 });
 
+/**
+ * Load and render following list when following modal is opened.
+ * Fetches following list, renders with unfollow options, and initializes search.
+ */
 document.getElementById('followingModal')?.addEventListener('show.bs.modal', () => {
   const input = document.querySelector('[data-modal-search="following-list"]');
   input.value = '';
@@ -295,6 +303,10 @@ document.getElementById('followingModal')?.addEventListener('show.bs.modal', () 
     });
 });
 
+/**
+ * Load and render mutual friends list when friends modal is opened.
+ * Fetches friends, renders list, and initializes search filter.
+ */
 document.getElementById('friendsModal')?.addEventListener('show.bs.modal', () => {
   const input = document.querySelector('[data-modal-search="friends-list"]');
   input.value = '';
@@ -307,3 +319,74 @@ document.getElementById('friendsModal')?.addEventListener('show.bs.modal', () =>
       _initModalSearch(input, list);
     });
 });
+
+/**
+ * Load and render blocked users list when blocked modal is opened.
+ * Fetches blocked list, renders with unblock buttons, and initializes search.
+ */
+document.getElementById('blockedModal')?.addEventListener('show.bs.modal', () => {
+  const input = document.querySelector('[data-modal-search="blocked-list"]');
+  input.value = '';
+  input.oninput = null;
+  fetch(BLOCKED_URL)
+    .then(r => r.json())
+    .then(data => {
+      const list = document.getElementById('blocked-list');
+      list.innerHTML = _renderBlockedList(data.users);
+      attachUnblockHandlers(list);
+      _initModalSearch(input, list);
+    });
+});
+
+/**
+ * Render HTML for blocked users list with unblock buttons.
+ * @param {Array} users - Array of blocked user objects.
+ * @returns {string} HTML string of blocked users with action buttons.
+ */
+function _renderBlockedList(users) {
+  if (users.length === 0) return '<p class="text-center text-muted py-3">No blocked users.</p>';
+  return users.map(u => `
+    <div class="user-item d-flex align-items-center justify-content-between mb-3">
+      <div class="d-flex align-items-center gap-3">
+        ${_userAvatarHtml(u)}
+        <div>
+          <div class="fw-semibold">@${u.username}</div>
+          ${u.full_name ? `<div class="text-muted small">${u.full_name}</div>` : ''}
+        </div>
+      </div>
+      <button class="btn btn-sm btn-outline-secondary unblock-btn ms-2" data-username="${u.username}">Unblock</button>
+    </div>`).join('');
+}
+
+/**
+ * Attach unblock button click handlers to blocked users list.
+ * Sends unblock request, removes user from list, and updates empty state.
+ * @param {HTMLElement} container - Container element with unblock buttons.
+ */
+function attachUnblockHandlers(container) {
+  container.querySelectorAll('.unblock-btn').forEach(btn => {
+    btn.addEventListener('click', function () {
+      const username = this.dataset.username;
+      this.disabled = true;
+      this.textContent = 'Unblocking…';
+      fetch(`/social/user/${username}/block/`, {
+        method: 'POST',
+        headers: { 'X-CSRFToken': getCookie('csrftoken') },
+      })
+        .then(r => r.json())
+        .then(data => {
+          if (data.blocked === false) {
+            this.closest('.user-item').remove();
+            const list = document.getElementById('blocked-list');
+            if (list && !list.querySelector('.user-item')) {
+              list.innerHTML = '<p class="text-center text-muted py-3">No blocked users.</p>';
+            }
+          }
+        })
+        .catch(() => {
+          this.disabled = false;
+          this.textContent = 'Unblock';
+        });
+    });
+  });
+}

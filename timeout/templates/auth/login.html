@@ -2,103 +2,109 @@
 {% load socialaccount %}
 {% load oauth_tags %}
 {% load static %}
-{% block title %}Login - Timeout{% endblock %}
-
-{% block extra_css %}
-<link rel="stylesheet" href="{% static 'css/auth-styles.css' %}">
+{% block title %}
+  Login - Timeout
 {% endblock %}
 
-{% block main_class %}flex-grow-1 p-0 m-0{% endblock %}
+{% block extra_css %}
+  <link rel="stylesheet" href="{% static 'css/auth-styles.css' %}" />
+{% endblock %}
+{% block main_class %}
+  flex-grow-1 p-0 m-0
+{% endblock %}
 {% block content %}
-<div class="auth-container">
-  <div class="auth-card auth-card-wide">
-    <div class="auth-header">
-      <h2>Welcome Back</h2>
-      <p>Sign in to continue to Timeout</p>
-    </div>
-
-    <div class="auth-body">
-
-      <form method="post" novalidate id="loginForm">
-        {% csrf_token %}
-
-        {% if form.non_field_errors %}
-        <div class="alert alert-danger" role="alert">
-          {% for error in form.non_field_errors %}
-          <div>{{ error }}</div>
-          {% endfor %}
-        </div>
-        {% endif %}
-
-        <div class="mb-3">
-          <label for="id_username" class="form-label">Email or Username</label>
-          {{ form.username }}
-          {% if form.username.errors %}
-          <div class="invalid-feedback d-block">
-            {% for error in form.username.errors %}{{ error }}{% endfor %}
-          </div>
-          {% endif %}
-        </div>
-
-        <div class="mb-3">
-          <label for="id_password" class="form-label">Password</label>
-          <div class="password-toggle">
-            {{ form.password }}
-            <button type="button" class="password-toggle-btn" onclick="togglePassword('id_password', 'eyeIcon')">
-              <svg id="eyeIcon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-              </svg>
-            </button>
-          </div>
-          {% if form.password.errors %}
-          <div class="invalid-feedback d-block">
-            {% for error in form.password.errors %}{{ error }}{% endfor %}
-          </div>
-          {% endif %}
-        </div>
-
-        <div class="d-flex justify-content-between align-items-center mb-4">
-          <div class="form-check">
-            <input class="form-check-input" type="checkbox" id="rememberMe" name="remember">
-            <label class="form-check-label" for="rememberMe" style="font-size: 0.9rem;">
-              Remember me
-            </label>
-          </div>
-          <a href="{% url 'forgot_password' %}" class="forgot-password-link">
-            Forgot password?
-          </a>
-        </div>
-
-        <button type="submit" class="btn btn-auth btn-primary w-100">
-          Sign In
-        </button>
-      </form>
-
-      {% google_oauth_available as has_google %}
-      {% if has_google %}
-      <div class="divider">
-        <span>or sign in with</span>
+  <div class="auth-container">
+    <div class="auth-card auth-card-wide">
+      <div class="auth-header">
+        <h2>Welcome Back</h2>
+        <p>Sign in to continue to Timeout</p>
       </div>
 
-      <a href="{% provider_login_url 'google' %}" class="social-btn social-btn-google w-100" rel="nofollow">
-        <svg width="18" height="18" viewBox="0 0 18 18" fill="currentColor">
-          <path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.615z"/>
-          <path d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.258c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332C2.438 15.983 5.482 18 9 18z"/>
-          <path d="M3.964 10.707c-.18-.54-.282-1.117-.282-1.707s.102-1.167.282-1.707V4.961H.957C.347 6.175 0 7.55 0 9s.348 2.825.957 4.039l3.007-2.332z"/>
-          <path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0 5.482 0 2.438 2.017.957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z"/>
-        </svg>
-        Google
-      </a>
-      {% endif %}
+      <div class="auth-body">
+        <form method="post" novalidate id="loginForm">
+          {% csrf_token %}
 
-      <p class="auth-link">
-        Don't have an account? <a href="{% url 'signup' %}">Sign up</a>
-      </p>
+          {% if form.non_field_errors %}
+            <div class="alert alert-danger" role="alert">
+              {% for error in form.non_field_errors %}
+                <div>{{ error }}</div>
+              {% endfor %}
+            </div>
+          {% endif %}
 
+          <!-- Username -->
+          <div class="mb-3">
+            <label for="id_username" class="form-label">Username</label>
+            {{ form.username }}
+            {% if form.username.errors %}
+              <div class="invalid-feedback d-block">
+                {% for error in form.username.errors %}
+                  {{ error }}
+                {% endfor %}
+              </div>
+            {% endif %}
+          </div>
+
+          <!-- Password -->
+          <div class="mb-3">
+            <label for="id_password" class="form-label">Password</label>
+            <div class="password-toggle">
+              {{ form.password }}
+              <button type="button" class="password-toggle-btn" onclick="togglePassword('id_password', 'eyeIcon')">
+                <svg id="eyeIcon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                </svg>
+              </button>
+            </div>
+            {% if form.password.errors %}
+              <div class="invalid-feedback d-block">
+                {% for error in form.password.errors %}
+                  {{ error }}
+                {% endfor %}
+              </div>
+            {% endif %}
+          </div>
+
+          <!-- Remember me & Forgot password -->
+          <div class="d-flex justify-content-between align-items-center mb-4">
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" id="rememberMe" name="remember">
+              <label class="form-check-label" for="rememberMe" style="font-size: 0.9rem;">
+                Remember me
+              </label>
+            </div>
+            <a href="{% url 'forgot_password' %}" class="forgot-password-link">
+              Forgot password?
+            </a>
+          </div>
+
+          <button type="submit" class="btn btn-auth btn-primary w-100">Sign In</button>
+        </form>
+
+        {% google_oauth_available as has_google %}
+        {% if has_google %}
+        <div class="divider">
+          <span>or sign in with</span>
+        </div>
+
+        <a href="{% provider_login_url 'google' %}" class="social-btn social-btn-google w-100">
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="currentColor">
+            <path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.615z" />
+            <path d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.258c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332C2.438 15.983 5.482 18 9 18z" />
+            <path d="M3.964 10.707c-.18-.54-.282-1.117-.282-1.707s.102-1.167.282-1.707V4.961H.957C.347 6.175 0 7.55 0 9s.348 2.825.957 4.039l3.007-2.332z" />
+            <path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0 5.482 0 2.438 2.017.957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z" />
+          </svg>Google
+        </a>
+        {% endif %}
+
+        <p class="auth-link">
+          Don't have an account? <a href="{% url 'signup' %}">Sign up</a>
+        </p>
+      </div>
     </div>
   </div>
-</div>
 
-<script src="{% static 'js/auth-scripts.js' %}"></script>
+  <!-- Handle password visibility toggle and form validation -->
+  <script src="{% static 'js/auth-scripts.js' %}"></script>
 {% endblock %}

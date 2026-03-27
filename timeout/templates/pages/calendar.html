@@ -12,36 +12,34 @@
 <meta name="event-create-url" content="{% url 'event_create' %}">
 <meta name="rs-suggest-url" content="{% url 'reschedule_study_sessions' %}">
 <meta name="rs-apply-url" content="{% url 'apply_session_schedule' %}">
+<meta name="dismiss-alert-url" content="{% url 'dismiss_alert' %}">
 {% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'css/calendar.css' %}">
-<link rel="stylesheet" href="{% static 'css/information.css' %}">  
+<link rel="stylesheet" href="{% static 'css/event-form.css' %}">
+<link rel="stylesheet" href="{% static 'css/information.css' %}">
 {% endblock %}
 
 {% block content %}
 <div class="cal-page">
 
   {% if workload_warning %}
-  <div class="alert alert-warning alert-dismissible fade show d-flex align-items-center justify-content-between mb-3" role="alert">
-      <span>⚠️ {{ workload_warning }}</span>
-      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-  </div>
-  {% endif %}
+<div class="alert alert-warning alert-dismissible fade show d-flex align-items-center justify-content-between mb-3" role="alert">
+    <span>⚠️ {{ workload_warning }}</span>
+    <button type="button" class="btn-close" onclick="dismissAlert('{{ workload_alert_key }}', this)" aria-label="Close"></button>
+</div>
+{% endif %}
 
-  {% if warnings %}
-  <div class="alert alert-warning alert-dismissible fade show d-flex align-items-center justify-content-between" role="alert">
-    <div>
-      <strong>Workload Warning</strong>
-      <ul class="mb-0">
-        {% for warning in warnings %}
-          <li>{{ warning }}</li>
-        {% endfor %}
-      </ul>
-    </div>
-    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+  {% for warning in warnings %}
+  <div class="alert alert-warning alert-dismissible fade show d-flex align-items-center justify-content-between mb-2" role="alert">
+   <div>
+     <strong>Workload Warning</strong>
+     <ul class="mb-0"><li>{{ warning.message }}</li></ul>
+   </div>
+   <button type="button" class="btn-close" onclick="dismissAlert('{{ warning.key }}', this)" aria-label="Close"></button>
   </div>
-  {% endif %}
+  {% endfor %}
 
   {% include "partials/reschedule_banners.html" %}
 

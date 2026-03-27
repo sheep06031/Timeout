@@ -67,7 +67,7 @@ function formatCountdown(startD, endD) {
     return 'Just ended';
 }
 
-/* ── Modal population ─────────────────────────────────────────────── */
+/* Modal population */
 
 const eventDetailsModal = document.getElementById('eventDetailsModal');
 if (eventDetailsModal) {
