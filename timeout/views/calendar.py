@@ -13,6 +13,7 @@ from timeout.models import Event
 from django.core.exceptions import ValidationError
 from django.db.models import Q
 from timeout.views.ai_workload import get_ai_workload_warning
+from timeout.views.ai_suggestions import get_ai_suggestions
 from timeout.views.deadline_warning import get_deadline_study_warnings
 from timeout.models import DismissedAlert
 
@@ -208,6 +209,7 @@ def get_data(request, events_by_date=None):
     workload_key = f'workload_{request.user.id}_{today_str}'
     today_events = (events_by_date or {}).get(now.date(), [])
     raw_workload = get_ai_workload_warning(request.user, today_events)
+    ai_suggestions = get_ai_suggestions(request.user, today_events)
     workload_warning = raw_workload if raw_workload and workload_key not in dismissed_keys else None
     return {
         "upcoming_deadlines": upcoming_deadlines,
@@ -215,6 +217,7 @@ def get_data(request, events_by_date=None):
         "warnings": warnings,
         "workload_warning": workload_warning,
         "workload_alert_key": workload_key,
+        "ai_suggestions": ai_suggestions,
     }
 
 def event_status(start_dt, end_dt, now):

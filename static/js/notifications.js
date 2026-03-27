@@ -167,14 +167,9 @@ document.addEventListener("DOMContentLoaded", () => {
         _navigateNotification(notifItem);
     });
 
-<<<<<<< HEAD
     /**
      * Mark all read
      */
-=======
-    /* MARK ALL READ */
-
->>>>>>> ae40dd13d9f24b456ad1800fa56ad13b8d1a6056
     document.getElementById("mark-all-read-btn")?.addEventListener("click", async () => {
         try {
             const res = await _postRequest("/notifications/read-all/");
