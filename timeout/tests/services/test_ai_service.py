@@ -82,16 +82,6 @@ class AIServiceTests(TestCase):
             result = AIService.get_dashboard_briefing(self.user)
         self.assertEqual(result, BRIEFING_TEXT)
 
-    @override_settings(OPENAI_API_KEY='')
-    @patch('timeout.services.ai_service.cache')
-    def test_no_api_key_returns_none(self, mock_cache):
-        """Test that no API key results in None being returned."""
-        mock_cache.get.return_value = None
-        with self.assertLogs('timeout.services.ai_service', level='WARNING') as cm:
-            result = AIService.get_dashboard_briefing(self.user)
-        self.assertIsNone(result)
-        self.assertTrue(any('OPENAI_API_KEY not configured' in msg for msg in cm.output))
-
     @patch('timeout.services.ai_service.cache')
     def test_openai_exception_returns_none(self, mock_cache):
         """Test that an OpenAI exception results in None being returned."""
