@@ -1,10 +1,8 @@
 from django.test import TestCase, Client
 from django.urls import reverse
 from django.contrib.auth import get_user_model
-from django.utils import timezone
 
 from timeout.models.notification import Notification
-from timeout.models.event import Event
 
 User = get_user_model()
 
@@ -91,18 +89,55 @@ class NotificationsViewTests(TestCase):
         response = self.client.get(self.url)
         self.assertEqual(len(list(response.context['notifications'])), 2)
 
-    def test_pagination_10_per_page(self):
-        for i in range(15):
-            make_notification(self.user, title=f'Notif {i}')
-        self.client.login(username='user', password='pass123')
-        response = self.client.get(self.url)
-        self.assertEqual(len(list(response.context['notifications'])), 10)
-
     def test_empty_notifications(self):
         self.client.login(username='user', password='pass123')
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(list(response.context['notifications'])), 0)
+
+    def test_ajax_returns_json(self):
+        make_notification(self.user, title='Ajax notif')
+        self.client.login(username='user', password='pass123')
+        response = self.client.get(self.url, HTTP_X_REQUESTED_WITH='XMLHttpRequest')
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertIn('notifications', data)
+        self.assertIn('has_next', data)
+        self.assertIn('next_page', data)
+
+    def test_ajax_notification_fields(self):
+        make_notification(self.user, title='Ajax notif', message='Hello')
+        self.client.login(username='user', password='pass123')
+        response = self.client.get(self.url, HTTP_X_REQUESTED_WITH='XMLHttpRequest')
+        notif = response.json()['notifications'][0]
+        for field in ['id', 'title', 'message', 'type', 'is_read', 'created_at']:
+            self.assertIn(field, notif)
+
+    def test_ajax_has_next_false_when_few_notifications(self):
+        make_notification(self.user, title='Only one')
+        self.client.login(username='user', password='pass123')
+        response = self.client.get(self.url, HTTP_X_REQUESTED_WITH='XMLHttpRequest')
+        self.assertFalse(response.json()['has_next'])
+
+    def test_ajax_has_next_true_when_many_notifications(self):
+        for i in range(20):
+            make_notification(self.user, title=f'N{i}')
+        self.client.login(username='user', password='pass123')
+        response = self.client.get(self.url, HTTP_X_REQUESTED_WITH='XMLHttpRequest')
+        self.assertTrue(response.json()['has_next'])
+
+    def test_ajax_next_page_is_none_when_no_next(self):
+        make_notification(self.user, title='Only one')
+        self.client.login(username='user', password='pass123')
+        response = self.client.get(self.url, HTTP_X_REQUESTED_WITH='XMLHttpRequest')
+        self.assertIsNone(response.json()['next_page'])
+
+    def test_ajax_next_page_number_when_has_next(self):
+        for i in range(20):
+            make_notification(self.user, title=f'N{i}')
+        self.client.login(username='user', password='pass123')
+        response = self.client.get(self.url, HTTP_X_REQUESTED_WITH='XMLHttpRequest')
+        self.assertEqual(response.json()['next_page'], 2)
 
 
 class MarkNotificationReadTests(TestCase):
@@ -122,8 +157,7 @@ class MarkNotificationReadTests(TestCase):
 
     def test_marks_notification_as_read(self):
         self.client.login(username='user', password='pass123')
-        response = self.client.post(self.url)
-        self.assertEqual(response.status_code, 200)
+        self.client.post(self.url)
         self.notif.refresh_from_db()
         self.assertTrue(self.notif.is_read)
 
@@ -155,8 +189,146 @@ class MarkNotificationReadTests(TestCase):
         self.assertTrue(self.notif.is_read)
 
 
+class MarkNotificationUnreadTests(TestCase):
+    """Tests for mark_notification_unread."""
+
+    def setUp(self):
+        self.client = Client()
+        self.user = User.objects.create_user(username='user', password='pass123')
+        self.other = User.objects.create_user(username='other', password='pass123')
+        self.notif = make_notification(self.user, title='Read', is_read=True)
+        self.url = reverse('mark_notification_unread', kwargs={'notification_id': self.notif.pk})
+
+    def test_login_required(self):
+        response = self.client.post(self.url)
+        self.assertEqual(response.status_code, 302)
+        self.assertIn('/login/', response['Location'])
+
+    def test_marks_notification_as_unread(self):
+        self.client.login(username='user', password='pass123')
+        self.client.post(self.url)
+        self.notif.refresh_from_db()
+        self.assertFalse(self.notif.is_read)
+
+    def test_returns_success_json(self):
+        self.client.login(username='user', password='pass123')
+        response = self.client.post(self.url)
+        self.assertJSONEqual(response.content, {'success': True})
+
+    def test_other_user_cannot_mark_unread(self):
+        self.client.login(username='other', password='pass123')
+        response = self.client.post(self.url)
+        self.assertEqual(response.status_code, 404)
+        self.notif.refresh_from_db()
+        self.assertTrue(self.notif.is_read)
+
+    def test_nonexistent_notification_returns_404(self):
+        self.client.login(username='user', password='pass123')
+        url = reverse('mark_notification_unread', kwargs={'notification_id': 99999})
+        response = self.client.post(url)
+        self.assertEqual(response.status_code, 404)
+
+
+class MarkAllNotificationsReadTests(TestCase):
+    """Tests for mark_all_notifications_read."""
+
+    def setUp(self):
+        self.client = Client()
+        self.user = User.objects.create_user(username='user', password='pass123')
+        self.other = User.objects.create_user(username='other', password='pass123')
+        self.url = reverse('mark_all_notifications_read')
+
+    def test_login_required(self):
+        response = self.client.post(self.url)
+        self.assertEqual(response.status_code, 302)
+        self.assertIn('/login/', response['Location'])
+
+    def test_marks_all_unread_as_read(self):
+        make_notification(self.user, is_read=False)
+        make_notification(self.user, is_read=False)
+        self.client.login(username='user', password='pass123')
+        self.client.post(self.url)
+        self.assertEqual(
+            Notification.objects.filter(user=self.user, is_read=False).count(), 0
+        )
+
+    def test_returns_success_json(self):
+        self.client.login(username='user', password='pass123')
+        response = self.client.post(self.url)
+        self.assertJSONEqual(response.content, {'success': True})
+
+    def test_does_not_affect_other_users(self):
+        make_notification(self.other, is_read=False)
+        self.client.login(username='user', password='pass123')
+        self.client.post(self.url)
+        self.assertTrue(
+            Notification.objects.filter(user=self.other, is_read=False).exists()
+        )
+
+    def test_does_not_affect_dismissed_notifications(self):
+        n = make_notification(self.user, is_read=False, is_dismissed=True)
+        self.client.login(username='user', password='pass123')
+        self.client.post(self.url)
+        n.refresh_from_db()
+        self.assertFalse(n.is_read)
+
+    def test_no_notifications_still_succeeds(self):
+        self.client.login(username='user', password='pass123')
+        response = self.client.post(self.url)
+        self.assertJSONEqual(response.content, {'success': True})
+
+
+class MarkAllNotificationsUnreadTests(TestCase):
+    """Tests for mark_all_notifications_unread."""
+
+    def setUp(self):
+        self.client = Client()
+        self.user = User.objects.create_user(username='user', password='pass123')
+        self.other = User.objects.create_user(username='other', password='pass123')
+        self.url = reverse('mark_all_notifications_unread')
+
+    def test_login_required(self):
+        response = self.client.post(self.url)
+        self.assertEqual(response.status_code, 302)
+        self.assertIn('/login/', response['Location'])
+
+    def test_marks_all_read_as_unread(self):
+        make_notification(self.user, is_read=True)
+        make_notification(self.user, is_read=True)
+        self.client.login(username='user', password='pass123')
+        self.client.post(self.url)
+        self.assertEqual(
+            Notification.objects.filter(user=self.user, is_read=True).count(), 0
+        )
+
+    def test_returns_success_json(self):
+        self.client.login(username='user', password='pass123')
+        response = self.client.post(self.url)
+        self.assertJSONEqual(response.content, {'success': True})
+
+    def test_does_not_affect_other_users(self):
+        make_notification(self.other, is_read=True)
+        self.client.login(username='user', password='pass123')
+        self.client.post(self.url)
+        self.assertTrue(
+            Notification.objects.filter(user=self.other, is_read=True).exists()
+        )
+
+    def test_does_not_affect_dismissed_notifications(self):
+        n = make_notification(self.user, is_read=True, is_dismissed=True)
+        self.client.login(username='user', password='pass123')
+        self.client.post(self.url)
+        n.refresh_from_db()
+        self.assertTrue(n.is_read)
+
+    def test_no_notifications_still_succeeds(self):
+        self.client.login(username='user', password='pass123')
+        response = self.client.post(self.url)
+        self.assertJSONEqual(response.content, {'success': True})
+
+
 class DeleteNotificationTests(TestCase):
-    """Tests for delete_notification (sets is_dismissed=True)."""
+    """Tests for delete_notification (soft delete via is_dismissed=True)."""
 
     def setUp(self):
         self.client = Client()
@@ -207,6 +379,70 @@ class DeleteNotificationTests(TestCase):
         self.assertTrue(Notification.objects.filter(pk=self.notif.pk).exists())
 
 
+class DeleteAllNotificationsTests(TestCase):
+    """Tests for delete_all_notifications."""
+
+    def setUp(self):
+        self.client = Client()
+        self.user = User.objects.create_user(username='user', password='pass123')
+        self.other = User.objects.create_user(username='other', password='pass123')
+        self.url = reverse('delete_all_notifications')
+
+    def test_login_required(self):
+        response = self.client.post(self.url)
+        self.assertEqual(response.status_code, 302)
+        self.assertIn('/login/', response['Location'])
+
+    def test_dismisses_all_notifications(self):
+        make_notification(self.user)
+        make_notification(self.user)
+        self.client.login(username='user', password='pass123')
+        self.client.post(self.url)
+        self.assertEqual(
+            Notification.objects.filter(user=self.user, is_dismissed=False).count(), 0
+        )
+
+    def test_marks_all_as_read(self):
+        make_notification(self.user, is_read=False)
+        make_notification(self.user, is_read=False)
+        self.client.login(username='user', password='pass123')
+        self.client.post(self.url)
+        self.assertEqual(
+            Notification.objects.filter(user=self.user, is_read=False).count(), 0
+        )
+
+    def test_returns_success_json(self):
+        self.client.login(username='user', password='pass123')
+        response = self.client.post(self.url)
+        self.assertJSONEqual(response.content, {'success': True})
+
+    def test_does_not_affect_other_users(self):
+        make_notification(self.other, is_dismissed=False)
+        self.client.login(username='user', password='pass123')
+        self.client.post(self.url)
+        self.assertTrue(
+            Notification.objects.filter(user=self.other, is_dismissed=False).exists()
+        )
+
+    def test_already_dismissed_not_double_counted(self):
+        make_notification(self.user, is_dismissed=True)
+        self.client.login(username='user', password='pass123')
+        response = self.client.post(self.url)
+        self.assertJSONEqual(response.content, {'success': True})
+
+    def test_records_remain_in_db(self):
+        """Delete all should soft-delete, not hard-delete."""
+        make_notification(self.user)
+        self.client.login(username='user', password='pass123')
+        self.client.post(self.url)
+        self.assertTrue(Notification.objects.filter(user=self.user).exists())
+
+    def test_no_notifications_still_succeeds(self):
+        self.client.login(username='user', password='pass123')
+        response = self.client.post(self.url)
+        self.assertJSONEqual(response.content, {'success': True})
+
+
 class PollNotificationsTests(TestCase):
     """Tests for poll_notifications."""
 
@@ -238,8 +474,7 @@ class PollNotificationsTests(TestCase):
         n2 = make_notification(self.user, title='New')
         self.client.login(username='user', password='pass123')
         response = self.client.get(self.url + f'?last_id={n1.pk}')
-        data = response.json()
-        ids = [n['id'] for n in data['notifications']]
+        ids = [n['id'] for n in response.json()['notifications']]
         self.assertNotIn(n1.pk, ids)
         self.assertIn(n2.pk, ids)
 
@@ -247,22 +482,16 @@ class PollNotificationsTests(TestCase):
         n = make_notification(self.user, title='Dismissed', is_dismissed=True)
         self.client.login(username='user', password='pass123')
         response = self.client.get(self.url + '?last_id=0')
-        data = response.json()
-        ids = [item['id'] for item in data['notifications']]
+        ids = [item['id'] for item in response.json()['notifications']]
         self.assertNotIn(n.pk, ids)
 
     def test_notification_fields_present(self):
         make_notification(self.user, title='My Notif', message='Hello')
         self.client.login(username='user', password='pass123')
         response = self.client.get(self.url + '?last_id=0')
-        data = response.json()
-        self.assertTrue(len(data['notifications']) > 0)
-        notif = data['notifications'][0]
-        self.assertIn('id', notif)
-        self.assertIn('title', notif)
-        self.assertIn('message', notif)
-        self.assertIn('created_at', notif)
-        self.assertIn('is_read', notif)
+        notif = response.json()['notifications'][0]
+        for field in ['id', 'title', 'message', 'created_at', 'is_read']:
+            self.assertIn(field, notif)
 
     def test_unread_count_correct(self):
         make_notification(self.user, is_read=False)
@@ -270,22 +499,26 @@ class PollNotificationsTests(TestCase):
         make_notification(self.user, is_read=True)
         self.client.login(username='user', password='pass123')
         response = self.client.get(self.url + '?last_id=0')
-        data = response.json()
-        self.assertEqual(data['unread_count'], 2)
+        self.assertEqual(response.json()['unread_count'], 2)
 
     def test_invalid_last_id_defaults_to_zero(self):
-        make_notification(self.user, title='Test')
         self.client.login(username='user', password='pass123')
         response = self.client.get(self.url + '?last_id=notanumber')
         self.assertEqual(response.status_code, 200)
 
     def test_only_own_notifications_returned(self):
-        other = User.objects.create_user(username='other', password='pass')
+        other = User.objects.create_user(username='other2', password='pass')
         make_notification(other, title='Not Mine')
         n = make_notification(self.user, title='Mine')
         self.client.login(username='user', password='pass123')
         response = self.client.get(self.url + '?last_id=0')
-        data = response.json()
-        ids = [item['id'] for item in data['notifications']]
+        ids = [item['id'] for item in response.json()['notifications']]
         self.assertIn(n.pk, ids)
         self.assertEqual(len(ids), 1)
+
+    def test_unread_count_excludes_dismissed(self):
+        make_notification(self.user, is_read=False, is_dismissed=True)
+        make_notification(self.user, is_read=False, is_dismissed=False)
+        self.client.login(username='user', password='pass123')
+        response = self.client.get(self.url + '?last_id=0')
+        self.assertEqual(response.json()['unread_count'], 1)

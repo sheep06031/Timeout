@@ -167,10 +167,9 @@ document.addEventListener("DOMContentLoaded", () => {
         _navigateNotification(notifItem);
     });
 
-    /* ─────────────────────────────────────────
-       MARK ALL READ
-    ───────────────────────────────────────── */
-
+    /**
+     * Mark all read
+     */
     document.getElementById("mark-all-read-btn")?.addEventListener("click", async () => {
         try {
             const res = await _postRequest("/notifications/read-all/");
@@ -190,6 +189,9 @@ document.addEventListener("DOMContentLoaded", () => {
         } catch (err) { console.error("Mark all read error:", err); }
     });
 
+    /**
+     * Mark all unread
+     */
     document.getElementById("mark-all-unread-btn")?.addEventListener("click", async () => {
         try {
             const res = await _postRequest("/notifications/unread-all/");
@@ -214,10 +216,25 @@ document.addEventListener("DOMContentLoaded", () => {
         } catch (err) { console.error("Mark all unread error:", err); }
     });
 
-    /* ─────────────────────────────────────────
-       INFINITE SCROLL
-    ───────────────────────────────────────── */
+    /**
+     * Delete all
+     */
+    document.getElementById("delete-all-btn")?.addEventListener("click", async () => {
+        if (!confirm("Delete all notifications?")) return;
+        try {
+            const res = await _postRequest("/notifications/delete-all/");
+            if (res.ok) {
+                document.querySelectorAll(".notification-item").forEach(item => item.remove());
+                if (pageUnread) pageUnread.textContent = "0";
+                if (badge) badge.style.display = "none";
+                document.getElementById("no-notifications").style.display = "block";
+            }
+        } catch (err) { console.error("Delete all error:", err); }
+    });
 
+    /**
+     * Infinite scroll for notifications
+     */
     const sentinel = document.getElementById("scroll-sentinel");
     const loadingIndicator = document.getElementById("loading-indicator");
     if (!sentinel) return;
@@ -229,7 +246,7 @@ document.addEventListener("DOMContentLoaded", () => {
     let isLoading = false;
 
     /**
-     * Build a notification item DOM element from JSON data.
+     * Build a notification item 
      */
     function _buildNotifElement(n) {
         const div = document.createElement("div");

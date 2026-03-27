@@ -22,6 +22,7 @@
     <div style="display:flex; gap:8px; align-items:center;">
         <button id="mark-all-read-btn" class="notif-clear-btn">Mark all read</button>
         <button id="mark-all-unread-btn" class="notif-clear-btn">Mark all unread</button>
+        <button id="delete-all-btn" class="notif-clear-btn">Delete all</button>
         {% if current_filter == 'unread' %}
             <a href="{% url 'notifications' %}" class="notif-clear-btn" style="text-decoration:none;">Show all</a>
         {% else %}

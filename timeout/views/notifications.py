@@ -95,6 +95,14 @@ def mark_notification_unread(request, notification_id):
         return JsonResponse({'error': 'Notification not found'}, status=404)
 
 @login_required
+def delete_all_notifications(request):
+    """Delete all notifications for the current user."""
+    Notification.objects.filter(
+        user=request.user, is_dismissed=False
+    ).update(is_dismissed=True, is_read=True)
+    return JsonResponse({'success': True})
+
+@login_required
 def poll_notifications(request):
     """AJAX endpoint to poll for new notifications since last_id."""
     try:

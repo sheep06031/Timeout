@@ -7,6 +7,7 @@ from timeout.views.notifications import (
     mark_notification_unread,
     mark_all_notifications_read,
     mark_all_notifications_unread,
+    delete_all_notifications,
 )
  
 urlpatterns = [ 
@@ -17,4 +18,5 @@ urlpatterns = [
     path('read-all/', mark_all_notifications_read, name='mark_all_notifications_read'),
     path('unread/<int:notification_id>/', mark_notification_unread, name='mark_notification_unread'),
     path('unread-all/', mark_all_notifications_unread, name='mark_all_notifications_unread'),
+    path('delete-all/', delete_all_notifications, name='delete_all_notifications'),
 ]
