@@ -39,7 +39,7 @@ class ApproveFlagViewTest(TestCase):
         response = self.client.post(self.approve_url())
         self.assertEqual(response.status_code, 200)
         data = json.loads(response.content)
-        self.assertTrue(data["ok"])
+        self.assertTrue(data["success"])
         self.assertFalse(Post.objects.filter(id=post_id).exists())
 
     # Approving deletes all associated flags via cascade
@@ -113,7 +113,7 @@ class DenyFlagViewTest(TestCase):
         response = self.client.post(self.deny_url())
         self.assertEqual(response.status_code, 200)
         data = json.loads(response.content)
-        self.assertTrue(data["ok"])
+        self.assertTrue(data["success"])
         self.assertFalse(PostFlag.objects.filter(id=self.flag.id).exists())
         self.assertTrue(Post.objects.filter(id=self.post.id).exists())
 

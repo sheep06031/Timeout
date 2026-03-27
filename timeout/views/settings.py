@@ -55,5 +55,5 @@ def settings_save_ajax(request):
     form = AppearanceForm(request.POST, instance=request.user)
     if form.is_valid():
         form.save()
-        return JsonResponse({'ok': True})
-    return JsonResponse({'ok': False, 'errors': form.errors}, status=400)
+        return JsonResponse({'success': True})
+    return JsonResponse({'success': False, 'errors': form.errors}, status=400)

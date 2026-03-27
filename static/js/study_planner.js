@@ -6,17 +6,6 @@
 let plannedSessions = [];
 
 /**
- * Retrieve CSRF token from browser cookies for form submission.
- */
-function getCsrfToken() {
-  for (const cookie of document.cookie.split(';')) {
-    const [key, val] = cookie.trim().split('=');
-    if (key === 'csrftoken') return decodeURIComponent(val);
-  }
-  return '';
-}
-
-/**
  * Request AI-generated study session plan from server based on user inputs.
  */
 async function fetchPlan() {
@@ -24,7 +13,7 @@ async function fetchPlan() {
   body.append('event_id', document.getElementById('spDeadline').value);
   body.append('hours_needed', document.getElementById('spHours').value);
   body.append('session_length', document.getElementById('spSessionLen').value);
-  const res = await fetch(window.SP_PLAN_URL, { method: 'POST', headers: { 'X-CSRFToken': getCsrfToken() }, body });
+  const res = await fetch(window.SP_PLAN_URL, { method: 'POST', headers: { 'X-CSRFToken': getCSRFToken() }, body });
   return res.json();
 }
 
@@ -84,7 +73,7 @@ async function saveSessions(sessions) {
   body.append('sessions', JSON.stringify(sessions));
 
   try {
-    const res = await fetch(window.SP_CONFIRM_URL, { method: 'POST', headers: { 'X-CSRFToken': getCsrfToken() }, body });
+    const res = await fetch(window.SP_CONFIRM_URL, { method: 'POST', headers: { 'X-CSRFToken': getCSRFToken() }, body });
     const data = await res.json();
     if (data.success) setTimeout(() => location.reload(), 500);
   } catch {

@@ -339,7 +339,7 @@
     fetch(autosaveUrl, { method: 'POST', body: buildSavePayload(currentContent, currentTitle, currentPageMode) })
       .then(function(res) { return res.json(); })
       .then(function(data) {
-        if (data.status === 'ok') {
+        if (data.success) {
           lastSavedContent = currentContent;
           lastSavedTitle = currentTitle;
           lastSavedPageMode = currentPageMode;

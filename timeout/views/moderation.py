@@ -25,7 +25,7 @@ def flag_post(request, post_id):
         defaults={'reason': reason, 'description': description},
     )
 
-    return JsonResponse({'ok': True, 'created': created})
+    return JsonResponse({'success': True, 'created': created})
 
 
 @login_required
@@ -44,7 +44,7 @@ def approve_flag(request, flag_id):
         type=Notification.Type.EVENT,
     )
     flag.post.delete()
-    return JsonResponse({'ok': True})
+    return JsonResponse({'success': True})
 
 
 @login_required
@@ -56,7 +56,7 @@ def deny_flag(request, flag_id):
 
     flag = get_object_or_404(PostFlag, id=flag_id)
     flag.delete()
-    return JsonResponse({'ok': True})
+    return JsonResponse({'success': True})
 
 
 def _is_ajax(request):
@@ -87,7 +87,7 @@ def ban_user(request, username):
     target.save(update_fields=['is_banned', 'ban_reason'])
 
     if _is_ajax(request):
-        return JsonResponse({'ok': True})
+        return JsonResponse({'success': True})
 
     messages.success(request, f'{target.username} has been banned.')
     return redirect('user_profile', username=username)
@@ -108,7 +108,7 @@ def unban_user(request, username):
     target.save(update_fields=['is_banned', 'ban_reason'])
 
     if _is_ajax(request):
-        return JsonResponse({'ok': True})
+        return JsonResponse({'success': True})
 
     messages.success(request, f'{target.username} has been unbanned.')
     return redirect('user_profile', username=username)

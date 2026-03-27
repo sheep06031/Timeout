@@ -165,7 +165,7 @@ def note_autosave(request, note_id):
     if request.POST.get('count_edit') == '1':
         NoteService.log_note_edited(request.user)
 
-    return JsonResponse({'status': 'ok', 'updated_at': note.updated_at.isoformat()})
+    return JsonResponse({'success': True, 'updated_at': note.updated_at.isoformat()})
 
 
 @login_required
@@ -272,9 +272,9 @@ def update_daily_goals(request):
         user.daily_focus_goal = max(10, min(focus, 480))
         user.save(update_fields=['daily_pomo_goal', 'daily_notes_goal', 'daily_focus_goal'])
 
-        return JsonResponse({'status': 'ok'})
+        return JsonResponse({'success': True})
     except (ValueError, TypeError):
-        return JsonResponse({'status': 'error'}, status=400)
+        return JsonResponse({'success': False}, status=400)
 
 
 @login_required

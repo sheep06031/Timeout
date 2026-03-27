@@ -5,17 +5,6 @@
  */
 
 /**
- * Retrieve CSRF token from browser cookies for secure form submissions.
- */
-function getCsrfToken() {
-  for (var c of document.cookie.split(';')) {
-    var parts = c.trim().split('=');
-    if (parts[0] === 'csrftoken') return decodeURIComponent(parts[1]);
-  }
-  return window.NOTES_CONFIG?.csrfToken || '';
-}
-
-/**
  * Add or remove pin icon from note item header.
  */
 function updatePinIcon(item, pinned) {
@@ -39,7 +28,7 @@ function updatePinIcon(item, pinned) {
 function togglePin(noteId, btn) {
   fetch('/notes/' + noteId + '/pin/', {
     method: 'POST',
-    headers: { 'X-CSRFToken': getCsrfToken() },
+    headers: { 'X-CSRFToken': getCSRFToken() },
   })
   .then(function(res) { return res.json(); })
   .then(function(data) {
@@ -221,7 +210,7 @@ var DailyGoals = (function() {
       body.append('daily_focus_goal', document.getElementById('goalInputFocus').value);
       fetch(cfg.goalsUpdateUrl, {
         method: 'POST',
-        headers: { 'X-CSRFToken': getCsrfToken() },
+        headers: { 'X-CSRFToken': getCSRFToken() },
         body: body,})
       .then(function(r) { return r.json(); })
       .then(function() {

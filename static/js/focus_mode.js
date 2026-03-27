@@ -17,7 +17,7 @@ var FocusMode = (function() {
   function setServerStatus(status) {
     fetch('/social/status/update/', {
       method: 'POST',
-      headers: { 'X-CSRFToken': getCsrfToken(), 'Content-Type': 'application/x-www-form-urlencoded' },
+      headers: { 'X-CSRFToken': getCSRFToken(), 'Content-Type': 'application/x-www-form-urlencoded' },
       body: 'status=' + encodeURIComponent(status),
     }).catch(function() {});
   }
@@ -86,7 +86,7 @@ var FocusMode = (function() {
     if (!active) return;
     var data = new FormData();
     data.append('status', 'social');
-    data.append('csrfmiddlewaretoken', getCsrfToken());
+    data.append('csrfmiddlewaretoken', getCSRFToken());
     navigator.sendBeacon('/social/status/update/', data);
     e.preventDefault();
     e.returnValue = 'Focus mode is active. Are you sure you want to leave?';

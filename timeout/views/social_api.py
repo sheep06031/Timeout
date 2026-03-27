@@ -3,6 +3,7 @@ from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
 
 from timeout.models import User
+from timeout.services.social_service import can_view_profile
 
 
 def _serialize_users(users, following_ids=None):
@@ -18,15 +19,6 @@ def _serialize_users(users, following_ids=None):
             entry['is_followed_back'] = u.id in following_ids
         result.append(entry)
     return result
-
-
-def _can_view_profile(request_user, profile_user):
-    """Check if a user can view another user's profile considering privacy settings."""
-    return (
-        request_user == profile_user or
-        not profile_user.privacy_private or
-        request_user.following.filter(id=profile_user.id).exists()
-    )
 
 
 @login_required
@@ -47,7 +39,7 @@ def following_api(request):
 def user_followers_api(request, username):
     """Return JSON list of a specific user's followers (respects privacy settings)."""
     profile_user = get_object_or_404(User, username=username)
-    if not _can_view_profile(request.user, profile_user):
+    if not can_view_profile(request.user, profile_user):
         return JsonResponse({'error': 'This account is private.'}, status=403)
     return JsonResponse({'users': _serialize_users(profile_user.followers.all())})
 
@@ -56,7 +48,7 @@ def user_followers_api(request, username):
 def user_following_api(request, username):
     """Return JSON list of users that a specific user is following (respects privacy)."""
     profile_user = get_object_or_404(User, username=username)
-    if not _can_view_profile(request.user, profile_user):
+    if not can_view_profile(request.user, profile_user):
         return JsonResponse({'error': 'This account is private.'}, status=403)
     return JsonResponse({'users': _serialize_users(profile_user.following.all())})
 
@@ -72,7 +64,7 @@ def friends_api(request):
 def user_friends_api(request, username):
     """Return JSON list of a specific user's mutual follows (respects privacy)."""
     profile_user = get_object_or_404(User, username=username)
-    if not _can_view_profile(request.user, profile_user):
+    if not can_view_profile(request.user, profile_user):
         return JsonResponse({'error': 'This account is private.'}, status=403)
     friends = profile_user.following.filter(following=profile_user)
     return JsonResponse({'users': _serialize_users(friends)})

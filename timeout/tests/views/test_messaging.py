@@ -208,7 +208,7 @@ class DeleteMessageViewTest(TestCase):
         response = self.client.post(self.delete_url())
         self.assertEqual(response.status_code, 200)
         data = json.loads(response.content)
-        self.assertTrue(data["ok"])
+        self.assertTrue(data["success"])
         self.assertFalse(Message.objects.filter(id=self.message.id).exists())
 
     # Non-staff user gets 403

@@ -2,6 +2,7 @@ from django.db.models import Q
 from django.utils import timezone
 from timeout.models import (Conversation, Like, Bookmark, Block, FollowRequest, User, FocusSession)
 from timeout.models.notification import Notification
+from timeout.services.feed_service import _get_blocked_ids
 
 def _get_conversation_sidebar(user):
     convs = Conversation.objects.filter(participants=user).prefetch_related('participants', 'messages').order_by('-updated_at')[:5]
@@ -29,10 +30,17 @@ def _can_view_profile(user, profile_user, is_blocked, has_blocked_me, is_followi
     """Determine whether user can view profile_user's profile."""
     return (not is_blocked and not has_blocked_me and (user == profile_user or not profile_user.privacy_private or is_following))
 
+def can_view_profile(request_user, profile_user):
+    """Convenience wrapper: check if request_user can view profile_user (fetches data)."""
+    if request_user == profile_user:
+        return True
+    if are_blocked(request_user, profile_user):
+        return False
+    return not profile_user.privacy_private or request_user.following.filter(id=profile_user.id).exists()
+
 def _search_users_queryset(user, query):
     """Return a queryset of users matching query, excluding blocked users."""
-    blocked_by_me = Block.objects.filter(blocker=user).values_list('blocked_id', flat=True)
-    blocking_me = Block.objects.filter(blocked=user).values_list('blocker_id', flat=True)
+    blocked_by_me, blocking_me = _get_blocked_ids(user)
     return User.objects.filter(Q(username__icontains=query) | Q(first_name__icontains=query) |
         Q(last_name__icontains=query)).exclude(id=user.id).exclude(id__in=blocked_by_me).exclude(id__in=blocking_me)[:10]
 

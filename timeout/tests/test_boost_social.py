@@ -257,7 +257,7 @@ class FlagPostTests(TestCase):
         })
         self.assertEqual(resp.status_code, 200)
         data = json.loads(resp.content)
-        self.assertTrue(data['ok'])
+        self.assertTrue(data['success'])
         self.assertTrue(data['created'])
         self.assertTrue(PostFlag.objects.filter(post=self.post, reporter=self.user).exists())
 

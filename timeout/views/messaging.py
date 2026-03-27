@@ -129,7 +129,7 @@ def delete_message(request, message_id):
         return JsonResponse({'error': 'Staff access required.'}, status=403)
     message = get_object_or_404(Message, id=message_id)
     message.delete()
-    return JsonResponse({'ok': True})
+    return JsonResponse({'success': True})
 
 
 @login_required

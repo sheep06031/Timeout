@@ -12,11 +12,7 @@ document.addEventListener('DOMContentLoaded', function () {
             const username = this.dataset.username;
             const action   = this.classList.contains('accept-request-btn') ? 'accept' : 'reject';
 
-            fetch(`/social/user/${username}/follow/${action}/`, {
-                method: 'POST',
-                headers: { 'X-CSRFToken': csrftoken, 'Content-Type': 'application/json' }
-            })
-            .then(r => r.json())
+            postJSON(`/social/user/${username}/follow/${action}/`)
             .then(() => this.closest('.follow-request-row').remove())
             .catch(err => console.error('Follow request error:', err));
         });

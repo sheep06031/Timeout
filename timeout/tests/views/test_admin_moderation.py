@@ -172,7 +172,7 @@ class BanUserViewTest(TestCase):
             HTTP_X_REQUESTED_WITH="XMLHttpRequest",
         )
         self.assertEqual(response.status_code, 200)
-        self.assertJSONEqual(response.content, {"ok": True})
+        self.assertJSONEqual(response.content, {"success": True})
         self.regular.refresh_from_db()
         self.assertTrue(self.regular.is_banned)
 
@@ -267,7 +267,7 @@ class UnbanUserViewTest(TestCase):
             HTTP_X_REQUESTED_WITH="XMLHttpRequest",
         )
         self.assertEqual(response.status_code, 200)
-        self.assertJSONEqual(response.content, {"ok": True})
+        self.assertJSONEqual(response.content, {"success": True})
         self.regular.refresh_from_db()
         self.assertFalse(self.regular.is_banned)
 

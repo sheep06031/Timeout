@@ -13,7 +13,7 @@ function fetchRescheduleSuggestions() {
 
     fetch(window.RS_SUGGEST_URL, {
         method: 'POST',
-        headers: { 'X-CSRFToken': window.AI_CSRF_TOKEN },
+        headers: { 'X-CSRFToken': getCSRFToken() },
     })
     .then(r => r.json())
     .then(data => {
@@ -66,10 +66,9 @@ function applyReschedule() {
     btn.textContent = 'Applying…';
     const formData = new FormData();
     formData.append('sessions', JSON.stringify(rsSuggestions));
-    formData.append('csrfmiddlewaretoken', window.AI_CSRF_TOKEN);
     fetch(window.RS_APPLY_URL, {
         method: 'POST',
-        headers: { 'X-CSRFToken': window.AI_CSRF_TOKEN },
+        headers: { 'X-CSRFToken': getCSRFToken() },
         body: formData,})
     .then(r => r.json())
     .then(data => {

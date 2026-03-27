@@ -50,8 +50,7 @@ function completeDeadline(eventId, checkbox) {
   fetch('/deadlines/' + eventId + '/complete/', {
     method: 'POST',
     headers: {
-      'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]')?.value
-        || getCookie('csrftoken'),
+      'X-CSRFToken': getCSRFToken(),
       'Content-Type': 'application/json',
     },
   })
@@ -92,8 +91,7 @@ function incompleteDeadline(eventId, checkbox) {
   fetch('/deadlines/' + eventId + '/incomplete/', {
     method: 'POST',
     headers: {
-      'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]')?.value
-        || getCookie('csrftoken'),
+      'X-CSRFToken': getCSRFToken(),
       'Content-Type': 'application/json',
     },
   })
@@ -118,20 +116,3 @@ function incompleteDeadline(eventId, checkbox) {
   });
 }
 
-/**
- * Retrieve CSRF token from browser cookies.
- * @param {string} name - Cookie name to retrieve.
- * @returns {string|null} Cookie value or null if not found.
- */
-function getCookie(name) {
-  var cookieValue = null;
-  if (document.cookie && document.cookie !== '') {
-    document.cookie.split(';').forEach(function(cookie) {
-      cookie = cookie.trim();
-      if (cookie.startsWith(name + '=')) {
-        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-      }
-    });
-  }
-  return cookieValue;
-}

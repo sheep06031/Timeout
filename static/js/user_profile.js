@@ -106,7 +106,7 @@ document.querySelectorAll('.block-btn').forEach(btn => {
 
     fetch(`/social/user/${username}/block/`, {
       method: 'POST',
-      headers: { 'X-CSRFToken': getCookie('csrftoken') },
+      headers: { 'X-CSRFToken': getCSRFToken() },
     })
       .then(r => r.json())
       .then(data => {

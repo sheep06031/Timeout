@@ -39,7 +39,7 @@ document.addEventListener('DOMContentLoaded', function () {
         btn.addEventListener('click', function () {
             if (!confirm('Delete this post permanently?')) return;
             postJSON(this.dataset.url)
-            .then(data => { if (data.ok) this.closest('.flag-review-card').remove(); })
+            .then(data => { if (data.success) this.closest('.flag-review-card').remove(); })
             .catch(err => console.error('Approve flag error:', err));
         });
     });
@@ -50,7 +50,7 @@ document.addEventListener('DOMContentLoaded', function () {
     document.querySelectorAll('.btn-deny-flag').forEach(btn => {
         btn.addEventListener('click', function () {
             postJSON(this.dataset.url)
-            .then(data => { if (data.ok) this.closest('.flag-review-card').remove(); })
+            .then(data => { if (data.success) this.closest('.flag-review-card').remove(); })
             .catch(err => console.error('Deny flag error:', err));
         });
     });
@@ -67,7 +67,7 @@ document.addEventListener('DOMContentLoaded', function () {
             if (!username || !confirm(`Ban @${username}?`)) return;
             postJSON(banBtn.dataset.url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
             .then(data => {
-                if (data.ok) {
+                if (data.success) {
                     if (onProfilePage()) window.location.reload();
                     else transformButtons(username, true);
                 }
@@ -80,7 +80,7 @@ document.addEventListener('DOMContentLoaded', function () {
             if (!username || !confirm(`Unban @${username}?`)) return;
             postJSON(unbanBtn.dataset.url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
             .then(data => {
-                if (data.ok) {
+                if (data.success) {
                     if (onProfilePage()) window.location.reload();
                     else transformButtons(username, false);
                 }
@@ -96,7 +96,7 @@ document.addEventListener('DOMContentLoaded', function () {
         btn.addEventListener('click', function () {
             if (!confirm('Delete this message permanently?')) return;
             postJSON(this.dataset.url)
-            .then(data => { if (data.ok) this.closest('.msg-bubble-row').remove(); })
+            .then(data => { if (data.success) this.closest('.msg-bubble-row').remove(); })
             .catch(err => console.error('Delete message error:', err));
         });
     });

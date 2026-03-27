@@ -36,7 +36,7 @@ class FlagPostViewTest(TestCase):
         })
         self.assertEqual(response.status_code, 200)
         data = json.loads(response.content)
-        self.assertTrue(data["ok"])
+        self.assertTrue(data["success"])
         self.assertTrue(data["created"])
         self.assertTrue(
             PostFlag.objects.filter(
@@ -53,7 +53,7 @@ class FlagPostViewTest(TestCase):
         response = self.client.post(self.flag_url(), data={"reason": "harassment"})
         self.assertEqual(response.status_code, 200)
         data = json.loads(response.content)
-        self.assertTrue(data["ok"])
+        self.assertTrue(data["success"])
         self.assertFalse(data["created"])
         self.assertEqual(PostFlag.objects.filter(post=self.post, reporter=self.user).count(), 1)
 

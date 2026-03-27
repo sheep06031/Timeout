@@ -8,13 +8,7 @@
   var statusEl = document.getElementById('autosaveStatus');
   var statusText = document.getElementById('autosaveText');
   var saveUrl = '/settings/save/';
-  var csrfToken = (function() {
-    for (var c of document.cookie.split(';')) {
-      var parts = c.trim().split('=');
-      if (parts[0] === 'csrftoken') return decodeURIComponent(parts[1]);
-    }
-    return '';
-  })();
+  var csrfToken = getCSRFToken();
   var saveTimer = null;
 
   /**
@@ -61,7 +55,7 @@
     })
     .then(function(r) { return r.json(); })
     .then(function(d) {
-      if (d.ok) showStatus('Saved', 'saved');
+      if (d.success) showStatus('Saved', 'saved');
       else showStatus('Error', 'error');
     })
     .catch(function() { showStatus('Error', 'error'); });

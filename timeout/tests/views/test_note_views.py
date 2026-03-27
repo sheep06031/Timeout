@@ -314,7 +314,7 @@ class NoteViewsTest(TestCase):
         )
         self.assertEqual(resp.status_code, 200)
         data = json.loads(resp.content)
-        self.assertEqual(data['status'], 'ok')
+        self.assertTrue(data['success'])
         self.note.refresh_from_db()
         self.assertEqual(self.note.content, '<p>Autosaved content</p>')
         self.assertEqual(self.note.title, 'Updated Title')

@@ -88,7 +88,7 @@ class UpdateDailyGoalsViewTest(_ViewTestBase):
             'daily_pomo_goal': '6', 'daily_notes_goal': '5', 'daily_focus_goal': '180',
         })
         self.assertEqual(resp.status_code, 200)
-        self.assertEqual(json.loads(resp.content)['status'], 'ok')
+        self.assertTrue(json.loads(resp.content)['success'])
         self.user.refresh_from_db()
         self.assertEqual(self.user.daily_pomo_goal, 6)
         self.assertEqual(self.user.daily_notes_goal, 5)
@@ -110,7 +110,7 @@ class UpdateDailyGoalsViewTest(_ViewTestBase):
         self.login()
         resp = self.client.post(reverse('update_daily_goals'), {'daily_pomo_goal': 'not_a_number'})
         self.assertEqual(resp.status_code, 400)
-        self.assertEqual(json.loads(resp.content)['status'], 'error')
+        self.assertFalse(json.loads(resp.content)['success'])
 
 
 class JsonViewsTest(_ViewTestBase):
