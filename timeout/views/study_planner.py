@@ -53,6 +53,23 @@ def plan_sessions(request):
     return JsonResponse({'success': True, 'sessions': sessions})
 
 
+def _create_study_session(user, session_data):
+    """Create a single study session event from session data dict."""
+    start_dt = datetime.fromisoformat(session_data['start'])
+    end_dt = datetime.fromisoformat(session_data['end'])
+    event = Event(
+        creator=user,
+        title=session_data['title'],
+        event_type=Event.EventType.STUDY_SESSION,
+        start_datetime=start_dt,
+        end_datetime=end_dt,
+        visibility=Event.Visibility.PRIVATE,
+        allow_conflict=True,
+    )
+    event.full_clean()
+    event.save()
+
+
 @login_required
 @require_POST
 def confirm_sessions(request):
@@ -64,27 +81,13 @@ def confirm_sessions(request):
     except (json.JSONDecodeError, ValueError):
         return JsonResponse({'success': False, 'error': 'Invalid session data.'}, status=400)
 
-    created = 0
-    errors = []
+    created, errors = 0, []
     for i, s in enumerate(sessions):
         try:
-            start_dt = datetime.fromisoformat(s['start'])
-            end_dt = datetime.fromisoformat(s['end'])
-            event = Event(
-                creator=request.user,
-                title=s['title'],
-                event_type=Event.EventType.STUDY_SESSION,
-                start_datetime=start_dt,
-                end_datetime=end_dt,
-                visibility=Event.Visibility.PRIVATE,
-                allow_conflict=True,
-            )
-            event.full_clean()
-            event.save()
+            _create_study_session(request.user, s)
             created += 1
         except (ValidationError, KeyError, ValueError) as e:
             errors.append({'index': i, 'error': str(e)})
-
     return JsonResponse({'success': True, 'count': created, 'errors': errors})
 
 

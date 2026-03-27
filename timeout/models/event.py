@@ -127,18 +127,15 @@ class Event(models.Model):
         - Ensures end time is after start time and prevents overlapping  for certain events"""
         if self.start_datetime >= self.end_datetime:
             raise ValidationError("End time must be after start time.")
-
         non_overlapping_types = [
             self.EventType.CLASS,
             self.EventType.STUDY_SESSION,
             self.EventType.EXAM,
             self.EventType.MEETING]
-
         if self.event_type not in non_overlapping_types:
             return  # deadlines & "other" can overlap freely
         if self.status == self.EventStatus.CANCELLED:
             return
-
         overlapping_events = Event.objects.filter(creator=self.creator,
             start_datetime__lt=self.end_datetime,
             end_datetime__gt=self.start_datetime).exclude(pk=self.pk).filter(event_type__in=non_overlapping_types)
@@ -154,15 +151,12 @@ class Event(models.Model):
         - PRIVATE events do not create or update posts"""
         super().save(*args, **kwargs)
         from .post import Post 
-
         if self.visibility == self.Visibility.PUBLIC and self.creator:
             existing_post = self.posts.first()
-
             post_content = (
                 f"📅 {self.title}\n\n"
                 f"{self.description}\n\n"
                 f"🕒 {self.start_datetime:%d %b %Y %H:%M}")
-
             if existing_post: # Update existing post
                 existing_post.content = post_content
                 existing_post.save()

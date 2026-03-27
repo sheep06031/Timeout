@@ -49,19 +49,16 @@ def _call_openai_suggestions(events_list):
         "You are a helpful calendar assistant. The user's events today are:\n" + "\n".join(events_list) +
         "\n\nSuggest 2–3 actionable tips to optimize their day, like when to take breaks, "
         "add focus sessions, or avoid overload. Return a JSON list of strings ONLY.")
-
     response = client.chat.completions.create(
         model="gpt-4o-mini",
         messages=[
             {"role": "system", "content": "You are a productivity AI assistant."},
             {"role": "user", "content": str(prompt)}],
         temperature=0.7, max_tokens=200)
-
     raw = response.choices[0].message.content.strip()
     if raw.startswith("```"):
         raw = raw.split("```")[1]
         if raw.startswith("json"): raw = raw[4:]
-
     suggestions = json.loads(raw)
     if not isinstance(suggestions, list): suggestions = [str(suggestions)]
     return suggestions

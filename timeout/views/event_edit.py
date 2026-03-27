@@ -6,34 +6,41 @@ from datetime import datetime
 from django.utils import timezone
 
 
-def _handle_event_edit_post(request, event):
-    """Apply POST data to event fields and save."""
+def _parse_event_datetimes(request):
+    """Parse start/end datetimes from POST. Returns (start_dt, end_dt) or None on error."""
     try:
         start_dt = timezone.make_aware(
-            datetime.fromisoformat(request.POST.get("start_datetime"))
-        )
+            datetime.fromisoformat(request.POST.get("start_datetime")))
         end_dt = timezone.make_aware(
-            datetime.fromisoformat(request.POST.get("end_datetime"))
-        )
+            datetime.fromisoformat(request.POST.get("end_datetime")))
+        return start_dt, end_dt
     except (ValueError, TypeError):
         messages.error(request, "Invalid date/time format.")
-        return redirect("calendar")
+        return None
 
-    event.title = request.POST.get("title") or event.title
-    event.event_type = request.POST.get("event_type") or event.event_type
-    event.visibility = request.POST.get("visibility") or event.visibility
-    event.recurrence = request.POST.get("recurrence") or "none"
+
+def _apply_event_fields(event, post_data, start_dt, end_dt):
+    """Update event model fields from POST data and save."""
+    event.title = post_data.get("title") or event.title
+    event.event_type = post_data.get("event_type") or event.event_type
+    event.visibility = post_data.get("visibility") or event.visibility
+    event.recurrence = post_data.get("recurrence") or "none"
     event.start_datetime = start_dt
     event.end_datetime = end_dt
-    event.location = request.POST.get("location")
-    event.description = request.POST.get("description")
-    event.allow_conflict = bool(request.POST.get("allow_conflict"))
+    event.location = post_data.get("location")
+    event.description = post_data.get("description")
+    event.allow_conflict = bool(post_data.get("allow_conflict"))
     event.save()
-
     if event.event_type == Event.EventType.DEADLINE:
-        session_ids = request.POST.getlist("linked_study_sessions")
-        event.linked_study_sessions.set(session_ids)
+        event.linked_study_sessions.set(post_data.getlist("linked_study_sessions"))
 
+
+def _handle_event_edit_post(request, event):
+    """Apply POST data to event fields and save."""
+    result = _parse_event_datetimes(request)
+    if result is None:
+        return redirect("calendar")
+    _apply_event_fields(event, request.POST, *result)
     return redirect("calendar")
 
 

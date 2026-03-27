@@ -28,17 +28,14 @@ def _gather_study_stats(user, now):
         creator=user,
         start_datetime__gte=week_ago,
         start_datetime__lte=now)
-
     study_events = events_this_week.filter(event_type=Event.EventType.STUDY_SESSION)
     total_seconds = sum(
         max((ev.end_datetime - ev.start_datetime).total_seconds(), 0)
         for ev in study_events)
-
     missed_deadlines = events_this_week.filter(
         event_type=Event.EventType.DEADLINE,
         is_completed=False,
         end_datetime__lt=now).count()
-
     return {
         'total_study_hours': round(total_seconds / 3600, 1),
         'missed_deadlines': missed_deadlines,

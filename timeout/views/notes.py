@@ -75,6 +75,16 @@ def note_list(request):
     return render(request, 'pages/notes.html', context)
 
 
+def _attach_event_to_note(note, event_id, user):
+    """Attach an event to a note if event_id is valid."""
+    if event_id:
+        from timeout.models.event import Event
+        try:
+            note.event = Event.objects.get(pk=event_id, creator=user)
+        except Event.DoesNotExist:
+            pass
+
+
 @login_required
 def note_create(request):
     """Create a new note with title/category/event, then redirect to editor."""
@@ -85,18 +95,8 @@ def note_create(request):
         if not title:
             messages.error(request, 'Please provide a title for your note.')
             return redirect('notes')
-        note = Note(
-            owner=request.user,
-            title=title,
-            content='',
-            category=category)
-        if event_id:
-            from timeout.models.event import Event
-            try:
-                note.event = Event.objects.get(pk=event_id, creator=request.user)
-            except Event.DoesNotExist:
-                pass
-
+        note = Note(owner=request.user, title=title, content='', category=category)
+        _attach_event_to_note(note, event_id, request.user)
         note.save()
         NoteService.update_streak_and_xp(request.user, NoteService.XP_NOTE_CREATE)
         NoteService.log_note_created(request.user)
@@ -209,33 +209,32 @@ def note_share(request, note_id):
     return redirect('social_feed')
 
 
+def _update_note_time(user, note_id, minutes):
+    """Add pomodoro minutes to the linked note, if it exists."""
+    if note_id:
+        try:
+            note = Note.objects.get(id=note_id, owner=user)
+            note.time_spent_minutes += minutes
+            note.save(update_fields=['time_spent_minutes'])
+        except Note.DoesNotExist:
+            pass
+
+
 @login_required
 @require_POST
 def pomodoro_complete(request):
     """Award XP when a Pomodoro work session is completed."""
     user = request.user
-    cfg_work = user.pomo_work_minutes
-
-    note_id = request.POST.get('note_id')
-    if note_id:
-        try:
-            note = Note.objects.get(id=note_id, owner=user)
-            note.time_spent_minutes += cfg_work
-            note.save(update_fields=['time_spent_minutes'])
-        except Note.DoesNotExist:
-            pass
-
+    _update_note_time(user, request.POST.get('note_id'), user.pomo_work_minutes)
     NoteService.award_pomodoro_xp(user)
-    NoteService.log_pomodoro(user, cfg_work)
-
+    NoteService.log_pomodoro(user, user.pomo_work_minutes)
     user.refresh_from_db()
-    progress = NoteService.get_daily_progress(user)
     return JsonResponse({
         'xp': user.xp,
         'level': user.level,
         'xp_progress_pct': user.xp_progress_pct,
         'xp_for_next_level': user.xp_for_next_level,
-        'daily_progress': progress})
+        'daily_progress': NoteService.get_daily_progress(user)})
 
 @login_required
 def notes_stats(request):

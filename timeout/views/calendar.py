@@ -178,32 +178,53 @@ def build_day(day, month, today, events_by_date):
         "events": events_by_date.get(day, []), # get events for this day
     }
 
+def _get_reschedule_prompts(user, now, dismissed_keys, session_prompts):
+    """Build reschedule prompts from missed sessions and session-stored prompts."""
+    missed = Event.objects.filter(
+        creator=user, event_type=Event.EventType.STUDY_SESSION,
+        status=Event.EventStatus.UPCOMING, end_datetime__lt=now, is_completed=False,
+    )
+    prompts = [{
+        'id': e.pk, 'title': e.title, 'reason': 'missed_sessions',
+        'alert_key': f'reschedule_{e.pk}_missed',
+        'duration_minutes': int((e.end_datetime - e.start_datetime).total_seconds() / 60),
+    } for e in missed if f'reschedule_{e.pk}_missed' not in dismissed_keys]
+    prompts += [p for p in session_prompts
+                if f"reschedule_{p['id']}_{p.get('reason', 'missed_sessions')}" not in dismissed_keys]
+    return prompts
+
+
+def _get_workload_and_suggestions(user, events_by_date, now, dismissed_keys):
+    """Return workload warning, its alert key, and AI suggestions."""
+    today_str = now.date().isoformat()
+    workload_key = f'workload_{user.id}_{today_str}'
+    today_events = (events_by_date or {}).get(now.date(), [])
+    raw_workload = get_ai_workload_warning(user, today_events)
+    workload_warning = raw_workload if raw_workload and workload_key not in dismissed_keys else None
+    return workload_warning, workload_key, get_ai_suggestions(user, today_events)
+
+
 def get_data(request, events_by_date=None):
     """Helper function to gather data needed for upcoming deadlines and reschedule prompts"""
     now = timezone.now()
-    today_str = now.date().isoformat()
-    dismissed_keys = set(DismissedAlert.objects.filter(user=request.user).values_list('alert_key', flat=True))
-    upcoming_deadlines = Event.objects.filter(creator=request.user, event_type__in=[Event.EventType.DEADLINE, Event.EventType.EXAM], start_datetime__gte=now).order_by('start_datetime')[:20]
-    missed_sessions = Event.objects.filter(creator=request.user,event_type=Event.EventType.STUDY_SESSION, status=Event.EventStatus.UPCOMING, end_datetime__lt=now, is_completed=False,)
-    reschedule_prompts = [{
-        'id': e.pk, 'title': e.title, 'reason': 'missed_sessions', 'alert_key': f'reschedule_{e.pk}_missed',
-        'duration_minutes': int((e.end_datetime - e.start_datetime).total_seconds() / 60),
-    } for e in missed_sessions if f'reschedule_{e.pk}_missed' not in dismissed_keys]
-    reschedule_prompts += [p for p in request.session.pop('reschedule_prompts', []) 
-                           if f"reschedule_{p['id']}_{p.get('reason', 'missed_sessions')}" not in dismissed_keys]
+    dismissed_keys = set(DismissedAlert.objects.filter(
+        user=request.user).values_list('alert_key', flat=True))
+    upcoming_deadlines = Event.objects.filter(
+        creator=request.user, event_type__in=[Event.EventType.DEADLINE, Event.EventType.EXAM],
+        start_datetime__gte=now).order_by('start_datetime')[:20]
+    reschedule_prompts = _get_reschedule_prompts(
+        request.user, now, dismissed_keys, request.session.pop('reschedule_prompts', []))
     all_warnings = get_deadline_study_warnings(request.user)
     warnings = [w for w in all_warnings if w['key'] not in dismissed_keys]
-    workload_key = f'workload_{request.user.id}_{today_str}'
-    today_events = (events_by_date or {}).get(now.date(), [])
-    raw_workload = get_ai_workload_warning(request.user, today_events)
-    workload_warning = raw_workload if raw_workload and workload_key not in dismissed_keys else None
+    workload_warning, workload_key, suggestions = _get_workload_and_suggestions(
+        request.user, events_by_date, now, dismissed_keys)
     return {
         "upcoming_deadlines": upcoming_deadlines,
         "reschedule_prompts": reschedule_prompts,
         "warnings": warnings,
         "workload_warning": workload_warning,
         "workload_alert_key": workload_key,
-        "ai_suggestions": get_ai_suggestions(request.user, today_events)}
+        "ai_suggestions": suggestions}
 
 def event_status(start_dt, end_dt, now):
     """Helper function to derive a human-readable status"""

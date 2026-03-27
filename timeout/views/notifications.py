@@ -12,7 +12,6 @@ def notifications_view(request):
     notifications_qs = Notification.objects.filter(user=request.user, is_dismissed=False).order_by('-created_at')
     unread_count = notifications_qs.filter(is_read=False).count()
     filter_param = request.GET.get('filter')
-
     if filter_param == 'unread': notifications_qs = notifications_qs.filter(is_read=False)
     if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
         data = [{
@@ -24,9 +23,8 @@ def notifications_view(request):
             'created_at': n.created_at.isoformat(),
             'deadline_id': n.deadline_id,
             'conversation_id': n.conversation_id,
-            'post_id': n.post_id} for n in notifications]
+            'post_id': n.post_id} for n in notifications_qs]
         return JsonResponse({'notifications': data})
-
     return render(request, 'pages/notifications.html', {
         'notifications': notifications_qs,
         'unread_count': unread_count,
@@ -92,14 +90,12 @@ def poll_notifications(request):
         last_id = int(request.GET.get('last_id', 0))
     except (ValueError, TypeError):
         last_id = 0
-
     NotificationService.create_deadline_notifications(request.user)
     NotificationService.create_event_notifications(request.user)
     notifications = Notification.objects.filter(
         user=request.user,
         id__gt=last_id,
         is_dismissed=False).order_by('id')
-
     data = [{
             'id': n.id,
             'title': n.title,
@@ -107,7 +103,6 @@ def poll_notifications(request):
             'created_at': n.created_at.strftime('%H:%M'),
             'is_read': bool(n.is_read)}
         for n in notifications]
-
     unread_count = Notification.objects.filter(
         user=request.user, is_read=False, is_dismissed=False).count()
     return JsonResponse({'notifications': data, 'unread_count': unread_count})

@@ -85,48 +85,53 @@ def conversation(request, conversation_id):
 
 
 
+def _check_blocked(user, other):
+    """Return True if a block exists between user and other."""
+    return other and Block.objects.filter(
+        Q(blocker=user, blocked=other) | Q(blocker=other, blocked=user)
+    ).exists()
+
+
+def _notify_receiver(receiver, sender, content, conv):
+    """Create a message notification for the receiver."""
+    if receiver:
+        Notification.objects.create(
+            user=receiver,
+            title=f"💬 {sender.username} sent you a message",
+            message=content[:80],
+            type=Notification.Type.MESSAGE,
+            conversation=conv,
+        )
+
+
+def _serialize_message(message):
+    """Return a JSON-serializable dict for a sent message."""
+    return {
+        'id': message.id,
+        'content': message.content,
+        'sender': message.sender.username,
+        'created_at': message.created_at.strftime('%H:%M'),
+        'is_me': True,
+    }
+
+
 @login_required
 @require_POST
 def send_message(request, conversation_id):
     """Send a message in a conversation."""
     conv = get_object_or_404(
-        Conversation,
-        id=conversation_id,
-        participants=request.user )
-
+        Conversation, id=conversation_id, participants=request.user)
     receiver = conv.get_other_participant(request.user)
-    if receiver and Block.objects.filter(
-        Q(blocker=request.user, blocked=receiver) |
-        Q(blocker=receiver, blocked=request.user)
-    ).exists():
+    if _check_blocked(request.user, receiver):
         return JsonResponse({'error': 'Cannot message a blocked user'}, status=403)
-
     content = request.POST.get('content', '').strip()
     if not content:
         return JsonResponse({'error': 'Empty message'}, status=400)
-
     message = Message.objects.create(
-        conversation=conv,
-        sender=request.user,
-        content=content,)
-
+        conversation=conv, sender=request.user, content=content)
     conv.save()
-
-    if receiver:
-        Notification.objects.create(
-            user=receiver,
-            title=f"💬 {request.user.username} sent you a message",
-            message=content[:80],
-            type=Notification.Type.MESSAGE,
-            conversation=conv,
-        )    
-
-    return JsonResponse({
-        'id': message.id,
-        'content': message.content,
-        'sender': message.sender.username,
-        'created_at': message.created_at.strftime('%H:%M'),
-        'is_me': True,})
+    _notify_receiver(receiver, request.user, content, conv)
+    return JsonResponse(_serialize_message(message))
 
 
 @login_required
