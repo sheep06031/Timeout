@@ -15,6 +15,7 @@ BRIEFING_TEXT = 'Great week! Keep it up.'
 
 
 def make_mock_openai(content=BRIEFING_TEXT):
+    """Helper to create a mock OpenAI client that returns the specified content."""
     mock_client = MagicMock()
     mock_resp = MagicMock()
     mock_resp.choices[0].message.content = content
@@ -23,6 +24,7 @@ def make_mock_openai(content=BRIEFING_TEXT):
 
 
 def make_event(user, event_type, hours_ago=3, duration_hours=2, is_completed=False, end_in_past=False):
+    """Helper to create an event with the specified parameters."""
     now = timezone.now()
     start = now - timedelta(hours=hours_ago)
     end = start + timedelta(hours=duration_hours)
@@ -41,27 +43,29 @@ def make_event(user, event_type, hours_ago=3, duration_hours=2, is_completed=Fal
 
 @override_settings(OPENAI_API_KEY='test-key')
 class AIServiceTests(TestCase):
+    """Tests for AIService.get_dashboard_briefing() and related logic."""
 
     def setUp(self):
+        """Set up a test user for AIService tests."""
         self.user = User.objects.create_user(username='testuser', password='pass1234')
 
-    # unauthenticated
     def test_unauthenticated_returns_none(self):
+        """Test that unauthenticated users receive None."""
         result = AIService.get_dashboard_briefing(AnonymousUser())
         self.assertIsNone(result)
 
-    # cache hit
     @patch('timeout.services.ai_service.cache')
     def test_returns_cached_value_without_openai_call(self, mock_cache):
+        """Test that cached values are returned without calling OpenAI."""
         mock_cache.get.return_value = 'cached briefing'
         with patch('openai.OpenAI') as mock_openai:
             result = AIService.get_dashboard_briefing(self.user)
         self.assertEqual(result, 'cached briefing')
         mock_openai.assert_not_called()
 
-    # cache miss → calls openai and caches
     @patch('timeout.services.ai_service.cache')
     def test_caches_result_after_openai_call(self, mock_cache):
+        """Test that a cache miss triggers an OpenAI call and caches the result."""
         mock_cache.get.return_value = None
         with patch('openai.OpenAI', make_mock_openai()):
             AIService.get_dashboard_briefing(self.user)
@@ -72,24 +76,25 @@ class AIServiceTests(TestCase):
 
     @patch('timeout.services.ai_service.cache')
     def test_returns_briefing_text(self, mock_cache):
+        """Test that the briefing text is returned correctly."""
         mock_cache.get.return_value = None
         with patch('openai.OpenAI', make_mock_openai()):
             result = AIService.get_dashboard_briefing(self.user)
         self.assertEqual(result, BRIEFING_TEXT)
 
-    # no api key
     @override_settings(OPENAI_API_KEY='')
     @patch('timeout.services.ai_service.cache')
     def test_no_api_key_returns_none(self, mock_cache):
+        """Test that no API key results in None being returned."""
         mock_cache.get.return_value = None
         with self.assertLogs('timeout.services.ai_service', level='WARNING') as cm:
             result = AIService.get_dashboard_briefing(self.user)
         self.assertIsNone(result)
         self.assertTrue(any('OPENAI_API_KEY not configured' in msg for msg in cm.output))
 
-    # openai exception
     @patch('timeout.services.ai_service.cache')
     def test_openai_exception_returns_none(self, mock_cache):
+        """Test that an OpenAI exception results in None being returned."""
         mock_cache.get.return_value = None
         mock_openai = MagicMock(side_effect=Exception('API error'))
         with patch('openai.OpenAI', mock_openai):
@@ -98,15 +103,16 @@ class AIServiceTests(TestCase):
         self.assertIsNone(result)
         self.assertTrue(any('OpenAI briefing call failed' in msg for msg in cm.output))
 
-    # stats: study hours
     @patch('timeout.services.ai_service.cache')
     def test_study_hours_passed_to_openai(self, mock_cache):
+        """Test that study hours are correctly passed to OpenAI."""
         mock_cache.get.return_value = None
         make_event(self.user, Event.EventType.STUDY_SESSION, hours_ago=3, duration_hours=2)
 
         captured = {}
 
         def fake_create(**kwargs):
+            """Fake OpenAI create method to capture prompt."""
             captured['prompt'] = kwargs['messages'][1]['content']
             resp = MagicMock()
             resp.choices[0].message.content = BRIEFING_TEXT
@@ -120,20 +126,18 @@ class AIServiceTests(TestCase):
         self.assertIn('total_study_hours', captured['prompt'])
         self.assertIn('2.0', captured['prompt'])
 
-    # stats: missed deadlines
     @patch('timeout.services.ai_service.cache')
     def test_missed_deadlines_counted(self, mock_cache):
+        """Test that missed deadlines are correctly counted."""
         mock_cache.get.return_value = None
-        # overdue incomplete deadline within past 7 days
         make_event(
             self.user, Event.EventType.DEADLINE,
             hours_ago=5, duration_hours=1,
             is_completed=False, end_in_past=True,
         )
-
         captured = {}
-
         def fake_create(**kwargs):
+            """Fake OpenAI create method to capture prompt."""
             captured['prompt'] = kwargs['messages'][1]['content']
             resp = MagicMock()
             resp.choices[0].message.content = BRIEFING_TEXT
@@ -146,9 +150,9 @@ class AIServiceTests(TestCase):
 
         self.assertIn('"missed_deadlines": 1', captured['prompt'])
 
-    # stats: most productive day
     @patch('timeout.services.ai_service.cache')
     def test_most_productive_day_in_stats(self, mock_cache):
+        """Test that the most productive day is correctly included in stats."""
         mock_cache.get.return_value = None
         make_event(self.user, Event.EventType.OTHER, hours_ago=2, is_completed=True)
         make_event(self.user, Event.EventType.OTHER, hours_ago=4, is_completed=True)
@@ -156,6 +160,7 @@ class AIServiceTests(TestCase):
         captured = {}
 
         def fake_create(**kwargs):
+            """Fake OpenAI create method to capture prompt."""
             captured['prompt'] = kwargs['messages'][1]['content']
             resp = MagicMock()
             resp.choices[0].message.content = BRIEFING_TEXT
@@ -168,9 +173,9 @@ class AIServiceTests(TestCase):
 
         self.assertIn('most_productive_day', captured['prompt'])
 
-    # stats: no completed events → 'None yet'
     @patch('timeout.services.ai_service.cache')
     def test_no_completed_events_gives_none_yet(self, mock_cache):
+        """Test that no completed events results in 'None yet'."""
         mock_cache.get.return_value = None
 
         captured = {}

@@ -22,10 +22,10 @@ class SeedCommandTests(TestCase):
         self.assertTrue(johndoe.is_superuser)
         self.assertTrue(johndoe.is_staff)
 
-    def test_seed_creates_25_regular_users(self):
+    def test_seed_creates_80_regular_users(self):
         self._call_seed()
-        self.assertEqual(User.objects.count(), 26)
-        self.assertEqual(User.objects.filter(is_superuser=False).count(), 25)
+        self.assertEqual(User.objects.count(), 81)
+        self.assertEqual(User.objects.filter(is_superuser=False).count(), 80)
 
     def test_seed_creates_follow_relationships(self):
         self._call_seed()

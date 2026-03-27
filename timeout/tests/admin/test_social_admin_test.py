@@ -10,14 +10,16 @@ User = get_user_model()
 
 class SocialAdminCoverageTest(TestCase):
     """Coverage-only tests for admin helper methods (does not test admin UI)."""
+
     def setUp(self):
+        """Set up users and admin site for tests."""
         self.site = AdminSite()
         self.author = User.objects.create_user(username="author", password="pass123")
         self.u1 = User.objects.create_user(username="u1", password="pass123")
         self.u2 = User.objects.create_user(username="u2", password="pass123")
 
-    # PostAdmin has methods for content preview, like count, and comment count
     def test_post_admin_preview_and_counts(self):
+        """ PostAdmin has methods for content preview, like count, and comment count """
         pa = PostAdmin(Post, self.site)
 
         short = Post(author=self.author, content="short", privacy=Post.Privacy.PUBLIC)
@@ -33,8 +35,8 @@ class SocialAdminCoverageTest(TestCase):
         self.assertEqual(pa.like_count(saved), 1)
         self.assertEqual(pa.comment_count(saved), 1)
 
-    # CommentAdmin has methods for post content preview and comment content preview
     def test_comment_admin_previews(self):
+        """ CommentAdmin has methods for post content preview and comment content preview """
         ca = CommentAdmin(Comment, self.site)
 
         p_short = Post.objects.create(author=self.author, content="a" * 10, privacy=Post.Privacy.PUBLIC)
@@ -50,8 +52,8 @@ class SocialAdminCoverageTest(TestCase):
         self.assertEqual(ca.content_preview(c_short_post), "hi")
         self.assertTrue(ca.content_preview(c_long_content).endswith("..."))
 
-    # LikeAdmin and BookmarkAdmin have a method for post content preview
     def test_like_and_bookmark_admin_post_preview(self):
+        """ LikeAdmin and BookmarkAdmin have a method for post content preview"""
         la = LikeAdmin(Like, self.site)
         ba = BookmarkAdmin(Bookmark, self.site)
 

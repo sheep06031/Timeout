@@ -43,6 +43,7 @@ class CheckNotificationsCommandTests(TestCase):
     """Tests for the check_notifications management command."""
 
     def setUp(self):
+        """Set up users for testing."""
         self.user1 = User.objects.create_user(username='alice', password='pass123')
         self.user2 = User.objects.create_user(username='bob',   password='pass123')
 
@@ -53,10 +54,12 @@ class CheckNotificationsCommandTests(TestCase):
         return out.getvalue()
 
     def test_prints_success_message(self):
+        """Check that the command prints a success message."""
         output = self._run()
         self.assertIn('Notifications checked', output)
 
     def test_creates_deadline_notification_for_user(self):
+        """Check that a deadline notification is created for a user."""
         make_deadline(self.user1, title='Essay', hours_until_due=12)
         self._run()
         self.assertTrue(
@@ -67,6 +70,7 @@ class CheckNotificationsCommandTests(TestCase):
         )
 
     def test_creates_deadline_notifications_for_all_users(self):
+        """Check that deadline notifications are created for all users."""
         make_deadline(self.user1, title='Alice deadline', hours_until_due=12)
         make_deadline(self.user2, title='Bob deadline',   hours_until_due=12)
         self._run()
@@ -74,11 +78,13 @@ class CheckNotificationsCommandTests(TestCase):
         self.assertTrue(Notification.objects.filter(user=self.user2, type=Notification.Type.DEADLINE).exists())
 
     def test_no_deadline_notification_for_far_future(self):
+        """Check that no notification is created for deadlines far in the future."""
         make_deadline(self.user1, title='Far away', hours_until_due=200)
         self._run()
         self.assertFalse(Notification.objects.filter(user=self.user1).exists())
 
     def test_no_deadline_notification_for_completed_event(self):
+        """Check that no notification is created for completed deadlines."""
         event = make_deadline(self.user1, title='Done', hours_until_due=12)
         event.is_completed = True
         event.save()
@@ -86,6 +92,7 @@ class CheckNotificationsCommandTests(TestCase):
         self.assertFalse(Notification.objects.filter(user=self.user1).exists())
 
     def test_no_duplicate_deadline_notifications_on_repeat_run(self):
+        """Check that duplicate notifications are not created on repeated runs."""
         make_deadline(self.user1, title='Essay', hours_until_due=12)
         self._run()
         self._run()
@@ -95,6 +102,7 @@ class CheckNotificationsCommandTests(TestCase):
         )
 
     def test_creates_event_notification_for_upcoming_class(self):
+        """Check that an event notification is created for an upcoming class."""
         make_upcoming_event(self.user1, title='Maths Lecture', hours_until_start=20)
         self._run()
         self.assertTrue(
@@ -105,6 +113,7 @@ class CheckNotificationsCommandTests(TestCase):
         )
 
     def test_creates_event_notifications_for_all_users(self):
+        """Check that event notifications are created for all users."""
         make_upcoming_event(self.user1, title='Alice class', hours_until_start=20)
         make_upcoming_event(self.user2, title='Bob class',   hours_until_start=20)
         self._run()
@@ -112,11 +121,13 @@ class CheckNotificationsCommandTests(TestCase):
         self.assertTrue(Notification.objects.filter(user=self.user2, type=Notification.Type.CLASS).exists())
 
     def test_no_event_notification_for_far_future(self):
+        """Check that no notification is created for events far in the future."""
         make_upcoming_event(self.user1, title='Far lecture', hours_until_start=500)
         self._run()
         self.assertFalse(Notification.objects.filter(user=self.user1).exists())
 
     def test_no_duplicate_event_notifications_on_repeat_run(self):
+        """Check that duplicate event notifications are not created on repeated runs."""
         make_upcoming_event(self.user1, title='Maths', hours_until_start=20)
         self._run()
         self._run()
@@ -126,6 +137,7 @@ class CheckNotificationsCommandTests(TestCase):
         )
 
     def test_no_event_notification_for_completed_event(self):
+        """Check that no notification is created for completed events."""
         event = make_upcoming_event(self.user1, title='Done class', hours_until_start=20)
         event.is_completed = True
         event.save()
@@ -133,6 +145,7 @@ class CheckNotificationsCommandTests(TestCase):
         self.assertFalse(Notification.objects.filter(user=self.user1).exists())
 
     def test_creates_both_deadline_and_event_notifications(self):
+        """Check that both deadline and event notifications are created."""
         make_deadline(self.user1, title='Assignment', hours_until_due=12)
         make_upcoming_event(self.user1, title='Lecture', hours_until_start=20)
         self._run()
@@ -141,11 +154,13 @@ class CheckNotificationsCommandTests(TestCase):
         self.assertIn(Notification.Type.CLASS, types)
 
     def test_runs_with_no_users(self):
+        """Check that the command runs without errors when there are no users."""
         User.objects.all().delete()
         output = self._run()
         self.assertIn('Notifications checked', output)
 
     def test_runs_with_no_events(self):
+        """Check that the command runs without errors when there are no events."""
         output = self._run()
         self.assertIn('Notifications checked', output)
         self.assertEqual(Notification.objects.count(), 0)

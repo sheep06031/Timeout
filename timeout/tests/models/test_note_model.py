@@ -12,6 +12,7 @@ class NoteModelTest(TestCase):
     """Tests for Note model fields, methods, and constraints."""
 
     def setUp(self):
+        """Set up test users and a note for testing."""
         self.user = User.objects.create_user(
             username='owner', password='pass123'
         )
@@ -37,11 +38,13 @@ class NoteModelTest(TestCase):
         )
 
     def test_str_representation(self):
+        """Test that the string representation includes the owner's username and note title."""
         result = str(self.note)
         self.assertIn(self.user.username, result)
         self.assertIn('Study Plan', result)
 
     def test_default_values(self):
+        """Test that the default values are set correctly."""
         note = Note.objects.create(
             owner=self.user,
             title='Quick Note',
@@ -51,6 +54,7 @@ class NoteModelTest(TestCase):
         self.assertEqual(note.category, Note.Category.OTHER)
 
     def test_get_color_all_categories(self):
+        """Test that get_color returns the correct color for all categories."""
         expected = {
             'lecture': 'primary',
             'todo': 'danger',
@@ -63,31 +67,40 @@ class NoteModelTest(TestCase):
             self.assertEqual(self.note.get_color(), color)
 
     def test_get_color_unknown_returns_secondary(self):
+        """Test that get_color returns 'secondary' for an unknown category."""
         self.note.category = 'unknown'
         self.assertEqual(self.note.get_color(), 'secondary')
 
     def test_can_edit_owner_returns_true(self):
+        """Test that the owner can edit the note."""
         self.assertTrue(self.note.can_edit(self.user))
 
     def test_can_edit_non_owner_returns_false(self):
+        """Test that a non-owner cannot edit the note."""
         self.assertFalse(self.note.can_edit(self.other))
 
     def test_can_edit_anonymous_returns_false(self):
+        """Test that an anonymous user cannot edit the note."""
         self.assertFalse(self.note.can_edit(AnonymousUser()))
 
     def test_can_delete_owner_returns_true(self):
+        """Test that the owner can delete the note."""
         self.assertTrue(self.note.can_delete(self.user))
 
     def test_can_delete_non_owner_returns_false(self):
+        """Test that a non-owner cannot delete the note."""
         self.assertFalse(self.note.can_delete(self.other))
 
     def test_can_delete_staff_returns_true(self):
+        """Test that a staff member can delete the note."""
         self.assertTrue(self.note.can_delete(self.staff))
 
     def test_can_delete_anonymous_returns_false(self):
+        """Test that an anonymous user cannot delete the note."""
         self.assertFalse(self.note.can_delete(AnonymousUser()))
 
     def test_ordering_pinned_first(self):
+        """Test that pinned notes are ordered first."""
         pinned = Note.objects.create(
             owner=self.user,
             title='Pinned Note',
@@ -98,11 +111,13 @@ class NoteModelTest(TestCase):
         self.assertEqual(notes[0], pinned)
 
     def test_event_set_null_on_delete(self):
+        """Test that the event field is set to null when the linked event is deleted."""
         self.event.delete()
         self.note.refresh_from_db()
         self.assertIsNone(self.note.event)
 
     def test_category_choices(self):
+        """Test that the category field has the correct choices."""
         values = [c[0] for c in Note.Category.choices]
         self.assertIn('lecture', values)
         self.assertIn('todo', values)
