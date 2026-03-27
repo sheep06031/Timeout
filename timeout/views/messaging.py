@@ -2,10 +2,10 @@ from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views.decorators.http import require_POST
-from django.db.models import Q
 
-from timeout.models import User, Conversation, Message, Block
+from timeout.models import User, Conversation, Message
 from timeout.models.notification import Notification
+from timeout.services.social_service import are_blocked
 
 
 @login_required
@@ -35,10 +35,7 @@ def start_conversation(request, username):
     if other_user == request.user:
         return redirect('inbox')
     
-    if Block.objects.filter(
-        Q(blocker=request.user, blocked=other_user) |
-        Q(blocker=other_user, blocked=request.user)
-    ).exists():
+    if are_blocked(request.user, other_user):
         return redirect('inbox')
 
     # Check if conversation already exists between these two users
@@ -65,10 +62,7 @@ def conversation(request, conversation_id):
     )
 
     other_user = conv.get_other_participant(request.user)
-    if other_user and Block.objects.filter(
-        Q(blocker=request.user, blocked=other_user) |
-        Q(blocker=other_user, blocked=request.user)
-    ).exists():
+    if are_blocked(request.user, other_user):
         return redirect('inbox')
 
     conv.messages.exclude(sender=request.user).update(is_read=True)
@@ -83,13 +77,6 @@ def conversation(request, conversation_id):
     return render(request, 'messaging/conversation.html', context)
 
 
-
-
-def _check_blocked(user, other):
-    """Return True if a block exists between user and other."""
-    return other and Block.objects.filter(
-        Q(blocker=user, blocked=other) | Q(blocker=other, blocked=user)
-    ).exists()
 
 
 def _notify_receiver(receiver, sender, content, conv):
@@ -122,7 +109,7 @@ def send_message(request, conversation_id):
     conv = get_object_or_404(
         Conversation, id=conversation_id, participants=request.user)
     receiver = conv.get_other_participant(request.user)
-    if _check_blocked(request.user, receiver):
+    if are_blocked(request.user, receiver):
         return JsonResponse({'error': 'Cannot message a blocked user'}, status=403)
     content = request.POST.get('content', '').strip()
     if not content:

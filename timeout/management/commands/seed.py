@@ -26,7 +26,7 @@ from timeout.models import Event, Post, Comment, Like, Bookmark, FocusSession, N
 User = get_user_model()
 fake = Faker()
 
-NUM_USERS = 80
+NUM_USERS = 25
 NUM_EVENTS = 50
 NUM_POSTS = 200
 NUM_NOTES_PER_USER = (8, 60)  # min, max notes per user

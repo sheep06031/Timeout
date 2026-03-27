@@ -1,6 +1,5 @@
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.db.models import Q
 from django.http import JsonResponse, HttpResponseForbidden
 from django.shortcuts import render, redirect, get_object_or_404
 from django.template.loader import render_to_string
@@ -13,7 +12,7 @@ from timeout.services import FeedService
 from timeout.views.profile import get_profile_event
 from timeout.services.social_service import (_get_conversation_sidebar,
     _get_follow_request_info, _get_block_status, _can_view_profile,
-    _serialize_search_result, _search_users_queryset)
+    _serialize_search_result, _search_users_queryset, are_blocked)
 
 def _get_feed_posts(tab, user, cursor=None):
     """Return feed posts"""
@@ -94,7 +93,7 @@ def like_post(request, post_id):
     """Like or unlike a post (toggle)."""
     post = get_object_or_404(Post, id=post_id)
     if not post.can_view(request.user): return JsonResponse({'error': 'Cannot view post'}, status=403)
-    if Block.objects.filter(Q(blocker=request.user, blocked=post.author) | Q(blocker=post.author, blocked=request.user)).exists():
+    if are_blocked(request.user, post.author):
         return JsonResponse({'error': 'Cannot interact with this post'}, status=403)
     like, created = Like.objects.get_or_create(user=request.user, post=post)
     if not created:
@@ -129,7 +128,7 @@ def add_comment(request, post_id):
     """Add a comment to a post."""
     post = get_object_or_404(Post, id=post_id)
     if not post.can_view(request.user): return HttpResponseForbidden('Cannot view post')
-    if Block.objects.filter(Q(blocker=request.user, blocked=post.author) | Q(blocker=post.author, blocked=request.user)).exists():
+    if are_blocked(request.user, post.author):
         return HttpResponseForbidden('Cannot interact with this post')
     form = CommentForm(request.POST)
     if form.is_valid():
@@ -202,7 +201,7 @@ def follow_user(request, username):
     """Follow/unfollow a user, or send/cancel a request for private accounts."""
     user_to_follow = get_object_or_404(User, username=username)
     if user_to_follow == request.user: return JsonResponse({'error': 'Cannot follow yourself'}, status=400)
-    if Block.objects.filter(Q(blocker=request.user, blocked=user_to_follow) | Q(blocker=user_to_follow, blocked=request.user)).exists():
+    if are_blocked(request.user, user_to_follow):
         return JsonResponse({'error': 'Cannot follow a blocked user'}, status=403)
     if request.user.following.filter(id=user_to_follow.id).exists():
         request.user.following.remove(user_to_follow)
@@ -280,36 +279,6 @@ def update_status(request):
     return JsonResponse({'status': status, 'status_display': request.user.get_status_display(),
         'focus_started_at': int(request.user.focus_started_at.timestamp()) if request.user.focus_started_at else None})
   
-@login_required
-def followers_api(request):
-    """Get a list of followers for the logged-in user, with an indication of whether they follow back."""
-    users = request.user.followers.all()
-    following_ids = set(request.user.following.values_list('id', flat=True))
-    return JsonResponse({'users': _serialize_users(users, following_ids=following_ids)})
-
-@login_required
-def following_api(request):
-    """Get a list of users the logged-in user is following."""
-    users = request.user.following.all()
-    return JsonResponse({'users': _serialize_users(users)})
-
-@login_required
-def user_followers_api(request, username):
-    """Get a list of followers for a specific user, with privacy checks."""
-    profile_user = get_object_or_404(User, username=username)
-    can_view = (request.user == profile_user or not profile_user.privacy_private or request.user.following.filter(id=profile_user.id).exists())
-    if not can_view: return JsonResponse({'error': 'This account is private.'}, status=403)
-    users = profile_user.followers.all()
-    return JsonResponse({'users': _serialize_users(users)})
-
-@login_required
-def user_following_api(request, username):
-    """Get a list of users a specific user is following, with privacy checks."""
-    profile_user = get_object_or_404(User, username=username)
-    can_view = (request.user == profile_user or not profile_user.privacy_private or request.user.following.filter(id=profile_user.id).exists())
-    if not can_view: return JsonResponse({'error': 'This account is private.'}, status=403)
-    users = profile_user.following.all()
-    return JsonResponse({'users': _serialize_users(users)})
 
 @login_required
 def search_users(request):
@@ -320,29 +289,6 @@ def search_users(request):
     results = [_serialize_search_result(u) for u in users]
     return JsonResponse({'users': results})
 
-@login_required
-def friends_api(request):
-    """Get a list of mutual followers (friends) for the logged-in user."""
-    friends = request.user.following.filter(followers=request.user)
-    return JsonResponse({'users': _serialize_users(friends)})
-
-@login_required
-def user_friends_api(request, username):
-    """Get a list of mutual followers (friends) for a specific user, with privacy checks."""
-    profile_user = get_object_or_404(User, username=username)
-    can_view = (request.user == profile_user or not profile_user.privacy_private or request.user.following.filter(id=profile_user.id).exists())
-    if not can_view: return JsonResponse({'error': 'This account is private.'}, status=403)
-    friends = profile_user.following.filter(followers=profile_user)
-    return JsonResponse({'users': _serialize_users(friends)})
-
-def _serialize_users(users, following_ids=None):
-    """Helper to serialize user lists with optional following back info."""
-    result = []
-    for u in users:
-        entry = {'username': u.username, 'full_name': u.get_full_name(), 'profile_picture': u.profile_picture.url if u.profile_picture else None}
-        if following_ids is not None: entry['is_followed_back'] = u.id in following_ids
-        result.append(entry)
-    return result
 
 @login_required
 @require_POST

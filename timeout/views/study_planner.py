@@ -49,7 +49,7 @@ def _find_candidate_slots(user, deadline, hours_needed, session_length):
 def _schedule_with_gpt(deadline, hours_needed, session_length, candidates):
     """Call GPT to schedule sessions and return the JSON response."""
     if not getattr(settings, 'OPENAI_API_KEY', ''):
-        return JsonResponse({'success': False, 'error': 'OpenAI API key not configured.'}, status=500)
+        return JsonResponse({'success': True, 'sessions': candidates})
     try:
         sessions = call_gpt(deadline, hours_needed, session_length, candidates)
     except json.JSONDecodeError:
@@ -57,7 +57,7 @@ def _schedule_with_gpt(deadline, hours_needed, session_length, candidates):
     except Exception as e:
         return JsonResponse({'success': False, 'error': f'AI error: {str(e)}'}, status=500)
     if not sessions:
-        return JsonResponse({'success': False, 'error': 'AI could not generate sessions. Try again.'}, status=500)
+        return JsonResponse({'success': True, 'sessions': candidates})
     return JsonResponse({'success': True, 'sessions': sessions})
 
 

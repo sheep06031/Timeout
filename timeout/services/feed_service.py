@@ -3,6 +3,12 @@ from timeout.models import Post, Block
 
 PAGE_SIZE = 15
 
+def _get_blocked_ids(user):
+    """Return (blocked_by_me_ids, blocking_me_ids) for a user."""
+    blocked_by_me = Block.objects.filter(blocker=user).values_list('blocked_id', flat=True)
+    blocking_me = Block.objects.filter(blocked=user).values_list('blocker_id', flat=True)
+    return blocked_by_me, blocking_me
+
 class FeedService:
     """Service for managing social feed logic."""
 
@@ -11,8 +17,7 @@ class FeedService:
         if not user.is_authenticated:
             return Post.objects.none()
         
-        blocked_by_me = Block.objects.filter(blocker=user).values_list('blocked_id', flat=True)
-        blocking_me = Block.objects.filter(blocked=user).values_list('blocker_id', flat=True)
+        blocked_by_me, blocking_me = _get_blocked_ids(user)
 
         following_ids = user.following.values_list('id', flat=True)
 
@@ -38,8 +43,7 @@ class FeedService:
         ).exclude(author__is_banned=True)
 
         if user.is_authenticated:
-            blocked_by_me = Block.objects.filter(blocker=user).values_list('blocked_id', flat=True)
-            blocking_me = Block.objects.filter(blocked=user).values_list('blocker_id', flat=True)
+            blocked_by_me, blocking_me = _get_blocked_ids(user)
 
             following_ids = user.following.values_list('id', flat=True)
             qs = (qs.exclude(author_id__in=following_ids)
@@ -76,8 +80,7 @@ class FeedService:
         if not user.is_authenticated:
             return Post.objects.none()
 
-        blocked_by_me = Block.objects.filter(blocker=user).values_list('blocked_id', flat=True)
-        blocking_me = Block.objects.filter(blocked=user).values_list('blocker_id', flat=True)
+        blocked_by_me, blocking_me = _get_blocked_ids(user)
 
         bookmarked_post_ids = user.bookmarks.values_list('post_id', flat=True)
 
