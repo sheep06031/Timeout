@@ -40,7 +40,6 @@ function formatDuration(totalMins) {
  */
 function formatCountdown(startD, endD) {
     const now = new Date();
-
     if (now < startD) {
         const totalMins = Math.round((startD - now) / 60000);
         const days  = Math.floor(totalMins / 1440);
@@ -48,17 +47,13 @@ function formatCountdown(startD, endD) {
         const mins  = totalMins % 60;
         if (days > 0)       return `Starts in ${days}d ${hours}h`;
         if (hours > 0)      return `Starts in ${hours}h ${mins}m`;
-        return `Starts in ${mins}m`;
-    }
-
+        return `Starts in ${mins}m`;}
     if (now <= endD) {
         const totalMins = Math.round((endD - now) / 60000);
         const hours = Math.floor(totalMins / 60);
         const mins  = totalMins % 60;
         if (hours > 0) return `Ongoing — ends in ${hours}h ${mins}m`;
-        return `Ongoing — ends in ${mins}m`;
-    }
-
+        return `Ongoing — ends in ${mins}m`;}
     const totalMins = Math.round((now - endD) / 60000);
     const days  = Math.floor(totalMins / 1440);
     const hours = Math.floor((totalMins % 1440) / 60);

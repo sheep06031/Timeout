@@ -94,7 +94,6 @@ function initMessaging() {
 function initLoadMore() {
     const loadMoreBtn = document.getElementById('load-more-btn');
     if (!loadMoreBtn) return;
-
     loadMoreBtn.addEventListener('click', function () {
         const tab = this.dataset.tab;
         const cursor = this.dataset.cursor;
@@ -110,13 +109,10 @@ function initLoadMore() {
                     this.disabled = false;
                 } else {
                     document.getElementById('load-more-wrap').remove();
-                }
-            })
+                }})
             .catch(() => {
                 this.textContent = 'Load more';
-                this.disabled = false;
-            });
-    });
+                this.disabled = false;});});
 }
 
 document.addEventListener('DOMContentLoaded', function() {

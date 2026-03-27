@@ -77,39 +77,28 @@ window.RS_APPLY_URL = document.querySelector('meta[name="rs-apply-url"]').conten
 function openDayEvents(dateStr, dateLabel, el) {
     const cell = el.closest('td');
     const chips = cell.querySelectorAll('.cal-chip');
-
     document.getElementById('dayEventsModalTitle').textContent = dateLabel;
-
     const body = document.getElementById('dayEventsModalBody');
     body.innerHTML = '';
-
     chips.forEach(chip => {
         const item = document.createElement('div');
         item.className = 'day-modal-event-item';
-
         const title = chip.dataset.eventTitle || chip.textContent.trim();
         const start = chip.dataset.eventStart || '';
         const end = chip.dataset.eventEnd || '';
         const eventClass = [...chip.classList]
             .find(c => c.startsWith('cal-chip--') && c !== 'cal-chip--conflict') || '';
-
         item.innerHTML = `
         <div class="day-modal-event ${eventClass}">
             <div class="day-modal-event-title">${title}</div>
             <div class="day-modal-event-time">${start} → ${end}</div>
         </div>
         `;
-
         item.addEventListener('click', () => {
             bootstrap.Modal.getInstance(document.getElementById('dayEventsModal'))?.hide();
-            setTimeout(() => chip.click(), 300);
-        });
-
-        body.appendChild(item);
-    });
-
-    new bootstrap.Modal(document.getElementById('dayEventsModal')).show();
-}
+            setTimeout(() => chip.click(), 300);});
+        body.appendChild(item); });
+    new bootstrap.Modal(document.getElementById('dayEventsModal')).show();}
 
 /**
  * Mark calendar event chips as 'ongoing' based on their data-event-status attribute.

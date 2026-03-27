@@ -256,12 +256,10 @@ document.addEventListener("DOMContentLoaded", () => {
         div.dataset.eventId = n.deadline_id || "";
         div.dataset.convoId = n.conversation_id || "";
         div.dataset.postId = n.post_id || "";
-
         const timeStr = new Date(n.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
         const readBtn = n.is_read
             ? `<button class="mark-unread-btn notif-btn" data-id="${n.id}">Unread</button>`
             : `<button class="mark-read-btn notif-btn notif-btn-read" data-id="${n.id}">Read</button>`;
-
         div.innerHTML = `
             <div class="notification-main">
                 <div class="notification-title">${n.title}</div>

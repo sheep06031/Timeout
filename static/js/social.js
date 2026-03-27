@@ -156,31 +156,22 @@ function initUserSearch() {
     const input = document.getElementById('userSearchInput');
     const results = document.getElementById('userSearchResults');
     if (!input) return;
-
     document.body.appendChild(results);
     let debounceTimer;
-
     input.addEventListener('input', function() {
         clearTimeout(debounceTimer);
         const query = this.value.trim();
         if (!query) { results.hidden = true; results.innerHTML = ''; return; }
-
         debounceTimer = setTimeout(function() {
             fetch(`/social/search/?q=${encodeURIComponent(query)}`)
                 .then(r => r.json())
                 .then(data => _handleSearchResults(data, results, input))
                 .catch(() => { results.hidden = true; });
-        }, 300);
-    });
-
+        }, 300);});
     document.addEventListener('click', function(e) {
-        if (!input.contains(e.target) && !results.contains(e.target)) results.hidden = true;
-    });
-
+        if (!input.contains(e.target) && !results.contains(e.target)) results.hidden = true;});
     input.addEventListener('focus', function() {
-        if (results.innerHTML) { _positionSearchDropdown(input, results); results.hidden = false; }
-    });
-
+        if (results.innerHTML) { _positionSearchDropdown(input, results); results.hidden = false; } });
     window.addEventListener('scroll', () => _positionSearchDropdown(input, results), { passive: true });
     window.addEventListener('resize', () => _positionSearchDropdown(input, results), { passive: true });
 }

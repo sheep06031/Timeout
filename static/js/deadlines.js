@@ -46,38 +46,29 @@ document.addEventListener('DOMContentLoaded', function() {
  */
 function completeDeadline(eventId, checkbox) {
   var item = document.querySelector('[data-id="' + eventId + '"]');
-
   fetch('/deadlines/' + eventId + '/complete/', {
     method: 'POST',
     headers: {
       'X-CSRFToken': getCSRFToken(),
-      'Content-Type': 'application/json',
-    },
-  })
+      'Content-Type': 'application/json',},})
   .then(function(res) {
     if (!res.ok) throw new Error('Request failed');
-    return res.json();
-  })
+    return res.json();})
   .then(function(data) {
     if (data.is_completed && item) {
       checkbox.disabled = true;
       item.classList.add('dl-item--completing');
       setTimeout(function() {
         item.remove();
-        // Update tab count badge
         var panel = document.querySelector('.dl-tab-panel--active');
         if (panel) {
           var remaining = panel.querySelectorAll('.dl-item').length;
           var activeBtn = document.querySelector('.dl-tab-btn--active .dl-tab-count');
           if (activeBtn) activeBtn.textContent = remaining;
-          if (remaining === 0) location.reload(); }}, 400);
-    }
-  })
+          if (remaining === 0) location.reload(); }}, 400);}})
   .catch(function(err) {
     console.error('Complete failed:', err);
-    checkbox.checked = false;
-  });
-}
+    checkbox.checked = false;});}
 
 /**
  * Mark a completed deadline as incomplete and animate removal from the list.
@@ -87,32 +78,24 @@ function completeDeadline(eventId, checkbox) {
  */
 function incompleteDeadline(eventId, checkbox) {
   var item = document.querySelector('[data-id="' + eventId + '"]');
-
   fetch('/deadlines/' + eventId + '/incomplete/', {
     method: 'POST',
     headers: {
       'X-CSRFToken': getCSRFToken(),
-      'Content-Type': 'application/json',
-    },
-  })
+      'Content-Type': 'application/json',},})
   .then(function(res) {
     if (!res.ok) throw new Error('Request failed');
-    return res.json();
-  })
+    return res.json();})
   .then(function(data) {
     if (data.is_completed === false && item) {
       item.classList.add('dl-item--completing');
       setTimeout(function() {
         item.remove();
         if (document.querySelectorAll('.dl-item').length === 0) {
-          location.reload();
-        }
-      }, 400);
-    }
-  })
+          location.reload();}
+      }, 400);}})
   .catch(function(err) {
     console.error('Incomplete failed:', err);
-    checkbox.checked = true;
-  });
+    checkbox.checked = true;});
 }
 

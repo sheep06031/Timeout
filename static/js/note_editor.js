@@ -61,15 +61,12 @@
   function updateOutline() {
     var headings = quill.root.querySelectorAll('h1, h2, h3');
     outlineList.innerHTML = '';
-
     if (headings.length === 0) {
       var empty = document.createElement('li');
       empty.className = 'note-outline-empty';
       empty.textContent = 'No headings yet';
       outlineList.appendChild(empty);
-      return;
-    }
-
+      return;}
     headings.forEach(function(heading) {
       var text = heading.textContent.trim();
       if (!text) return;
@@ -79,28 +76,19 @@
       li.textContent = text;
       li.title = text;
       li.addEventListener('click', function() {
-        heading.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      });
-      outlineList.appendChild(li);
-    });
-
-    /* If all headings were empty text */
+        heading.scrollIntoView({ behavior: 'smooth', block: 'center' });});
+      outlineList.appendChild(li);});
     if (outlineList.children.length === 0) {
       var empty = document.createElement('li');
       empty.className = 'note-outline-empty';
       empty.textContent = 'No headings yet';
-      outlineList.appendChild(empty);
-    }
-  }
+      outlineList.appendChild(empty);}}
+
 
   outlineToggleBtn.addEventListener('click', function() {
-    outlinePanel.classList.toggle('collapsed');
-  });
-
+    outlinePanel.classList.toggle('collapsed');});
   outlineCloseBtn.addEventListener('click', function() {
-    outlinePanel.classList.add('collapsed');
-  });
-
+    outlinePanel.classList.add('collapsed');});
   quill.on('text-change', updateOutline);
   updateOutline();
 
