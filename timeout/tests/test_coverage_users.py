@@ -17,24 +17,26 @@ User = get_user_model()
 
 
 def make_user(username='testuser', password='TestPass1!', **kwargs):
+    """Helper function to create a user with default credentials."""
     return User.objects.create_user(username=username, password=password, **kwargs)
 
-
-# Settings View
-
 class SettingsViewTests(TestCase):
+    """Tests for the settings view."""
 
     def setUp(self):
+        """Set up a test user and client for settings view tests."""
         self.user = make_user()
         self.client.login(username='testuser', password='TestPass1!')
 
     def test_settings_get(self):
+        """Test that the settings view loads correctly."""
         resp = self.client.get(reverse('settings'))
         self.assertEqual(resp.status_code, 200)
         self.assertIn('appearance_form', resp.context)
         self.assertIn('password_form', resp.context)
 
     def test_settings_change_password(self):
+        """Test that changing the password works correctly."""
         resp = self.client.post(reverse('settings'), {
             'action': 'password',
             'old_password': 'TestPass1!',
@@ -46,6 +48,7 @@ class SettingsViewTests(TestCase):
         self.assertTrue(self.user.check_password('NewStr0ng@Pass!'))
 
     def test_settings_change_password_invalid(self):
+        """Test that providing an incorrect old password does not change the password."""
         resp = self.client.post(reverse('settings'), {
             'action': 'password',
             'old_password': 'WrongPass!',
@@ -55,11 +58,13 @@ class SettingsViewTests(TestCase):
         self.assertEqual(resp.status_code, 200)
 
     def test_settings_delete_account(self):
+        """Test that deleting the account works correctly."""
         resp = self.client.post(reverse('settings'), {'action': 'delete_account'})
         self.assertRedirects(resp, reverse('landing'))
         self.assertFalse(User.objects.filter(pk=self.user.pk).exists())
 
     def test_settings_save_ajax(self):
+        """Test that saving settings via AJAX works correctly."""
         resp = self.client.post(reverse('settings_save'), {
             'theme': 'dark',
             'colorblind_mode': 'none',
@@ -74,10 +79,12 @@ class SettingsViewTests(TestCase):
         self.assertTrue(data['ok'])
 
     def test_settings_save_ajax_invalid(self):
+        """Test that saving settings via AJAX with invalid data returns an error."""
         resp = self.client.post(reverse('settings_save'), {'theme': 'invalid_theme'})
         self.assertEqual(resp.status_code, 400)
 
     def test_settings_requires_login(self):
+        """Test that the settings view requires login."""
         self.client.logout()
         resp = self.client.get(reverse('settings'))
         self.assertEqual(resp.status_code, 302)
@@ -88,15 +95,18 @@ class SettingsViewTests(TestCase):
 class ProfileEditViewTests(TestCase):
 
     def setUp(self):
+        """Set up a test user and client for profile edit view tests."""
         self.user = make_user(university='Oxford University')
         self.client.login(username='testuser', password='TestPass1!')
 
     def test_profile_edit_get(self):
+        """Test that the profile edit view loads correctly."""
         resp = self.client.get(reverse('profile_edit'))
         self.assertEqual(resp.status_code, 200)
         self.assertIn('form', resp.context)
 
     def test_profile_edit_post_valid(self):
+        """Test that submitting valid data to the profile edit view updates the user."""
         resp = self.client.post(reverse('profile_edit'), {
             'first_name': 'Updated',
             'last_name': 'Name',
@@ -111,6 +121,7 @@ class ProfileEditViewTests(TestCase):
         self.assertEqual(self.user.first_name, 'Updated')
 
     def test_profile_edit_post_invalid(self):
+        """Test that submitting invalid data to the profile edit view does not update the user."""
         resp = self.client.post(reverse('profile_edit'), {
             'university_choice': '__other__',
             'university_other': '',
@@ -118,19 +129,21 @@ class ProfileEditViewTests(TestCase):
         self.assertEqual(resp.status_code, 200)
 
     def test_profile_edit_requires_login(self):
+        """Test that the profile edit view requires login."""
         self.client.logout()
         resp = self.client.get(reverse('profile_edit'))
         self.assertEqual(resp.status_code, 302)
 
 
-# Profile Edit Form
-
 class ProfileEditFormTests(TestCase):
+    """Tests for the ProfileEditForm, especially university choice logic."""
 
     def setUp(self):
+        """Set up a test user for profile edit form tests."""
         self.user = make_user()
 
     def test_valid_with_known_university(self):
+        """Test that the form is valid when a known university is selected."""
         form = ProfileEditForm(data={
             'first_name': 'A', 'last_name': 'B',
             'university_choice': 'Oxford University',
@@ -140,6 +153,7 @@ class ProfileEditFormTests(TestCase):
         self.assertTrue(form.is_valid())
 
     def test_valid_with_other_university(self):
+        """Test that the form is valid when 'other' university is selected with text."""
         form = ProfileEditForm(data={
             'first_name': 'A', 'last_name': 'B',
             'university_choice': '__other__',
@@ -150,6 +164,7 @@ class ProfileEditFormTests(TestCase):
         self.assertTrue(form.is_valid())
 
     def test_other_requires_text(self):
+        """Test that the form is invalid when 'other' university is selected without text."""
         form = ProfileEditForm(data={
             'first_name': 'A', 'last_name': 'B',
             'university_choice': '__other__',
@@ -161,6 +176,7 @@ class ProfileEditFormTests(TestCase):
         self.assertIn('university_other', form.errors)
 
     def test_save_sets_university(self):
+        """Test that saving the form sets the university field correctly based on the choice."""
         form = ProfileEditForm(data={
             'first_name': 'A', 'last_name': 'B',
             'university_choice': 'Durham University',
@@ -172,6 +188,7 @@ class ProfileEditFormTests(TestCase):
         self.assertEqual(user.university, 'Durham University')
 
     def test_save_other_university(self):
+        """Test that saving the form with 'other' university sets the university field to the provided text."""
         form = ProfileEditForm(data={
             'first_name': 'A', 'last_name': 'B',
             'university_choice': '__other__',
@@ -184,12 +201,14 @@ class ProfileEditFormTests(TestCase):
         self.assertEqual(user.university, 'Stanford')
 
     def test_prepopulate_known_university(self):
+        """Test that the form pre-populates the university choice when the user's university is a known option."""
         self.user.university = 'Oxford University'
         self.user.save()
         form = ProfileEditForm(instance=self.user)
         self.assertEqual(form.initial.get('university_choice'), 'Oxford University')
 
     def test_prepopulate_other_university(self):
+        """Test that the form pre-populates the 'other' university fields when the user's university is not a known option."""
         self.user.university = 'Unknown Uni'
         self.user.save()
         form = ProfileEditForm(instance=self.user)
@@ -197,6 +216,7 @@ class ProfileEditFormTests(TestCase):
         self.assertEqual(form.initial.get('university_other'), 'Unknown Uni')
 
     def test_no_university_no_prepopulate(self):
+        """Test that the form does not pre-populate university fields when the user has no university set."""
         form = ProfileEditForm(instance=self.user)
         self.assertNotIn('university_choice', form.initial)
 
@@ -214,27 +234,29 @@ class ProfileEditFormTests(TestCase):
             user = form.save()
             self.assertEqual(user.university, 'Existing')
 
-
-# AI Calendar
-
 class AICalendarTests(TestCase):
+    """Tests for the AI calendar event creation view."""
 
     def setUp(self):
+        """Set up a test user and client for AI calendar tests."""
         self.user = make_user()
         self.client.login(username='testuser', password='TestPass1!')
 
     def test_empty_input(self):
+        """Test that submitting empty input returns a 400 status code."""
         resp = self.client.post(reverse('ai_event_create'), {'user_input': ''})
         self.assertEqual(resp.status_code, 400)
 
     @patch('timeout.views.ai_calendar.settings')
     def test_no_api_key(self, mock_settings):
+        """Test that if no OpenAI API key is set, the view returns a 500 status code."""
         mock_settings.OPENAI_API_KEY = ''
         resp = self.client.post(reverse('ai_event_create'), {'user_input': 'meeting tomorrow'})
         self.assertEqual(resp.status_code, 500)
 
     @patch('timeout.views.ai_calendar.settings')
     def test_ai_json_error(self, mock_settings):
+        """Test that if the AI returns invalid JSON, the view returns a 500 status code."""
         mock_settings.OPENAI_API_KEY = 'test-key'
         with patch.dict('sys.modules', {'openai': MagicMock(OpenAI=MagicMock(side_effect=Exception('fail')))}):
             resp = self.client.post(reverse('ai_event_create'), {'user_input': 'meeting tomorrow'})
@@ -242,6 +264,7 @@ class AICalendarTests(TestCase):
 
     @patch('timeout.views.ai_calendar.settings')
     def test_ai_success(self, mock_settings):
+        """Test that if the AI returns valid JSON, the view returns a 200 status code and success response."""
         mock_settings.OPENAI_API_KEY = 'test-key'
         now = timezone.now()
         mock_response = MagicMock()
@@ -266,6 +289,7 @@ class AICalendarTests(TestCase):
 
     @patch('timeout.views.ai_calendar.settings')
     def test_ai_invalid_json(self, mock_settings):
+        """Test that if the AI returns invalid JSON, the view returns a 500 status code."""
         mock_settings.OPENAI_API_KEY = 'test-key'
         mock_response = MagicMock()
         mock_response.choices = [MagicMock()]
@@ -278,6 +302,7 @@ class AICalendarTests(TestCase):
 
     @patch('timeout.views.ai_calendar.settings')
     def test_ai_all_day_event(self, mock_settings):
+        """Test that if the AI returns an all-day event, the view handles it correctly."""
         mock_settings.OPENAI_API_KEY = 'test-key'
         now = timezone.now()
         mock_response = MagicMock()
@@ -299,6 +324,7 @@ class AICalendarTests(TestCase):
 
     @patch('timeout.views.ai_calendar.settings')
     def test_ai_markdown_code_fence(self, mock_settings):
+        """Test that if the AI returns JSON wrapped in a Markdown code fence, the view handles it correctly."""
         mock_settings.OPENAI_API_KEY = 'test-key'
         now = timezone.now()
         raw_json = json.dumps({
@@ -320,10 +346,12 @@ class AICalendarTests(TestCase):
         self.assertEqual(resp.status_code, 200)
 
     def test_requires_login(self):
+        """Test that the view requires the user to be logged in."""
         self.client.logout()
         resp = self.client.post(reverse('ai_event_create'), {'user_input': 'x'})
         self.assertEqual(resp.status_code, 302)
 
     def test_requires_post(self):
+        """Test that the view only allows POST requests."""
         resp = self.client.get(reverse('ai_event_create'))
         self.assertEqual(resp.status_code, 405)

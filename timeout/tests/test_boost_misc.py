@@ -17,45 +17,35 @@ from timeout.models.message import Conversation, Message
 
 User = get_user_model()
 
-
 def _make_user(username='testuser', password='TestPass1!', **kwargs):
+    """Helper function to create a user with default credentials."""
     return User.objects.create_user(username=username, password=password, **kwargs)
 
-
-def _make_event(user, title='Evt', event_type='meeting', days_offset=1, hours=1, **kwargs):
-    now = timezone.now()
-    return Event.objects.create(
-        creator=user, title=title, event_type=event_type,
-        start_datetime=now + timedelta(days=days_offset),
-        end_datetime=now + timedelta(days=days_offset, hours=hours),
-        **kwargs,
-    )
-
-
-# Pages Views
-
 class PagesViewTests(TestCase):
+    """Tests for the main page views like landing, dashboard, and banned."""
 
     def test_banned_page(self):
+        """Test that the banned page loads successfully."""
         resp = self.client.get(reverse('banned'))
         self.assertEqual(resp.status_code, 200)
 
     def test_dashboard_requires_login(self):
+        """Test that the dashboard view requires login."""
         resp = self.client.get(reverse('dashboard'))
         self.assertEqual(resp.status_code, 302)
 
     def test_dashboard_authenticated(self):
+        """Test that the dashboard view loads successfully for authenticated users."""
         _make_user()
         self.client.login(username='testuser', password='TestPass1!')
         resp = self.client.get(reverse('dashboard'))
         self.assertEqual(resp.status_code, 200)
 
-
-# Notification Service Edge Cases
-
 class NotificationServiceTests(TestCase):
+    """Tests for the NotificationService helper functions."""
 
     def test_create_deadline_notifications_within_hour(self):
+        """Test that create_deadline_notifications creates notifications for deadlines within the next hour."""
         from timeout.services.notification_service import NotificationService
         from timeout.models.notification import Notification
         user = _make_user()
@@ -71,6 +61,7 @@ class NotificationServiceTests(TestCase):
         self.assertTrue(Notification.objects.filter(user=user).exists())
 
     def test_create_deadline_notifications_within_day(self):
+        """Test that create_deadline_notifications creates notifications for deadlines within the next day."""
         from timeout.services.notification_service import NotificationService
         from timeout.models.notification import Notification
         user = _make_user()
@@ -86,6 +77,7 @@ class NotificationServiceTests(TestCase):
         self.assertTrue(Notification.objects.filter(user=user).exists())
 
     def test_create_deadline_notifications_within_week(self):
+        """Test that create_deadline_notifications creates notifications for deadlines within the next week."""
         from timeout.services.notification_service import NotificationService
         from timeout.models.notification import Notification
         user = _make_user()
@@ -101,6 +93,7 @@ class NotificationServiceTests(TestCase):
         self.assertTrue(Notification.objects.filter(user=user).exists())
 
     def test_create_event_notifications_within_hour(self):
+        """Test that create_event_notifications creates notifications for events starting within the next hour."""
         from timeout.services.notification_service import NotificationService
         from timeout.models.notification import Notification
         user = _make_user()
@@ -116,6 +109,7 @@ class NotificationServiceTests(TestCase):
         self.assertTrue(Notification.objects.filter(user=user).exists())
 
     def test_create_event_notifications_tomorrow(self):
+        """Test that create_event_notifications creates notifications for events starting tomorrow."""
         from timeout.services.notification_service import NotificationService
         from timeout.models.notification import Notification
         user = _make_user()
@@ -131,6 +125,7 @@ class NotificationServiceTests(TestCase):
         self.assertTrue(Notification.objects.filter(user=user).exists())
 
     def test_create_event_notifications_this_week(self):
+        """Test that create_event_notifications creates notifications for events starting within the next week."""
         from timeout.services.notification_service import NotificationService
         from timeout.models.notification import Notification
         user = _make_user()
@@ -146,6 +141,7 @@ class NotificationServiceTests(TestCase):
         self.assertTrue(Notification.objects.filter(user=user).exists())
 
     def test_create_event_notifications_far_future_ignored(self):
+        """Test that create_event_notifications does not create notifications for events starting far in the future."""
         from timeout.services.notification_service import NotificationService
         from timeout.models.notification import Notification
         user = _make_user()
@@ -161,6 +157,7 @@ class NotificationServiceTests(TestCase):
         self.assertFalse(Notification.objects.filter(user=user).exists())
 
     def test_notify_once_no_duplicate(self):
+        """Test that _notify_once does not create duplicate notifications."""
         from timeout.services.notification_service import NotificationService
         from timeout.models.notification import Notification
         user = _make_user()
@@ -176,12 +173,11 @@ class NotificationServiceTests(TestCase):
         NotificationService._notify_once(user, event, "Test msg")
         self.assertEqual(Notification.objects.filter(user=user, message="Test msg").count(), 1)
 
-
-# Notes Autosave and Edit
-
 class NoteAutosaveTests(TestCase):
+    """Tests for the note autosave functionality."""
 
     def setUp(self):
+        """Set up test data for NoteAutosaveTests."""
         self.user = _make_user()
         self.client.login(username='testuser', password='TestPass1!')
         from timeout.models import Note
@@ -190,6 +186,7 @@ class NoteAutosaveTests(TestCase):
         )
 
     def test_autosave(self):
+        """Test that the note autosave endpoint updates the note successfully."""
         resp = self.client.post(reverse('note_autosave', args=[self.note.id]), {
             'title': 'Updated Title',
             'content': 'Updated content',
@@ -199,6 +196,7 @@ class NoteAutosaveTests(TestCase):
         self.assertEqual(data['status'], 'ok')
 
     def test_autosave_with_count_edit(self):
+        """Test that the note autosave endpoint updates the note successfully with count_edit."""
         resp = self.client.post(reverse('note_autosave', args=[self.note.id]), {
             'title': 'Updated',
             'content': 'Updated',
@@ -207,79 +205,85 @@ class NoteAutosaveTests(TestCase):
         self.assertEqual(resp.status_code, 200)
 
     def test_note_edit_page(self):
+        """Test that the note edit page loads successfully."""
         resp = self.client.get(reverse('note_edit', args=[self.note.id]))
         self.assertEqual(resp.status_code, 200)
 
-
-# Deadline List View with Filters
-
 class DeadlineListFilterTests(TestCase):
+    """Tests for the deadline list filtering and sorting."""
 
     def setUp(self):
+        """Set up test data for DeadlineListFilterTests."""
         self.user = _make_user()
         self.client.login(username='testuser', password='TestPass1!')
         now = timezone.now()
         Event.objects.create(
             creator=self.user, title='Active DL',
             event_type='deadline',
-            start_datetime=now, end_datetime=now + timedelta(days=3),
-        )
+            start_datetime=now, end_datetime=now + timedelta(days=3),)
         Event.objects.create(
             creator=self.user, title='Done DL',
             event_type='deadline',
             start_datetime=now - timedelta(days=5),
             end_datetime=now - timedelta(days=1),
-            is_completed=True,
-        )
+            is_completed=True,)
 
     def test_deadline_list_default(self):
+        """Test that the deadline list view loads successfully with default filters."""
         resp = self.client.get(reverse('deadline_list'))
         self.assertEqual(resp.status_code, 200)
 
     def test_deadline_list_completed_filter(self):
+        """Test that the deadline list view filters completed deadlines correctly."""
         resp = self.client.get(reverse('deadline_list'), {'status': 'completed'})
         self.assertEqual(resp.status_code, 200)
 
     def test_deadline_list_all_filter(self):
+        """Test that the deadline list view shows all deadlines when the 'all' filter is applied."""
         resp = self.client.get(reverse('deadline_list'), {'status': 'all'})
         self.assertEqual(resp.status_code, 200)
 
     def test_deadline_list_sort_desc(self):
+        """Test that the deadline list view sorts deadlines in descending order when the 'desc' sort is applied."""
         resp = self.client.get(reverse('deadline_list'), {'sort': 'desc'})
         self.assertEqual(resp.status_code, 200)
 
     def test_deadline_list_type_filter(self):
+        """Test that the deadline list view filters by event type correctly."""
         resp = self.client.get(reverse('deadline_list'), {'type': 'deadline'})
         self.assertEqual(resp.status_code, 200)
 
     def test_deadline_list_invalid_type_ignored(self):
+        """Test that the deadline list view ignores invalid event types and defaults to showing all types."""
         resp = self.client.get(reverse('deadline_list'), {'type': 'bogus_type'})
         self.assertEqual(resp.status_code, 200)
 
-
-# Pages: Landing, Dashboard greeting branches
-
 class LandingPageTests(TestCase):
+    """Tests for the landing page view."""
 
     def test_landing_unauthenticated(self):
+        """Test that the landing page loads successfully for unauthenticated users."""
         resp = self.client.get(reverse('landing'))
         self.assertEqual(resp.status_code, 200)
 
     def test_landing_authenticated_redirects_dashboard(self):
+        """Test that the landing page redirects authenticated users to the dashboard."""
         _make_user()
         self.client.login(username='testuser', password='TestPass1!')
         resp = self.client.get(reverse('landing'))
         self.assertRedirects(resp, reverse('dashboard'))
 
-
 class DashboardGreetingTests(TestCase):
+    """Tests for the dashboard greeting logic."""
 
     def setUp(self):
+        """Set up test data for DashboardGreetingTests."""
         self.user = _make_user()
         self.client.login(username='testuser', password='TestPass1!')
 
     @patch('timeout.views.pages.timezone')
     def test_morning_greeting(self, mock_tz):
+        """Test that the dashboard view shows a morning greeting when the time is in the morning."""
         from datetime import datetime as dt
         mock_now = timezone.make_aware(dt(2026, 3, 25, 9, 0, 0))
         mock_tz.now.return_value = mock_now
@@ -289,6 +293,7 @@ class DashboardGreetingTests(TestCase):
 
     @patch('timeout.views.pages.timezone')
     def test_afternoon_greeting(self, mock_tz):
+        """Test that the dashboard view shows an afternoon greeting when the time is in the afternoon."""
         from datetime import datetime as dt
         mock_now = timezone.make_aware(dt(2026, 3, 25, 14, 0, 0))
         mock_tz.now.return_value = mock_now
@@ -298,6 +303,7 @@ class DashboardGreetingTests(TestCase):
 
     @patch('timeout.views.pages.timezone')
     def test_evening_greeting(self, mock_tz):
+        """Test that the dashboard view shows an evening greeting when the time is in the evening."""
         from datetime import datetime as dt
         mock_now = timezone.make_aware(dt(2026, 3, 25, 20, 0, 0))
         mock_tz.now.return_value = mock_now
@@ -305,13 +311,12 @@ class DashboardGreetingTests(TestCase):
         resp = self.client.get(reverse('dashboard'))
         self.assertEqual(resp.status_code, 200)
 
-
-# Study Planner: call_gpt
-
 class CallGptTests(TestCase):
+    """Tests for the call_gpt function in the study planner."""
 
     @patch('timeout.views.study_planner.settings')
     def test_call_gpt_success(self, mock_settings):
+        """Test that the call_gpt function returns a list of study sessions on success."""
         from timeout.views.study_planner import call_gpt
         mock_settings.OPENAI_API_KEY = 'test-key'
         deadline = MagicMock()
@@ -330,6 +335,7 @@ class CallGptTests(TestCase):
 
     @patch('timeout.views.study_planner.settings')
     def test_call_gpt_exception_raises(self, mock_settings):
+        """Test that the call_gpt function raises an exception if the OpenAI API call fails."""
         from timeout.views.study_planner import call_gpt
         mock_settings.OPENAI_API_KEY = 'test-key'
         deadline = MagicMock()
@@ -341,6 +347,7 @@ class CallGptTests(TestCase):
 
     @patch('timeout.views.study_planner.settings')
     def test_call_gpt_markdown_fence(self, mock_settings):
+        """Test that the call_gpt function correctly handles markdown fences in the response."""
         from timeout.views.study_planner import call_gpt
         mock_settings.OPENAI_API_KEY = 'test-key'
         deadline = MagicMock()
@@ -356,24 +363,20 @@ class CallGptTests(TestCase):
             result = call_gpt(deadline, 4, 2, [])
         self.assertIsInstance(result, list)
 
-
-# Management Command: check_site
-
 class CheckSiteCommandTests(TestCase):
-
     def test_check_site_runs(self):
+        """Test that the check_site management command runs successfully."""
         from django.core.management import call_command
         from io import StringIO
         out = StringIO()
         call_command('check_site', stdout=out)
         self.assertIn('SITE_ID', out.getvalue())
 
-
-# Notification Service: create_message_notification
-
 class MessageNotificationTests(TestCase):
+    """Tests for the NotificationService's create_message_notification function."""
 
     def test_create_message_notification(self):
+        """Test that the create_message_notification function creates a notification for the recipient."""
         from timeout.services.notification_service import NotificationService
         from timeout.models.notification import Notification
         alice = _make_user('alice')
@@ -385,6 +388,7 @@ class MessageNotificationTests(TestCase):
         self.assertTrue(Notification.objects.filter(user=bob).exists())
 
     def test_create_message_notification_no_recipient(self):
+        """Test that the create_message_notification function does not create a notification if there is no recipient."""
         from timeout.services.notification_service import NotificationService
         alice = _make_user('alice')
         conv = Conversation.objects.create()
