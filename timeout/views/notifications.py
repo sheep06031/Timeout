@@ -9,21 +9,11 @@ from timeout.services.notification_service import NotificationService
 @login_required
 def notifications_view(request):
     """Display user notifications with pagination and filtering."""
-    notifications_qs = Notification.objects.filter(
-        user=request.user,
-        is_dismissed=False
-    ).order_by('-created_at')
+    notifications_qs = Notification.objects.filter(user=request.user, is_dismissed=False).order_by('-created_at')
     unread_count = notifications_qs.filter(is_read=False).count()
-
     filter_param = request.GET.get('filter')
-    if filter_param == 'unread':
-        notifications_qs = notifications_qs.filter(is_read=False)
 
-    paginator = Paginator(notifications_qs, 15)
-    page_number = request.GET.get('page', 1)
-    notifications = paginator.get_page(page_number)
-
-    # AJAX request for infinite scroll
+    if filter_param == 'unread': notifications_qs = notifications_qs.filter(is_read=False)
     if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
         data = [{
             'id': n.id,
@@ -34,20 +24,13 @@ def notifications_view(request):
             'created_at': n.created_at.isoformat(),
             'deadline_id': n.deadline_id,
             'conversation_id': n.conversation_id,
-            'post_id': n.post_id,
-        } for n in notifications]
-        return JsonResponse({
-            'notifications': data,
-            'has_next': notifications.has_next(),
-            'next_page': notifications.next_page_number() if notifications.has_next() else None,
-        })
+            'post_id': n.post_id} for n in notifications]
+        return JsonResponse({'notifications': data})
 
     return render(request, 'pages/notifications.html', {
         'notifications': notifications,
         'unread_count': unread_count,
-        'current_filter': filter_param,
-    })
-
+        'current_filter': filter_param})
 
 @login_required
 def mark_notification_read(request, notification_id):
@@ -112,28 +95,19 @@ def poll_notifications(request):
 
     NotificationService.create_deadline_notifications(request.user)
     NotificationService.create_event_notifications(request.user)
-
     notifications = Notification.objects.filter(
         user=request.user,
         id__gt=last_id,
-        is_dismissed=False
-    ).order_by('id')
+        is_dismissed=False).order_by('id')
 
-    data = [
-        {
+    data = [{
             'id': n.id,
             'title': n.title,
             'message': n.message,
             'created_at': n.created_at.strftime('%H:%M'),
-            'is_read': bool(n.is_read),
-        }
-        for n in notifications
-    ]
+            'is_read': bool(n.is_read)}
+        for n in notifications]
 
     unread_count = Notification.objects.filter(
-        user=request.user,
-        is_read=False,
-        is_dismissed=False
-    ).count()
-
+        user=request.user, is_read=False, is_dismissed=False).count()
     return JsonResponse({'notifications': data, 'unread_count': unread_count})

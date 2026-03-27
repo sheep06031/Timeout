@@ -199,7 +199,6 @@ def ai_suggest_reschedule(request):
     event_id = request.POST.get('event_id')
     if not event_id:
         return JsonResponse({'success': False, 'error': 'No event ID provided.'}, status=400)
-
     if not settings.OPENAI_API_KEY:
         return JsonResponse({'success': False, 'error': 'OpenAI API key not configured.'}, status=500)
 
@@ -219,5 +218,4 @@ def ai_suggest_reschedule(request):
         return JsonResponse({'success': False, 'error': 'AI returned an invalid response. Please try again.'}, status=500)
     except Exception as e:
         return JsonResponse({'success': False, 'error': f'AI error: {str(e)}'}, status=500)
-
     return _suggestion_response(event, data)

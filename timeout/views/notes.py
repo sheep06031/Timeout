@@ -82,17 +82,14 @@ def note_create(request):
         title = request.POST.get('title', '').strip()
         category = request.POST.get('category', 'other')
         event_id = request.POST.get('event', '')
-
         if not title:
             messages.error(request, 'Please provide a title for your note.')
             return redirect('notes')
-
         note = Note(
             owner=request.user,
             title=title,
             content='',
-            category=category,
-        )
+            category=category)
         if event_id:
             from timeout.models.event import Event
             try:
@@ -101,12 +98,9 @@ def note_create(request):
                 pass
 
         note.save()
-        NoteService.update_streak_and_xp(
-            request.user, NoteService.XP_NOTE_CREATE,
-        )
+        NoteService.update_streak_and_xp(request.user, NoteService.XP_NOTE_CREATE)
         NoteService.log_note_created(request.user)
         return redirect('note_edit', note_id=note.id)
-
     return redirect('notes')
 
 
@@ -222,7 +216,6 @@ def pomodoro_complete(request):
     user = request.user
     cfg_work = user.pomo_work_minutes
 
-    # Link to specific note if provided
     note_id = request.POST.get('note_id')
     if note_id:
         try:
@@ -237,15 +230,12 @@ def pomodoro_complete(request):
 
     user.refresh_from_db()
     progress = NoteService.get_daily_progress(user)
-
     return JsonResponse({
         'xp': user.xp,
         'level': user.level,
         'xp_progress_pct': user.xp_progress_pct,
         'xp_for_next_level': user.xp_for_next_level,
-        'daily_progress': progress,
-    })
-
+        'daily_progress': progress})
 
 @login_required
 def notes_stats(request):

@@ -20,12 +20,10 @@ class NoteService:
     @staticmethod
     def update_streak_and_xp(user, xp_base):
         """Update user's note streak and award XP. Call on note create/edit."""
-
         today = timezone.localtime(timezone.now()).date()
         yesterday = today - datetime.timedelta(days=1)
 
         if user.last_note_date == today:
-            # Already counted today, just award XP without streak change
             user.xp += xp_base
             user.save(update_fields=['xp'])
             return
@@ -41,9 +39,7 @@ class NoteService:
         streak_bonus = user.note_streak * 5
         user.xp += xp_base + streak_bonus
         user.last_note_date = today
-        user.save(update_fields=[
-            'xp', 'note_streak', 'longest_note_streak', 'last_note_date',
-        ])
+        user.save(update_fields=['xp', 'note_streak', 'longest_note_streak', 'last_note_date'])
 
     @staticmethod
     def award_pomodoro_xp(user):

@@ -87,29 +87,22 @@ def feed_more(request):
 
     if tab not in ('following', 'discover', 'bookmarks'):
         tab = 'following'
-
     posts = _get_feed_posts(tab, request.user, cursor=cursor)
     has_more = len(posts) > PAGE_SIZE
     posts = posts[:PAGE_SIZE]
-
     liked_ids = set(Like.objects.filter(user=request.user).values_list('post_id', flat=True))
     bookmarked_ids = set(Bookmark.objects.filter(user=request.user).values_list('post_id', flat=True))
 
-    html = ''.join(
-        render_to_string('social/_post_card.html', {
+    html = ''.join(render_to_string('social/_post_card.html', {
             'post': post,
             'user': request.user,
             'liked_ids': liked_ids,
-            'bookmarked_ids': bookmarked_ids,
-        }, request=request)
-        for post in posts
-    )
-
+            'bookmarked_ids': bookmarked_ids}, request=request) for post in posts)
+    
     return JsonResponse({
         'html': html,
         'has_more': has_more,
-        'next_cursor': posts[-1].id if has_more and posts else None,
-    })
+        'next_cursor': posts[-1].id if has_more and posts else None})
 
 
 @login_required
@@ -203,14 +196,12 @@ def bookmarks(request):
 def add_comment(request, post_id):
     """Add a comment to a post."""
     post = get_object_or_404(Post, id=post_id)
-
     if not post.can_view(request.user):
         return HttpResponseForbidden('Cannot view post')
 
     if Block.objects.filter(
         Q(blocker=request.user, blocked=post.author) |
-        Q(blocker=post.author, blocked=request.user)
-    ).exists():
+        Q(blocker=post.author, blocked=request.user)).exists():
         return HttpResponseForbidden('Cannot interact with this post')
 
     form = CommentForm(request.POST)
@@ -218,7 +209,6 @@ def add_comment(request, post_id):
         comment = form.save(commit=False)
         comment.author = request.user
         comment.post = post
-
         parent_id = request.POST.get('parent_id')
         if parent_id:
             parent = get_object_or_404(Comment, id=parent_id)
@@ -228,9 +218,7 @@ def add_comment(request, post_id):
         messages.success(request, 'Comment added!')
     else:
         messages.error(request, 'Error adding comment.')
-
     return redirect('social_feed')
-
 
 @login_required
 @require_POST

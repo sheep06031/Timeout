@@ -20,7 +20,6 @@ def settings_view(request):
 
     if request.method == 'POST':
         action = request.POST.get('action', '')
-
         if action == 'password':
             password_form = PasswordChangeForm(user, request.POST)
             if password_form.is_valid():
@@ -30,7 +29,6 @@ def settings_view(request):
                 return redirect('settings')
             else:
                 messages.error(request, 'Please fix the errors below.')
-
         elif action == 'delete_account':
             user.delete()
             messages.success(request, 'Your account has been deleted.')
@@ -38,8 +36,7 @@ def settings_view(request):
 
     context = {
         'appearance_form': appearance_form,
-        'password_form': password_form,
-    }
+        'password_form': password_form}
     return render(request, 'pages/settings.html', context)
 
 

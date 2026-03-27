@@ -71,29 +71,22 @@ class Comment(models.Model):
 def create_comment_notification(sender, instance, created, **kwargs):
     """
     Automatically create notifications when a comment is created.
-
-    Behaviour:
     - Only creates a notification when a new comment is created 
     - Notifies the post author if someone else comments on their post
     """
-
     if created:
-        # Notify post author if not self
         if instance.post.author != instance.author:
             Notification.objects.create(
                 user=instance.post.author,
                 title=f"💬 {instance.author.username} commented on your post",
                 message=instance.content[:80],
                 type=Notification.Type.COMMENT,
-                post=instance.post,
-            )
+                post=instance.post)
 
-        # Notify parent comment author if this is a reply
         if instance.parent and instance.parent.author != instance.author:
             Notification.objects.create(
                 user=instance.parent.author,
                 title=f"💬 {instance.author.username} replied to your comment",
                 message=instance.content[:80],
                 type=Notification.Type.COMMENT,
-                post=instance.post,
-            )
+                post=instance.post)

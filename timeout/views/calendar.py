@@ -182,34 +182,20 @@ def get_data(request, events_by_date=None):
     """Helper function to gather data needed for upcoming deadlines and reschedule prompts"""
     now = timezone.now()
     today_str = now.date().isoformat()
-    dismissed_keys = set(
-        DismissedAlert.objects.filter(user=request.user).values_list('alert_key', flat=True)
-    )
-    upcoming_deadlines = Event.objects.filter(creator=request.user, event_type__in=[Event.EventType.DEADLINE, Event.EventType.EXAM], start_datetime__gte=now,
-    ).order_by('start_datetime')[:20]
+    dismissed_keys = set(DismissedAlert.objects.filter(user=request.user).values_list('alert_key', flat=True))
+    upcoming_deadlines = Event.objects.filter(creator=request.user, event_type__in=[Event.EventType.DEADLINE, Event.EventType.EXAM], start_datetime__gte=now).order_by('start_datetime')[:20]
     missed_sessions = Event.objects.filter(creator=request.user,event_type=Event.EventType.STUDY_SESSION, status=Event.EventStatus.UPCOMING, end_datetime__lt=now, is_completed=False,)
-    reschedule_prompts = [
-        {
-            'id': e.pk,
-            'title': e.title,
-            'duration_minutes': int((e.end_datetime - e.start_datetime).total_seconds() / 60),
-            'reason': 'missed',
-            'alert_key': f'reschedule_{e.pk}_missed',
-        }
-        for e in missed_sessions
-        if f'reschedule_{e.pk}_missed' not in dismissed_keys
-
-    ]
-    reschedule_prompts += [
-        p for p in request.session.pop('reschedule_prompts', [])
-        if f"reschedule_{p['id']}_{p.get('reason', 'missed')}" not in dismissed_keys
-    ]
+    reschedule_prompts = [{
+        'id': e.pk, 'title': e.title, 'reason': 'missed_sessions', 'alert_key': f'reschedule_{e.pk}_missed',
+        'duration_minutes': int((e.end_datetime - e.start_datetime).total_seconds() / 60),
+    } for e in missed_sessions if f'reschedule_{e.pk}_missed' not in dismissed_keys]
+    reschedule_prompts += [p for p in request.session.pop('reschedule_prompts', []) 
+                           if f"reschedule_{p['id']}_{p.get('reason', 'missed_sessions')}" not in dismissed_keys]
     all_warnings = get_deadline_study_warnings(request.user)
     warnings = [w for w in all_warnings if w['key'] not in dismissed_keys]
     workload_key = f'workload_{request.user.id}_{today_str}'
     today_events = (events_by_date or {}).get(now.date(), [])
     raw_workload = get_ai_workload_warning(request.user, today_events)
-    ai_suggestions = get_ai_suggestions(request.user, today_events)
     workload_warning = raw_workload if raw_workload and workload_key not in dismissed_keys else None
     return {
         "upcoming_deadlines": upcoming_deadlines,
@@ -217,8 +203,7 @@ def get_data(request, events_by_date=None):
         "warnings": warnings,
         "workload_warning": workload_warning,
         "workload_alert_key": workload_key,
-        "ai_suggestions": ai_suggestions,
-    }
+        "ai_suggestions": get_ai_suggestions(request.user, today_events)}
 
 def event_status(start_dt, end_dt, now):
     """Helper function to derive a human-readable status"""
@@ -265,8 +250,7 @@ def subscribe_event(request, pk):
     already = Event.objects.filter(
         creator=request.user,
         title=original.title,
-        start_datetime=original.start_datetime,
-    ).exists()
+        start_datetime=original.start_datetime).exists()
     if already:
         return JsonResponse({'success': False, 'error': 'Already subscribed.'}, status=400)
     Event.objects.create(
@@ -280,8 +264,7 @@ def subscribe_event(request, pk):
         visibility=Event.Visibility.PRIVATE,
         is_all_day=original.is_all_day,
         recurrence=original.recurrence,
-        allow_conflict=True,
-    )
+        allow_conflict=True)
     return JsonResponse({'success': True})
 
 def _parse_event_datetimes(request, is_all_day):
@@ -308,36 +291,27 @@ def event_create(request):
     """Create a new calendar event from form POST data."""
     is_all_day = request.POST.get("is_all_day") == "on"
     allow_conflict = request.POST.get("allow_conflict") == "on"
-
     start_datetime, end_datetime = _parse_event_datetimes(request, is_all_day)
-    if start_datetime is None:
-        return redirect("calendar")
+    if start_datetime is None: return redirect("calendar")
 
     event = Event(
         creator=request.user,
         title=request.POST["title"],
         event_type=request.POST.get("event_type", "other"),
-        start_datetime=timezone.make_aware(
-            datetime.fromisoformat(start_datetime)
-        ),
-        end_datetime=timezone.make_aware(
-            datetime.fromisoformat(end_datetime)
-        ),
+        start_datetime=timezone.make_aware(datetime.fromisoformat(start_datetime)),
+        end_datetime=timezone.make_aware(datetime.fromisoformat(end_datetime)),
         location=request.POST.get("location", ""),
         description=request.POST.get("description", ""),
         allow_conflict=allow_conflict,
         visibility=request.POST.get("visibility", "public"),
         is_all_day=is_all_day,
-        recurrence=request.POST.get("recurrence", "none"),
-    )
-
+        recurrence=request.POST.get("recurrence", "none"))
     try:
         event.full_clean()
         event.save()
         messages.success(request, f'"{event.title}" added to calendar.')
     except ValidationError as e:
         messages.error(request, '; '.join(e.messages))
-
     return redirect("calendar")
 
 @login_required

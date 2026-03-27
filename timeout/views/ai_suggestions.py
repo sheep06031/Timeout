@@ -28,7 +28,7 @@ def get_ai_suggestions(user, events_today):
         return ["AI returned invalid JSON. Please try again."]
     except Exception as e:
         return [f"AI suggestion unavailable: {str(e)}"]
-
+ 
 
 def _format_events_for_prompt(events_today):
     """Format event objects into human-readable strings for the AI prompt."""
@@ -45,36 +45,23 @@ def _format_events_for_prompt(events_today):
 def _call_openai_suggestions(events_list):
     """Call OpenAI API to generate productivity suggestions for the given events."""
     client = OpenAI(api_key=settings.OPENAI_API_KEY)
-
-    # Build prompt safely
     prompt = (
-        "You are a helpful calendar assistant. The user's events today are:\n"
-        + "\n".join(events_list) +
+        "You are a helpful calendar assistant. The user's events today are:\n" + "\n".join(events_list) +
         "\n\nSuggest 2–3 actionable tips to optimize their day, like when to take breaks, "
-        "add focus sessions, or avoid overload. Return a JSON list of strings ONLY."
-    )
+        "add focus sessions, or avoid overload. Return a JSON list of strings ONLY.")
 
-    # Call OpenAI
     response = client.chat.completions.create(
         model="gpt-4o-mini",
         messages=[
             {"role": "system", "content": "You are a productivity AI assistant."},
-            {"role": "user", "content": str(prompt)},
-        ],
-        temperature=0.7,
-        max_tokens=200,
-    )
+            {"role": "user", "content": str(prompt)}],
+        temperature=0.7, max_tokens=200)
 
     raw = response.choices[0].message.content.strip()
-
-    # Remove markdown fences if present
     if raw.startswith("```"):
         raw = raw.split("```")[1]
-        if raw.startswith("json"):
-            raw = raw[4:]
+        if raw.startswith("json"): raw = raw[4:]
 
     suggestions = json.loads(raw)
-    if not isinstance(suggestions, list):
-        suggestions = [str(suggestions)]
-
+    if not isinstance(suggestions, list): suggestions = [str(suggestions)]
     return suggestions
