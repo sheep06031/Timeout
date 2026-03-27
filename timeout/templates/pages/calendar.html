@@ -8,7 +8,6 @@
 <meta name="ai-add-url" content="{% url 'ai_event_create' %}">
 <meta name="sp-plan-url" content="{% url 'study_planner_plan' %}">
 <meta name="sp-confirm-url" content="{% url 'study_planner_confirm' %}">
-<meta name="reschedule-url" content="{% url 'ai_reschedule' %}">
 <meta name="event-create-url" content="{% url 'event_create' %}">
 <meta name="rs-suggest-url" content="{% url 'reschedule_study_sessions' %}">
 <meta name="rs-apply-url" content="{% url 'apply_session_schedule' %}">
@@ -40,8 +39,6 @@
    <button type="button" class="btn-close" onclick="dismissAlert('{{ warning.key }}', this)" aria-label="Close"></button>
   </div>
   {% endfor %}
-
-  {% include "partials/reschedule_banners.html" %}
 
   <div class="cal-card">
     
@@ -312,7 +309,6 @@
 {% endblock %}
 
 {% block extra_js %}
-<script src="{% static 'js/reschedule.js' %}"></script>
 <script src="{% static 'js/ai_calendar.js' %}"></script>
 <script src="{% static 'js/study_planner.js' %}"></script>
 <script src="{% static 'js/reschedule_sessions.js' %}"></script>
