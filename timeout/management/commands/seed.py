@@ -27,7 +27,7 @@ User = get_user_model()
 fake = Faker()
 
 NUM_USERS = 80
-NUM_EVENTS = 50
+NUM_EVENTS = 160
 NUM_POSTS = 200
 NUM_NOTES_PER_USER = (8, 60)  # min, max notes per user
 HEATMAP_WEEKS = 16
@@ -430,7 +430,7 @@ class Command(BaseCommand):
         events, event_types = [], ['deadline', 'exam', 'class', 'meeting', 'study_session']
         for i in range(NUM_EVENTS):
             creator = random.choice(users)
-            start = timezone.now() + timedelta(days=random.randint(-7, 30), hours=random.randint(8, 20))
+            start = timezone.now() + timedelta(days=random.randint(-60, 60), hours=random.randint(8, 20))
             event = Event.objects.create(
                 creator=creator, title=fake.sentence(nb_words=4).rstrip('.'),
                 description=fake.paragraph(), event_type=random.choice(event_types),
@@ -584,7 +584,7 @@ class Command(BaseCommand):
         events, today_wd = [], timezone.now().weekday()
         for title, weekday, loc, hour, minute, dur in classes:
             days_to_next = (weekday - today_wd) % 7
-            for week in range(-3, 5):
+            for week in range(-8, 9):
                 offset = days_to_next + week * 7
                 start, end = _days_offset(offset, hour, minute, dur)
                 events.append(dict(
@@ -598,9 +598,12 @@ class Command(BaseCommand):
     def _johndoe_exams(self, johndoe):
         """Generate exam events for johndoe."""
         exams = [
-            ('Algorithms & Complexity Exam', 18, 9, 3, 'Exam Hall A, KCL'),
+            ('Algorithms & Complexity Midterm', 18, 9, 3, 'Exam Hall A, KCL'),
             ('Database Systems Exam', 32, 14, 2, 'Great Hall, KCL'),
-            ('Machine Learning Final Exam', 45, 10, 3, 'Exam Hall B, KCL'),
+            ('Machine Learning Final Exam', 55, 10, 3, 'Exam Hall B, KCL'),
+            ('Software Engineering Viva', 70, 11, 1, 'Bush House, KCL'),
+            ('Algorithms & Complexity Final', 85, 9, 3, 'Exam Hall A, KCL'),
+            ('Database Systems Resit', 100, 14, 2, 'Great Hall, KCL'),
         ]
         events = []
         for title, day, hour, dur, loc in exams:
@@ -618,7 +621,13 @@ class Command(BaseCommand):
             ('SEG Coursework Submission', 7),
             ('ML Assignment 2 Due', 14),
             ('Database ER Diagram Submission', 21),
-            ('SEG Final Report', 50),
+            ('Algorithms Problem Set 3', 35),
+            ('ML Assignment 3 Due', 48),
+            ('SEG Final Report', 60),
+            ('Database Final Project', 75),
+            ('ML Research Paper', 90),
+            ('Algorithms Final Submission', 105),
+            ('SEG Peer Review', 115),
         ]
         events = []
         for title, day in deadlines:
@@ -637,9 +646,18 @@ class Command(BaseCommand):
             ('ML Past Papers', 'study_session', 'Library, KCL', 40, 10, 3),
             ('DB Exam Prep', 'study_session', 'Library, KCL', 28, 16, 2),
             ('Group Study – SEG', 'study_session', 'Library, KCL', 5, 15, 2),
+            ('Algorithms Mock Exam', 'study_session', 'Library, KCL', 50, 10, 3),
+            ('ML Group Revision', 'study_session', 'Library, KCL', 65, 14, 2),
+            ('DB Query Practice', 'study_session', 'Library, KCL', 78, 11, 2),
+            ('SEG Demo Prep', 'study_session', 'Library, KCL', 88, 15, 2),
+            ('Algorithms Final Revision', 'study_session', 'Library, KCL', 100, 10, 3),
             ('SEG Team Meeting', 'meeting', 'Bush House, KCL', 3, 11, 1),
             ('Supervisor Check-in', 'meeting', 'Bush House, KCL', 10, 14, 1),
             ('Career Fair Prep', 'meeting', 'Bush House, KCL', 6, 13, 1),
+            ('SEG Sprint Review', 'meeting', 'Bush House, KCL', 30, 11, 1),
+            ('Supervisor Check-in 2', 'meeting', 'Bush House, KCL', 55, 14, 1),
+            ('SEG Final Demo', 'meeting', 'Bush House, KCL', 80, 10, 2),
+            ('Career Mentoring Session', 'meeting', 'Bush House, KCL', 95, 13, 1),
         ]
         events = []
         for title, etype, loc, day, hour, dur in items:
