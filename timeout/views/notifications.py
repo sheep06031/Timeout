@@ -28,14 +28,14 @@ def notifications_view(request):
         return JsonResponse({'notifications': data})
 
     return render(request, 'pages/notifications.html', {
-        'notifications': notifications,
+        'notifications': notifications_qs,
         'unread_count': unread_count,
         'current_filter': filter_param})
 
 @login_required
 def mark_notification_read(request, notification_id):
     """Mark a notification as read."""
-    try:
+    try: 
         n = Notification.objects.get(id=notification_id, user=request.user)
         n.is_read = True
         n.save(update_fields=['is_read'])
