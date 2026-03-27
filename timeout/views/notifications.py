@@ -19,7 +19,7 @@ def notifications_view(request):
     if filter_param == 'unread':
         notifications_qs = notifications_qs.filter(is_read=False)
 
-    paginator = Paginator(notifications_qs, 15)
+    paginator = Paginator(notifications_qs, 10)
     page_number = request.GET.get('page', 1)
     notifications = paginator.get_page(page_number)
 

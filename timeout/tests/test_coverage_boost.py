@@ -613,7 +613,7 @@ class DeadlineWarningTests(TestCase):
         )
         warnings = get_deadline_study_warnings(self.user)
         self.assertEqual(len(warnings), 1)
-        self.assertIn('Essay Due', warnings[0])
+        self.assertIn('Essay Due', warnings[0]['message'])
 
     def test_deadline_with_study_sessions(self):
         from timeout.views.deadline_warning import get_deadline_study_warnings
