@@ -102,18 +102,27 @@ var Pomodoro = (function() {
 
   // Helpers
 
+  /**  
+   * Get the configured duration for a given phase, enforcing limits based on work duration. 
+  */
   function getDuration(phase) {
     if (phase === 'work')       return WORK;
     if (phase === 'long_break') return LONG_BREAK;
     return SHORT_BREAK;
   }
 
+  /** 
+   * Get the display label for a given phase. 
+   */
   function getPhaseLabel(phase) {
     if (phase === 'work')        return 'Work Session';
     if (phase === 'short_break') return 'Short Break';
     return 'Long Break';
   }
 
+  /** 
+   * Get the currently linked note ID from the dropdown, or fallback to the one in config. 
+   */
   function getLinkedNoteId() {
     var sel = document.getElementById('pomoNoteSelect');
     return sel ? sel.value : (cfg.currentNoteId || '');
@@ -121,6 +130,9 @@ var Pomodoro = (function() {
 
   // Rendering
 
+  /** 
+   * Update the circular progress ring based on the current phase and remaining time. 
+   */
   function _renderRing() {
     var ringEl = document.getElementById('pomoRing');
     if (!ringEl) return;
@@ -129,6 +141,9 @@ var Pomodoro = (function() {
     ringEl.style.stroke = state.phase === 'work' ? '#5B73E8' : '#4ECDC4';
   }
 
+  /** 
+   * Show/hide start and pause buttons based on whether the timer is running. 
+   */
   function _renderButtons() {
     var startBtn = document.getElementById('pomoStartBtn');
     var pauseBtn = document.getElementById('pomoPauseBtn');
@@ -244,6 +259,9 @@ var Pomodoro = (function() {
     render();
   }
 
+  /**
+   * Pause the timer, keeping all state intact for resumption.  No XP is awarded since the session isn't complete.
+   */
   function pause() {
     clearInterval(state.intervalId);
     state.running = false;
@@ -261,6 +279,9 @@ var Pomodoro = (function() {
     _processPhaseEnd(true);   // wasSkipped = true → no XP
   }
 
+  /**
+   * Reset the entire timer state, clearing sessions and counts.  No XP is awarded since the session isn't complete.
+   */
   function reset() {
     clearInterval(state.intervalId);
     state.running = false;
