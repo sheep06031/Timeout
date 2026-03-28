@@ -5,7 +5,7 @@ sidebar data, checking follow/block relationships, and searching users while res
 
 
 from django.db.models import Q
-from timeout.models import (Conversation, FollowRequest, User)
+from timeout.models import (Conversation, Block, FollowRequest, User)
 from timeout.services.feed_service import _get_blocked_ids
 
 def _get_conversation_sidebar(user):
