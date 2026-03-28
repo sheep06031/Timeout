@@ -1,3 +1,6 @@
+"""
+Utility functions for Timeout views and services.
+"""
 from datetime import datetime, date
 from django.utils import timezone
 

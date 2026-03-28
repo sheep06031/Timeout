@@ -1,3 +1,7 @@
+"""
+Service layer for Event-related business logic. This is where complex queries and data transformations related to Events should live, keeping views thin and focused on HTTP handling.
+"""
+
 from django.utils import timezone
 from timeout.models import Event
 

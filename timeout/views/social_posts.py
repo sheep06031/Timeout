@@ -1,3 +1,6 @@
+"""
+Views for social features: feed, posts, comments, likes, and bookmarks.
+"""
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse, HttpResponseForbidden
@@ -65,6 +68,7 @@ def feed(request):
 
 @login_required
 def feed_more(request):
+    """AJAX endpoint to load more posts for infinite scrolling."""
     from timeout.services.feed_service import PAGE_SIZE
     tab = request.GET.get('tab', 'following')
     try: cursor = int(request.GET.get('cursor', 0))

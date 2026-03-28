@@ -1,3 +1,6 @@
+"""
+Views for social features: user profiles and events on profiles.
+"""
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, get_object_or_404
 from timeout.models import User
