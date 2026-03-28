@@ -1,3 +1,8 @@
+"""
+like.py - Defines the Like model representing a user's like of a post, including automatic notification creation.
+"""
+
+
 from django.conf import settings
 from django.db import models
 from timeout.models.notification import Notification

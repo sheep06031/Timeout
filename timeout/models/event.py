@@ -1,3 +1,8 @@
+"""
+event.py - Defines the Event model representing calendar events such as deadlines, exams, classes, meetings, and study sessions.
+"""
+
+
 from django.conf import settings
 from django.db import models
 from django.utils import timezone

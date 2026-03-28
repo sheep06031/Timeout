@@ -1,8 +1,9 @@
 """
-Custom management command to seed the database with test data.
+seed.py - Management command to populate the database with realistic test data.
 
-Usage:
-    python manage.py seed
+Generates users, events, posts, comments, notes, focus sessions, and social
+graph fixtures using Faker. Also configures the allauth Site and Google
+SocialApp from environment variables.
 """
 
 import os
@@ -321,9 +322,11 @@ def _days_offset(n, hour=9, minute=0, duration_h=1):
 
 
 class Command(BaseCommand):
+    """Management command to seed the database with test data."""
     help = 'Seed the database with site config, Google OAuth app, a superuser, and 25 random student users.'
 
     def handle(self, *args, **options):
+        """Main entry point for the command. Runs all setup and seeding steps in order."""
         self.stdout.write('=' * 50 + '\nSEEDING DATABASE\n' + '=' * 50)
         self._setup_site()
         self._setup_google_social_app()
