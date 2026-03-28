@@ -1,3 +1,8 @@
+"""
+sitemaps.py - Defines StaticViewSitemap for generating a sitemap of static views with monthly change frequency and priority.
+"""
+
+
 from django.contrib.sitemaps import Sitemap
 from django.urls import reverse
 
