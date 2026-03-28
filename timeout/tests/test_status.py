@@ -1,3 +1,11 @@
+"""
+Tests for the user status functionality in the timeout app, including the User model's status field and the view that updates the user's status via POST requests to the 'update_status' endpoint.
+Includes tests for:
+- The default status value for new users
+- Valid status choices and their correct saving to the database
+- The behavior of the update_status view, including authentication requirements, allowed methods, response format, and correct updating of the user's status in the database
+- The visibility of user statuses in different views, such as the profile page and social feed
+"""
 import json
 from django.test import TestCase, Client
 from django.urls import reverse

@@ -1,3 +1,7 @@
+"""
+Tests for the custom management commands in the timeout app, specifically the 'seed' and 'unseed' commands. 
+These tests verify that the commands correctly create and remove user data as expected, and that they handle edge cases such as idempotency and empty databases gracefully.
+"""
 from io import StringIO
 
 from django.core.management import call_command

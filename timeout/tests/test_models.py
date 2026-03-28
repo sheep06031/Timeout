@@ -1,3 +1,12 @@
+"""
+Tests for the custom User model in the timeout app.
+Includes tests for:
+- User creation with various field values
+- Custom fields (middle_name, bio, university, year_of_study, academic_interests, privacy_private, management_style)
+- Default values for optional fields
+- String representation and full name methods
+- Follow relationships and counts
+"""
 from django.test import TestCase
 from django.contrib.auth import get_user_model
 

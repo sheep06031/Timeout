@@ -1,3 +1,13 @@
+"""
+Tests for the views in the timeout app, covering both public and authenticated pages, as well as the signup, login, logout, and complete_profile views.
+Includes tests for:
+- Public pages: landing, login, signup
+- Authenticated pages: dashboard, profile, calendar, notes, statistics, social feed
+- Signup view: GET returns form, POST with valid data creates user and logs them in, POST with invalid data re-renders form with errors, redirects authenticated users
+- Login view: GET returns form, POST with valid credentials logs in and redirects, POST with invalid credentials re-renders form with errors, redirects authenticated users
+- Logout view: GET logs out and redirects to landing, ends session
+- Complete profile view: GET returns form, POST with valid data updates profile and redirects, POST with invalid data re-renders form with errors, requires login, redirects without session flag, clears session flag after completion
+"""
 from django.contrib.sites.models import Site
 from django.test import TestCase, Client
 from django.urls import reverse

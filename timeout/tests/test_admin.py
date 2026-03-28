@@ -1,3 +1,7 @@
+"""
+Tests for the custom UserAdmin configuration in the timeout app.
+Includes tests to verify that the admin interface is correctly set up with the expected fields, filters, and fieldsets, as well as that the admin changelist view loads successfully.
+"""
 from django.contrib.admin.sites import AdminSite
 from django.test import TestCase, RequestFactory
 from django.contrib.auth import get_user_model
