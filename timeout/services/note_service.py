@@ -1,3 +1,9 @@
+"""
+note_service.py - Defines NoteService for querying and filtering notes, managing XP and streaks,
+logging study activity (notes, Pomodoros, focus), and retrieving heatmap and daily progress data.
+"""
+
+
 import datetime
 
 from django.db.models import Q, Count

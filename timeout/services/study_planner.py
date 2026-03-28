@@ -1,3 +1,8 @@
+"""
+study_planner.py - Provides functions to calculate free time slots for a user based on their existing events, and to pick evenly spaced slots for study sessions.
+"""
+
+
 from datetime import timedelta
 from timeout.models import Event
 

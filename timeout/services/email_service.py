@@ -1,5 +1,10 @@
-from django.conf import settings
+"""
+email_service.py - Defines EmailService for sending password reset emails via Twilio SendGrid,
+with styled HTML content containing the reset code. Returns a boolean indicating success or failure.
+"""
 
+
+from django.conf import settings
 
 def _build_reset_code_html(code):
     """Build the HTML content for the password reset email."""

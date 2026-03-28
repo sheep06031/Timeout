@@ -1,3 +1,8 @@
+"""
+ai_service.py - Defines AIService for generating a cached weekly study summary briefing using OpenAI,
+based on user stats (study hours, missed deadlines, most productive day, events) from the past week.
+"""
+
 import json
 import logging
 from collections import Counter
