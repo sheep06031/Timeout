@@ -1,3 +1,23 @@
+"""Calendar and event management related URL patterns for the timeout app.
+Includes:
+- calendar: Main calendar view showing user's events and deadlines.
+- calendar/add: View to create a new event.
+- calendar/event/<int:pk>/subscribe: Endpoint to subscribe to an event.
+- calendar/ai-add: View to create a new event with AI assistance.
+- calendar/ai-reschedule: View to get AI suggestions for rescheduling events.
+- calendar/reschedule-study-sessions: Endpoint to apply AI-suggested study session rescheduling.
+- calendar/apply-session-schedule: Endpoint to apply a generated session schedule to the calendar.
+- calendar/dismiss-alert: Endpoint to dismiss a calendar alert notification.
+- deadlines: View to list upcoming deadlines.
+- deadlines/<int:event_id>/complete: Endpoint to mark a deadline as complete.
+- event/<int:event_id>/: View to see details of a specific event.
+- event/<int:pk>/edit/: View to edit a specific event.
+- event/<int:pk>/delete/: View to delete a specific event.
+- notifications/: Main notifications page showing all notifications for the user.
+- notifications/read/<int:notification_id>/: Endpoint to mark a specific notification as read.
+- notifications/poll/: Endpoint for AJAX polling to get new notifications since the last check.
+- notifications/delete/<int:notification_id>/: Endpoint to dismiss a specific notification.
+"""
 from django.urls import path
 from timeout.views import calendar as cal_views
 from timeout.views import deadlines as deadline_views
@@ -7,8 +27,6 @@ from timeout.views import event_edit as edit_views
 from timeout.views import event_details as detail_views
 from timeout.views import event_delete as delete_views
 from timeout.views.notifications import delete_notification, mark_notification_read, notifications_view, poll_notifications
-
-""" Calendar and event management related URL patterns for the timeout app. """
 
 urlpatterns = [
     path('calendar/', cal_views.calendar_view, name='calendar'),

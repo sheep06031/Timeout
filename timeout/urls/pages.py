@@ -1,9 +1,18 @@
+"""
+URL patterns for the timeout app's main pages.
+Includes:
+- landing: Public landing page for unauthenticated users.
+- dashboard: Main user dashboard with upcoming events, notes, deadlines, and social feed.
+- profile: User profile page showing their info, posts, and current/upcoming events.
+- profile/edit: Page to edit user profile information.
+- settings: User settings page to update preferences and account info.
+- statistics: Page showing insights into user's event patterns and focus sessions.
+"""
 from django.urls import path
 from timeout.views import pages
 from timeout.views import profile as profile_views
 from timeout.views import settings as settings_views
 
-"""URL patterns for the timeout app's main pages."""
 urlpatterns = [
     path('banned/', pages.banned, name='banned'),
     path('', pages.landing, name='landing'),

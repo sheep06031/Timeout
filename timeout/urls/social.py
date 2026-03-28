@@ -1,7 +1,35 @@
+"""
+URL patterns for the timeout app's social features.
+Includes:
+- feed: Main social feed showing posts from followed users.
+- create_post: Endpoint to create a new post.
+- delete_post: Endpoint to delete a post.
+- like_post: Endpoint to like/unlike a post.
+- bookmark_post: Endpoint to bookmark/unbookmark a post.
+- add_comment: Endpoint to add a comment to a post.
+- delete_comment: Endpoint to delete a comment.
+- flag_post: Endpoint to flag a post for moderation.
+- approve_flag: Endpoint for moderators to approve a flagged post.
+- deny_flag: Endpoint for moderators to deny a flagged post.
+- ban_user: Endpoint for moderators to ban a user.
+- unban_user: Endpoint for moderators to unban a user.
+- bookmarks: View to show the current user's bookmarked posts.
+- user_profile: View to show a user's profile and their posts.
+- follow_user: Endpoint to follow/unfollow a user.
+- block_user: Endpoint to block/unblock a user.
+- accept_follow_request: Endpoint to accept a follow request for private accounts.
+- reject_follow_request: Endpoint to reject a follow request for private accounts.
+- update_status: Endpoint to update the user's current status message.
+- reset_focus_timer: Endpoint to reset the user's focus timer (if implemented).
+- followers_api: API endpoint to get the current user's followers with follow-back status.
+- following_api: API endpoint to get the users that the current user is following.
+- user_followers_api: API endpoint to get a specific user's followers (respects privacy).
+- user_following_api: API endpoint to get a specific user's following list (respects privacy).
+- friends_api: API endpoint to get the current user's mutual follows (friends).
+- user_friends_api: API endpoint to get a specific user's mutual follows (respects privacy).
+"""
 from django.urls import path
 from timeout.views import social, social_api, moderation
-
-"""URL patterns for the timeout app's social features."""
 
 urlpatterns = [
     # Feed
