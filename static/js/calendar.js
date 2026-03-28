@@ -72,7 +72,6 @@ window.AI_ADD_URL = document.querySelector('meta[name="ai-add-url"]').content;
 window.AI_CSRF_TOKEN = document.querySelector('meta[name="csrf-token"]').content;
 window.SP_PLAN_URL = document.querySelector('meta[name="sp-plan-url"]').content;
 window.SP_CONFIRM_URL = document.querySelector('meta[name="sp-confirm-url"]').content;
-window.RESCHEDULE_URL = document.querySelector('meta[name="reschedule-url"]').content;
 window.RESCHEDULE_CANCEL_URL_TPL = '/calendar/{id}/cancel/';
 window.EVENT_CREATE_URL = document.querySelector('meta[name="event-create-url"]').content;
 window.RS_SUGGEST_URL = document.querySelector('meta[name="rs-suggest-url"]').content;
