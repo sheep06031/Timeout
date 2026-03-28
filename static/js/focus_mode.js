@@ -23,12 +23,16 @@ var FocusMode = (function() {
 
   /**
    * Enter focus mode: hide navigation, show overlay, start activity tracking.
+   * @param {number} [resumeStartTime] - Existing start timestamp to restore elapsed time across navigation.
    */
-  function enter() {
+  function enter(resumeStartTime) {
     active = true;
-    startTime = Date.now();
+    startTime = resumeStartTime || Date.now();
     lastActivity = Date.now();
     warningShown = false;
+
+    sessionStorage.setItem('focusModeActive', 'true');
+    sessionStorage.setItem('focusModeStartTime', String(startTime));
 
     setServerStatus('focus');
 
@@ -58,6 +62,9 @@ var FocusMode = (function() {
     clearInterval(elapsedInterval);
     clearInterval(inactivityInterval);
 
+    sessionStorage.removeItem('focusModeActive');
+    sessionStorage.removeItem('focusModeStartTime');
+
     setServerStatus('social');
 
     var overlay = document.getElementById('focusOverlay');
@@ -79,17 +86,16 @@ var FocusMode = (function() {
   }
 
   /**
-   * Handle page unload during focus mode by updating server status via sendBeacon.
+   * Handle page unload during focus mode.
+   * State is persisted in sessionStorage so focus mode resumes on the next notes page.
+   * The server status beacon is intentionally omitted here — the next page's init() will
+   * re-enter focus mode and set the status back to 'focus' automatically.
    */
-  function onBeforeUnload(e) {
+  function onBeforeUnload() {
     if (!active) return;
-    var data = new FormData();
-    data.append('status', 'social');
-    data.append('csrfmiddlewaretoken', getCSRFToken());
-    navigator.sendBeacon('/social/status/update/', data);
-    e.preventDefault();
-    e.returnValue = 'Focus mode is active. Are you sure you want to leave?';
-    return e.returnValue;
+    // Ensure sessionStorage is up-to-date before navigation.
+    sessionStorage.setItem('focusModeActive', 'true');
+    sessionStorage.setItem('focusModeStartTime', String(startTime));
   }
 
   /**
@@ -143,6 +149,7 @@ var FocusMode = (function() {
 
   /**
    * Initialize focus mode module with button event listeners.
+   * Automatically resumes focus mode if it was active when the previous page was left.
    */
   function init() {
     var btn = document.getElementById('focusModeBtn');
@@ -157,6 +164,20 @@ var FocusMode = (function() {
       dismissWarning();
       lastActivity = Date.now();
     });
+
+    // Resume focus mode if it was active on the previous page.
+    var savedActive = sessionStorage.getItem('focusModeActive');
+    var savedStart = sessionStorage.getItem('focusModeStartTime');
+    if (savedActive === 'true' && savedStart) {
+      var savedStartTime = parseInt(savedStart, 10);
+      // Only resume if the session started within the last 8 hours.
+      if (Date.now() - savedStartTime < 8 * 60 * 60 * 1000) {
+        enter(savedStartTime);
+      } else {
+        sessionStorage.removeItem('focusModeActive');
+        sessionStorage.removeItem('focusModeStartTime');
+      }
+    }
   }
 
   return { init: init };
