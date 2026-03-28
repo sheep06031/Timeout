@@ -10,6 +10,7 @@ from django.views.decorators.http import require_POST
 from timeout.models import Event
 
 
+
 def _query_reschedule_events(user, now, lookahead):
     """Query sessions, deadlines, and fixed events for rescheduling."""
     sessions = Event.objects.filter(
