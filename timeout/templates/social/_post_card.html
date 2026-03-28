@@ -3,7 +3,15 @@
 
     <!-- Header -->
     <div class="post-header">
-      <div>
+      <div class="d-flex align-items-center gap-2">
+        <a href="{% url 'user_profile' post.author.username %}" class="post-author-avatar">
+          {% if post.author.profile_picture %}
+            <img src="{{ post.author.profile_picture.url }}" alt="{{ post.author.username }}">
+          {% else %}
+            {{ post.author.username|first|upper }}
+          {% endif %}
+        </a>
+        <div>
         <a href="{% url 'user_profile' post.author.username %}" class="post-author-link">
           {{ post.author.username }}
         </a>
@@ -12,6 +20,7 @@
           {% if post.privacy == 'followers_only' %}
             <span class="badge-followers">Followers Only</span>
           {% endif %}
+        </div>
         </div>
       </div>
       <div class="d-flex gap-2 align-items-center">
@@ -106,7 +115,13 @@
 
         {% for comment in post.comments.all %}
           <div class="comment-item {% if comment.parent %}reply{% endif %}">
-            <div class="comment-avatar">{{ comment.author.username|first|upper }}</div>
+            <div class="comment-avatar">
+              {% if comment.author.profile_picture %}
+                <img src="{{ comment.author.profile_picture.url }}" alt="{{ comment.author.username }}">
+              {% else %}
+                {{ comment.author.username|first|upper }}
+              {% endif %}
+            </div>
             <div class="comment-bubble">
               <div class="d-flex align-items-center justify-content-between">
                 <div>
