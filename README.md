@@ -72,6 +72,12 @@ Timeout is a web app designed to help university students stay organized, focuse
 
 ---
 
+## ERD Diagram
+
+<img width="1596" height="3661" alt="erdDiagram" src="https://github.com/user-attachments/assets/7b9b230a-cf9c-4300-9f5a-cd1b431f5ec2" />
+
+---
+
 ## Deployment
 
 The deployed version of this app can be accessed through https://kcltimeout.com
