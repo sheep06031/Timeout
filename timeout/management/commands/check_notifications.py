@@ -1,6 +1,11 @@
 """
-Usage:
-    python manage.py check_notifications
+check_notifications.py - Management command to check upcoming deadlines and events
+                         and create notifications for all users accordingly.
+
+This command iterates through all users in the system and uses the NotificationService
+to create notifications for any upcoming deadlines and events that they have. It is 
+intended to be run periodically (e.g., via a cron job) to ensure that users receive 
+timely notifications about their deadlines and events.
 """
 
 from django.core.management.base import BaseCommand
@@ -14,7 +19,7 @@ class Command(BaseCommand):
     help = "Check upcoming deadlines and create notifications"
 
     def handle(self, *args, **kwargs):
-        # Iterate through all users and create notifications for deadlines and events
+        """Iterate through all users and create notifications for deadlines and events."""
         for user in User.objects.all():
             NotificationService.create_deadline_notifications(user)
             NotificationService.create_event_notifications(user)  

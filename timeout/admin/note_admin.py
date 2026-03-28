@@ -1,3 +1,13 @@
+"""
+note_admin.py - Admin interface for Note model in Timeout application.
+
+Provides a customized admin view for managing user notes, including:
+    - Displaying key fields in the list view (owner, title preview, category, etc.)
+    - Filtering by category, pinned status, and creation date
+    - Searching by title, content, and owner's username
+    - Readonly timestamps and raw ID fields for related models
+"""
+
 from django.contrib import admin
 from timeout.models import Note
 

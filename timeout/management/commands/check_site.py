@@ -17,9 +17,11 @@ from django.core.management.base import BaseCommand
 
 
 class Command(BaseCommand):
+    """Management command to diagnose Site and Google SocialApp configuration for allauth."""
     help = 'Diagnose Site and Google SocialApp configuration for allauth.'
 
     def handle(self, *args, **options):
+        """Run all checks and print results."""
         active_site = self._check_site_id()
         self._check_social_apps(active_site)
         self._check_provider_override()

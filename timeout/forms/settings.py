@@ -1,3 +1,13 @@
+"""
+settings.py - Forms for user settings in the Timeout application.
+Provides one form class:
+    AppearanceForm
+        - ModelForm based on the User model for managing appearance, notification, and study preferences.
+        - Exposes fields for theme, colorblind mode, notification sounds, Pomodoro timer settings, default note category, daily study reminder time, and auto-online status.
+        - Applies appropriate widgets for each field, including radio buttons for theme and colorblind mode, checkboxes for boolean preferences, number inputs for Pomodoro settings, a select dropdown for default note category, and a time input for
+          the daily study reminder.
+"""
+
 from django import forms
 from timeout.models import User
 

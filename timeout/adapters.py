@@ -1,3 +1,27 @@
+"""
+adapters.py - Custom django-allauth adapters for the Timeout application.
+
+Provides two adapter classes that override default allauth behaviour:
+    TimeoutAccountAdapter
+        - Redirects newly registered (email/password) users to a profile
+          completion page so they can set a username and university details.
+        - After login, routes users to the dashboard and, when applicable,
+          updates their status to SOCIAL.
+
+    TimeoutSocialAccountAdapter
+        - Before completing a social login, checks whether an existing local
+          account shares the same verified email address.  If one is found the
+          social account is connected to it automatically, preventing duplicate
+          accounts.
+        - Redirects first-time social users to the same profile completion page.
+
+Usage:
+    Register both adapters in settings.py:
+        ACCOUNT_ADAPTER        = 'timeout.adapters.TimeoutAccountAdapter'
+        SOCIALACCOUNT_ADAPTER  = 'timeout.adapters.TimeoutSocialAccountAdapter'
+"""
+
+
 from django.contrib.auth import get_user_model
 from django.shortcuts import resolve_url
 
