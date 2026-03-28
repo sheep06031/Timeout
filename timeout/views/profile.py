@@ -17,7 +17,7 @@ from timeout.forms import ProfileEditForm, ChangeUsernameForm
 
 def _find_event(user, status, **filters):
     """Query for a single event matching filters; return (event, status) or None."""
-    event = Event.objects.filter(creator=user, **filters).first()
+    event = Event.objects.filter(creator=user, **filters).exclude(event_type=Event.EventType.DEADLINE).first()
     return (event, status) if event else None
 
 
