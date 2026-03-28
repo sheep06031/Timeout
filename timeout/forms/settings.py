@@ -16,7 +16,7 @@ class AppearanceForm(forms.ModelForm):
             'theme', 'colorblind_mode',
             'notification_sounds',
             'pomo_work_minutes', 'pomo_short_break', 'pomo_long_break',
-            'default_note_category', 'daily_study_reminder',
+            'default_note_category',
             'auto_online',
         ]
         widgets = {
@@ -33,9 +33,6 @@ class AppearanceForm(forms.ModelForm):
                 'class': 'form-control', 'min': 5, 'max': 60,
             }),
             'default_note_category': forms.Select(attrs={'class': 'form-select'}),
-            'daily_study_reminder': forms.TimeInput(attrs={
-                'type': 'time', 'class': 'form-control',
-            }),
             'auto_online': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
         }
 

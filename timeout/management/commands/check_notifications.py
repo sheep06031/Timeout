@@ -19,10 +19,9 @@ class Command(BaseCommand):
     help = "Check upcoming deadlines and create notifications"
 
     def handle(self, *args, **kwargs):
-        """Iterate through all users and create notifications for deadlines, events, and study reminders."""
+        """Iterate through all users and create notifications for deadlines and events."""
         for user in User.objects.all():
             NotificationService.create_deadline_notifications(user)
             NotificationService.create_event_notifications(user)
-            NotificationService.create_study_reminder_notification(user)
 
         self.stdout.write(self.style.SUCCESS("Notifications checked."))

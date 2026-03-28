@@ -140,13 +140,6 @@
           <label class="stg-label" for="id_default_note_category">Default Category</label>
           {{ appearance_form.default_note_category }}
         </div>
-        <div class="stg-field stg-field--half">
-          <label class="stg-label" for="id_daily_study_reminder">Daily Study Reminder</label>
-          <input type="time" name="daily_study_reminder" id="id_daily_study_reminder"
-                 class="stg-input"
-                 value="{% if appearance_form.instance.daily_study_reminder %}{{ appearance_form.instance.daily_study_reminder|time:'H:i' }}{% endif %}">
-          <span class="stg-field-hint">Get a reminder to study at this time daily.</span>
-        </div>
       </div>
     </div>
 

@@ -123,27 +123,3 @@ class NotificationService:
             Event.EventType.OTHER:         Notification.Type.EVENT,
         }
         return mapping.get(event_type, Notification.Type.EVENT)
-
-    @staticmethod
-    def create_study_reminder_notification(user):
-        """Create a daily study reminder notification when the current time matches the user's reminder."""
-        if not user.daily_study_reminder:
-            return
-        now_local = timezone.localtime(timezone.now()).time()
-        reminder = user.daily_study_reminder
-        if now_local.hour != reminder.hour or now_local.minute != reminder.minute:
-            return
-        today = timezone.localdate()
-        already_sent = Notification.objects.filter(
-            user=user,
-            type=Notification.Type.STUDY_SESSION,
-            title="📚 Daily Study Reminder",
-            created_at__date=today,
-        ).exists()
-        if not already_sent:
-            Notification.objects.create(
-                user=user,
-                title="📚 Daily Study Reminder",
-                message="It's time to study! You set a daily reminder for this time.",
-                type=Notification.Type.STUDY_SESSION,
-            )
