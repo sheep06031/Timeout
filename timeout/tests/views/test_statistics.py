@@ -1,3 +1,10 @@
+"""
+test_statistics.py - Tests for the statistics view and helper functions, covering duration formatting,
+event counting by type, weekly/monthly breakdowns, urgency filtering, focus stats calculation,
+friend leaderboard sorting, login requirements, and correct context data in the statistics view.
+"""
+
+
 from datetime import timedelta
 from unittest.mock import patch
 

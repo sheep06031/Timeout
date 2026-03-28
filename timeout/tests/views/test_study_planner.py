@@ -1,3 +1,11 @@
+"""
+test_study_planner.py - Tests for the study planner helper functions (get_busy_slots, get_free_slots,
+pick_evenly_spaced_slots, _day_slots, _nearest_slot) and views (plan_sessions, confirm_sessions),
+covering scheduling edge cases (overlapping events, minimum gap enforcement, other users' events),
+GPT integration, invalid input handling, and authentication checks.
+"""
+
+
 import json
 from datetime import date, datetime, timedelta
 from unittest.mock import patch

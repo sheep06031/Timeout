@@ -1,3 +1,9 @@
+"""
+test_notifications.py - Defines tests for the notifications view and related actions (marking as read/unread, marking all as read/unread),
+covering authentication requirements, correct filtering of notifications, AJAX response structure, and user isolation.
+"""
+
+
 from django.test import TestCase, Client
 from django.urls import reverse
 from django.contrib.auth import get_user_model

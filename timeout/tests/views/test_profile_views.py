@@ -1,3 +1,9 @@
+"""
+test_profile_views.py - Defines ChangeUsernameViewTests for testing the change_username view,
+covering GET redirection, login requirements, valid/invalid POST handling, and username update logic.
+"""
+
+
 from django.contrib.auth import get_user_model
 from django.test import Client, TestCase
 from django.urls import reverse
