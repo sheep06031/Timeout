@@ -46,13 +46,21 @@
     <!-- Linked Event -->
     {% if post.event %}
       <div class="post-event-tag" style="display:flex; align-items:center; justify-content:space-between;">
-        <div style="display:flex; align-items:center; gap:8px;">
+        {% if post.event.creator == user %}
+          <a href="{% url 'calendar' %}?open_event={{ post.event.id }}" style="text-decoration:none; color:inherit; display:flex; align-items:center; gap:8px;">
+        {% else %}
+          <div style="display:flex; align-items:center; gap:8px;">
+        {% endif %}
           <i class="bi bi-calendar-event"></i>
           <div>
             <div>{{ post.event.title }}</div>
             <div class="event-date">{{ post.event.start_datetime|date:"F j, Y g:i A" }}</div>
           </div>
-        </div>
+        {% if post.event.creator == user %}
+          </a>
+        {% else %}
+          </div>
+        {% endif %}
         {% if post.event.visibility == 'public' and post.event.creator != user %}
           <button class="btn-subscribe-event"
                   data-url="{% url 'subscribe_event' post.event.id %}"
