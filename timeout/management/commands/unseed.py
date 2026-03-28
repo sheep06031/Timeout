@@ -34,6 +34,27 @@ class Command(BaseCommand):
             help='Keep the superuser @johndoe instead of deleting.',
         )
 
+    def _delete_user_data(self, excluded_users):
+        """Delete notes and study logs for non-superusers, then remove those users."""
+        notes = Note.objects.exclude(owner__in=excluded_users).delete()[0]
+        logs = StudyLog.objects.exclude(user__in=excluded_users).delete()[0]
+        User.objects.exclude(username=SUPERUSER_USERNAME).delete()
+        return notes, logs
+
+    def _delete_all_data(self):
+        """Delete all notes, study logs, and users from the database."""
+        notes = Note.objects.all().delete()[0]
+        logs = StudyLog.objects.all().delete()[0]
+        User.objects.all().delete()
+        return notes, logs
+
+    def _delete_global_records(self):
+        """Delete global events, Google SocialApp, and Site(id=1)."""
+        count = Event.objects.filter(is_global=True).delete()[0]
+        SocialApp.objects.filter(provider='google').delete()
+        Site.objects.filter(id=1).delete()
+        return count
+
     def handle(self, *args, **options):
         """Delete all seeded data: users, notes, study logs, global events, Site, and SocialApp."""
         keep_super = options['keep_super']
@@ -43,26 +64,15 @@ class Command(BaseCommand):
             return
         if keep_super:
             self.stdout.write('Mode: Removing seeded data (keeping @johndoe)')
-            excluded_users = User.objects.filter(username=SUPERUSER_USERNAME)
-            notes_deleted = Note.objects.exclude(owner__in=excluded_users).delete()[0]
-            logs_deleted = StudyLog.objects.exclude(user__in=excluded_users).delete()[0]
-            User.objects.exclude(username=SUPERUSER_USERNAME).delete()
+            notes_deleted, logs_deleted = self._delete_user_data(
+                User.objects.filter(username=SUPERUSER_USERNAME))
         else:
-            self.stdout.write(self.style.WARNING(
-                'Mode: Removing ALL data (including superusers)'))
-            notes_deleted = Note.objects.all().delete()[0]
-            logs_deleted = StudyLog.objects.all().delete()[0]
-            User.objects.all().delete()
-
-        global_events_deleted = Event.objects.filter(is_global=True).delete()[0]
-        SocialApp.objects.filter(provider='google').delete()
-        Site.objects.filter(id=1).delete()
-
-        total_users_after = User.objects.count()
-        users_removed = total_users_before - total_users_after
-
+            self.stdout.write(self.style.WARNING('Mode: Removing ALL data (including superusers)'))
+            notes_deleted, logs_deleted = self._delete_all_data()
+        global_events_deleted = self._delete_global_records()
+        users_removed = total_users_before - User.objects.count()
         self.stdout.write(self.style.SUCCESS(
             f'Removed {users_removed} user(s), {notes_deleted} notes, '
             f'{logs_deleted} study logs, {global_events_deleted} global events, '
             f'Site(id=1), and Google SocialApp.'))
-        self.stdout.write(f'Remaining users: {total_users_after}')
+        self.stdout.write(f'Remaining users: {User.objects.count()}')
