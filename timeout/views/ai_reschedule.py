@@ -174,8 +174,7 @@ def ai_suggest_reschedule(request):
     try:
         data = call_openai_json(
             [{'role': 'system', 'content': system_prompt}, {'role': 'user', 'content': 'Suggest the best reschedule slot.'}],
-            max_tokens=150,
-        )
+            max_tokens=150, )
     except json.JSONDecodeError:
         return JsonResponse({'success': False, 'error': 'AI returned an invalid response. Please try again.'}, status=500)
     except Exception as e:
