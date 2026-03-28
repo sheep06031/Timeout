@@ -1,3 +1,8 @@
+"""
+follow_request.py - Defines the FollowRequest model representing a pending follow request between users.
+"""
+
+
 from django.conf import settings
 from django.db import models
 from timeout.models.mixins import CreatedAtMixin

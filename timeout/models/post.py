@@ -1,3 +1,8 @@
+"""
+post.py - Defines the Post model representing a social media post with privacy controls, associated with calendar events, and including methods for likes, bookmarks, comments, and visibility checks.
+"""
+
+
 from django.conf import settings
 from django.db import models
 from timeout.models.mixins import TimestampMixin, OwnedMixin

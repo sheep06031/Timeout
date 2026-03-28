@@ -1,3 +1,8 @@
+"""
+bookmark.py - Defines the Bookmark model representing a user's bookmark of a post.
+"""
+
+
 from django.conf import settings
 from django.db import models
 from timeout.models.notification import Notification

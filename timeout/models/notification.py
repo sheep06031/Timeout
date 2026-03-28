@@ -1,3 +1,9 @@
+"""
+notification.py - Defines the Notification model representing user notifications for various activities such as 
+deadlines, events, messages, likes, comments, bookmarks, follows, exams, classes, meetings, and study sessions.
+"""
+
+
 from django.conf import settings
 from django.db import models
 from django.utils import timezone

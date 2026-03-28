@@ -1,3 +1,8 @@
+"""
+user.py - Defines the custom User model for the Timeout application, including fields for profile information, preferences, gamification, and social features.
+"""
+
+
 import math
 
 from django.contrib.auth.models import AbstractUser
