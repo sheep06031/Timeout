@@ -77,25 +77,16 @@
         <!-- Status Setter -->
         <div class="post-card mb-4">
           <div class="post-card-body">
-            <div class="d-flex gap-2 align-items-center mb-3">
-                <h4 class="m-0">My Status</h4>
-                <div id="profile-focus-timer"
-                   class="focus-timer-badge"
-                   {% if user.status == 'focus' and user.focus_started_at %}
-                     data-focus-started-at="{{ user.focus_started_at|date:'U' }}"
-                   {% else %}
-                     style="display:none"
-                   {% endif %}>
-                ⏱ <span class="focus-timer-display">00:00</span>
-              </div>
-            </div>
-            
+            <h4 class="m-0 mb-3">My Status</h4>
+
             <div class="d-flex gap-2 flex-wrap align-items-center">
               {% for value, label in status_choices %}
+                {% if value != 'focus' %}
                 <button class="status-btn {% if user.status == value %}status-badge-{{ value }}{% else %}status-btn-idle{% endif %}"
                   data-status="{{ value }}">
                   {{ label }}
                 </button>
+                {% endif %}
               {% endfor %}
             </div>
           </div>
