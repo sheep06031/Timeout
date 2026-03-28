@@ -1,3 +1,19 @@
+"""
+social.py - Forms for social features in the Timeout application.
+
+Provides two form classes:
+    PostForm
+        - ModelForm based on the Post model for creating and editing posts.
+        - Exposes content, event, and privacy fields.
+        - Applies Bootstrap-compatible widgets for content, event, and privacy fields.
+        - Scopes the event dropdown to events created by the current user and marks it as optional.
+    CommentForm
+        - ModelForm based on the Comment model for creating comments on posts.
+        - Exposes only the content field.
+        - Applies a Bootstrap-compatible textarea widget for the content field.
+        - Labels the content field with an empty string for a cleaner comment form appearance.
+"""
+
 from django import forms
 from timeout.models import Post, Comment
 

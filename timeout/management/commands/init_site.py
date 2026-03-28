@@ -17,6 +17,7 @@ NAME = 'Timeout Local'
 
 
 class Command(BaseCommand):
+    """Management command to create or update the Site record (id=1) used by allauth."""
     help = 'Create or update the Site record (id=1) used by allauth.'
 
     def handle(self, *args, **options):

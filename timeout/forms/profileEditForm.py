@@ -1,3 +1,21 @@
+"""
+profileEditForm.py - Forms for editing user profile details in the Timeout application.
+
+Provides two form classes:
+    ChangeUsernameForm
+        - Standalone form for changing username from the profile page.
+        - Validates that the new username is different, valid, and not already taken.
+    ProfileEditForm
+        - ModelForm based on the User model for editing profile details.
+        - Includes fields for first name, last name, bio, year of study, academic interests
+            profile picture, management style, and privacy settings.
+        - Provides a dropdown for university selection with an "Other" option that reveals              a free-text field when selected.
+        - Pre-populates university fields if the user already has a university set.
+        - Validates that if "Other" is selected, the free-text field must be filled in.
+        - On save, resolves the final university value from either the dropdown or free-text field.
+"""
+
+
 from django import forms
 from django.contrib.auth import get_user_model
 
