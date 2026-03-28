@@ -16,7 +16,13 @@
   <div class="convo-header glass-card">
     <a href="{% url 'inbox' %}" class="btn-back">← Back</a>
     <div class="convo-header-user">
-      <div class="convo-avatar">{{ other_user.username|first|upper }}</div>
+      <div class="convo-avatar">
+        {% if other_user.profile_picture %}
+          <img src="{{ other_user.profile_picture.url }}" alt="{{ other_user.username }}">
+        {% else %}
+          {{ other_user.username|first|upper }}
+        {% endif %}
+      </div>
       <div>
       <a href="{% url 'user_profile' other_user.username %}" class="convo-username" style="text-decoration:none;color:inherit;">{{ other_user.username }}</a>        <div class="convo-status-row">
           <span class="status-dot status-{{ other_user.status }}"></span>
