@@ -1,5 +1,5 @@
 """
-oauth_tags.py - Defines a custom template tag to check if Google OAuth is available by verifying the existence of a configured SocialApp with credentials.
+Defines a custom template tag to check if Google OAuth is available by verifying the existence of a configured SocialApp with credentials.
 """
 
 
