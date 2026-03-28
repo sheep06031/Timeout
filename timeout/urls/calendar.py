@@ -3,6 +3,7 @@ Calendar and event management related URL patterns for the timeout app.
 """
 from django.urls import path
 from timeout.views import calendar as cal_views
+from timeout.views import event_actions
 from timeout.views import deadlines as deadline_views
 from timeout.views import ai_calendar as ai_cal_views
 from timeout.views import ai_reschedule as ai_reschedule_views
@@ -13,13 +14,13 @@ from timeout.views.notifications import delete_notification, mark_notification_r
 
 urlpatterns = [
     path('calendar/', cal_views.calendar_view, name='calendar'),
-    path('calendar/add/', cal_views.event_create, name='event_create'),
-    path('calendar/event/<int:pk>/subscribe/', cal_views.subscribe_event, name='subscribe_event'),
+    path('calendar/add/', event_actions.event_create, name='event_create'),
+    path('calendar/event/<int:pk>/subscribe/', event_actions.subscribe_event, name='subscribe_event'),
     path('calendar/ai-add/', ai_cal_views.ai_create_event, name='ai_event_create'),
     path('calendar/ai-reschedule/', ai_reschedule_views.ai_suggest_reschedule, name='ai_reschedule'),
     path('calendar/reschedule-study-sessions/', ai_reschedule_views.reschedule_study_sessions, name='reschedule_study_sessions'),
-    path('calendar/apply-session-schedule/', cal_views.apply_session_schedule, name='apply_session_schedule'),
-    path('calendar/dismiss-alert/', cal_views.dismiss_alert, name='dismiss_alert'),
+    path('calendar/apply-session-schedule/', event_actions.apply_session_schedule, name='apply_session_schedule'),
+    path('calendar/dismiss-alert/', event_actions.dismiss_alert, name='dismiss_alert'),
     path('deadlines/', deadline_views.deadline_list_view, name='deadline_list'),
     path('deadlines/<int:event_id>/complete/', deadline_views.deadline_mark_complete, name='deadline_mark_complete'),
     

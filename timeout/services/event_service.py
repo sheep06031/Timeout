@@ -25,8 +25,7 @@ class EventService:
 
         Expected keys:
             title, event_type, start_datetime, end_datetime,
-            location, description, allow_conflict, visibility,
-            is_all_day, recurrence
+            location, description, visibility, is_all_day, recurrence
         """
         return Event(
             creator=user,
@@ -36,7 +35,6 @@ class EventService:
             end_datetime=data['end_datetime'],
             location=data.get('location', ''),
             description=data.get('description', ''),
-            allow_conflict=data.get('allow_conflict', False),
             visibility=data.get('visibility', 'private'),
             is_all_day=data.get('is_all_day', False),
             recurrence=data.get('recurrence', 'none'),

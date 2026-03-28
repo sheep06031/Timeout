@@ -31,13 +31,13 @@ urlpatterns = [
     path('bookmarks/', social_posts.bookmarks, name='bookmarks'),
 
     # User profiles and following
-    path('user/<str:username>/follow/accept/', social.accept_follow_request, name='accept_follow_request'),
-    path('user/<str:username>/follow/reject/', social.reject_follow_request, name='reject_follow_request'),
-    path('user/<str:username>/follow/', social.follow_user, name='follow_user'),
-    path('user/<str:username>/block/', social.block_user, name='block_user'),
-    path('user/<str:username>/', social.user_profile, name='user_profile'),  
-    path('status/update/', social.update_status, name='update_status'), 
-    path('focus/reset-timer/', social.reset_focus_timer, name='reset_focus_timer'),
+    path('user/<str:username>/follow/accept/', social_follow.accept_follow_request, name='accept_follow_request'),
+    path('user/<str:username>/follow/reject/', social_follow.reject_follow_request, name='reject_follow_request'),
+    path('user/<str:username>/follow/', social_follow.follow_user, name='follow_user'),
+    path('user/<str:username>/block/', social_follow.block_user, name='block_user'),
+    path('user/<str:username>/', social_profile.user_profile, name='user_profile'),
+    path('status/update/', social_follow.update_status, name='update_status'),
+    path('focus/reset-timer/', social_follow.reset_focus_timer, name='reset_focus_timer'),
 
     # Friends & follow lists (own)
     path('friends/', social_api.friends_api, name='friends_api'),

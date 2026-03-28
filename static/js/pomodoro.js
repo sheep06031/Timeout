@@ -155,32 +155,6 @@ var Pomodoro = (function() {
     }
   }
 
-  /** 
-   * Update session-progress dots below the timer. 
-   */
-  function _renderDots() {
-    var dots = document.querySelectorAll('#pomoDots .nt-pomo-dot');
-    dots.forEach(function(dot, i) {
-      dot.classList.toggle('nt-pomo-dot--filled', i < state.session);
-      dot.classList.toggle('nt-pomo-dot--active', i === state.session && state.phase === 'work');
-    });
-  }
-
-  /** 
-   * Update the fixed mini-bar shown on note_edit when no full panel is present. 
-   */
-  function _renderMiniBar(timeStr) {
-    var miniBar = document.getElementById('pomoMiniBar');
-    if (!miniBar) return;
-    var hasPanel = !!document.getElementById('pomoPanel');
-    var showMini = state.running || (state.started && !hasPanel);
-    miniBar.style.display = showMini ? 'flex' : 'none';
-    var miniPhase = document.getElementById('pomoMiniPhase');
-    var miniTime  = document.getElementById('pomoMiniTime');
-    if (miniPhase) miniPhase.textContent = getPhaseLabel(state.phase);
-    if (miniTime)  miniTime.textContent  = timeStr;
-  }
-
   /**
    * Update all UI elements (timer, phase label, count, ring, buttons, mini-bar).
    */
@@ -196,15 +170,24 @@ var Pomodoro = (function() {
     if (phaseEl) phaseEl.textContent = getPhaseLabel(state.phase);
     if (countEl) countEl.textContent = state.todayCount;
     _renderButtons();
-    _renderDots();
-    _renderMiniBar(timeStr);
+    var dots = document.querySelectorAll('#pomoDots .nt-pomo-dot');
+    dots.forEach(function(dot, i) {
+      dot.classList.toggle('nt-pomo-dot--filled', i < state.session);
+      dot.classList.toggle('nt-pomo-dot--active', i === state.session && state.phase === 'work');});
+    var miniBar = document.getElementById('pomoMiniBar');
+    if (miniBar) {
+      // On note_edit (no full panel), keep mini-bar visible while a session is active, even if paused.
+      var hasPanel = !!document.getElementById('pomoPanel');
+      var showMini = state.running || (state.started && !hasPanel);
+      miniBar.style.display = showMini ? 'flex' : 'none';
+      var miniPhase = document.getElementById('pomoMiniPhase');
+      var miniTime  = document.getElementById('pomoMiniTime');
+      if (miniPhase) miniPhase.textContent = getPhaseLabel(state.phase);
+      if (miniTime)  miniTime.textContent  = timeStr;}
   }
 
   // Timer logic
 
-  /**
-   * Decrement the remaining time and handle phase transitions.
-   */
   function tick() {
     if (state.remaining <= 0) {
       _processPhaseEnd(false);
@@ -392,5 +375,6 @@ var Pomodoro = (function() {
     // Auto-resume timer if a session was active.
     if (hadRunningSession) start();
   }
+
   return { init: init };
 })();

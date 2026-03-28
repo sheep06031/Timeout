@@ -1,7 +1,6 @@
 """
 View for generating AI-based workload warnings based on the user's daily events. Accessible only to logged-in users. Caches results for 1 hour to optimize performance and reduce API calls.
 """
-from datetime import datetime
 from django.conf import settings
 from django.core.cache import cache
 from timeout.utils import ai_cache_key

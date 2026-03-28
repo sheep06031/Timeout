@@ -1,7 +1,6 @@
 """
 Tests for the messaging views in the timeout app, including delete_message, send_message, and poll_messages.
 """
-import json
 from django.test import TestCase, Client
 from django.urls import reverse
 from django.contrib.auth import get_user_model

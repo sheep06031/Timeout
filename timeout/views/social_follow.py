@@ -116,3 +116,14 @@ def search_users(request):
     users = _search_users_queryset(request.user, query)
     results = [_serialize_search_result(u) for u in users]
     return JsonResponse({'users': results})
+
+
+@login_required
+@require_POST
+def reset_focus_timer(request):
+    """Reset focus session timer on page load. Creates a new session with timer at 0."""
+    user = request.user
+    if user.status == 'focus':
+        user.focus_started_at = timezone.now()
+        user.save()
+    return JsonResponse({'success': True})

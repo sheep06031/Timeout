@@ -53,7 +53,6 @@ def _build_event_from_data(user, data):
         'recurrence': data.get('recurrence', 'none'),
         'is_all_day': is_all_day,
         'visibility': data.get('visibility', 'private'),
-        'allow_conflict': False,
     })
 
 

@@ -2,23 +2,16 @@
 View for rendering the main calendar page, including logic to fetch and display events, handle month navigation, and provide data for AI-generated workload warnings and suggestions. Accessible only to logged-in users.
 """
 import calendar as cal
-import json
 from datetime import timedelta, date, datetime, time
-from django.shortcuts import render, redirect, get_object_or_404
+from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
-from django.contrib import messages
 from django.utils import timezone
-from django.views.decorators.http import require_POST
-from django.http import JsonResponse
-from timeout.models import Event
-from django.core.exceptions import ValidationError
+from timeout.models import Event, DismissedAlert
 from django.db.models import Q
 from timeout.views.deadline_warning import get_deadline_study_warnings
-from timeout.models import DismissedAlert
-from timeout.utils import parse_aware_dt
-from timeout.services import DeadlineService, EventService, AIService
+from timeout.services import DeadlineService, AIService
 
-MONTH_NAMES = [ 
+MONTH_NAMES = [
     "", "January", "February", "March", "April", "May", "June",
     "July", "August", "September", "October", "November", "December",
 ]
@@ -27,23 +20,23 @@ MONTH_NAMES = [
 def calendar_view(request):
     """Renders a monthly calendar grid with events in day cells, including recurring events."""
     today = timezone.now().date() # get today's date for default
-    year, month = check_month_year(*get_date(request, today)) 
+    year, month = check_month_year(*get_date(request, today))
     nav = get_months(year, month) # get previous and next month/year for navigation links
 
     cal_obj = cal.Calendar(firstweekday=0)
     weeks_raw = cal_obj.monthdatescalendar(year, month)
-    last_visible = weeks_raw[-1][-1] 
+    last_visible = weeks_raw[-1][-1]
 
     events_qs = visible_events(request.user, last_visible)
-    events_by_date = index_events(events_qs, last_visible) 
-    weeks = build_weeks(weeks_raw, month, today, events_by_date) 
-    context = calendar_context(year, month, nav, weeks) 
-    context.update(get_data(request, events_by_date)) 
+    events_by_date = index_events(events_qs, last_visible)
+    weeks = build_weeks(weeks_raw, month, today, events_by_date)
+    context = calendar_context(year, month, nav, weeks)
+    context.update(get_data(request, events_by_date))
     return render(request, "pages/calendar.html", context)
 
 def calendar_context(year, month, nav, weeks):
     """Helper function to build the context dict for the calendar template"""
-    prev_month, prev_year, next_month, next_year = nav 
+    prev_month, prev_year, next_month, next_year = nav
     return {
         "weeks": weeks,
         "month": month,
@@ -89,8 +82,8 @@ def get_months(year, month):
 
 def visible_events(user, last_visible):
     """Helper function to fetch events for the visible date range, including recurring events"""
-    last_day = timezone.make_aware(datetime.combine(last_visible, time.max)) 
-    events_qs = Event.objects.filter( 
+    last_day = timezone.make_aware(datetime.combine(last_visible, time.max))
+    events_qs = Event.objects.filter(
         Q(creator=user) | Q(is_global=True),
         start_datetime__lte=last_day,
     ).order_by("start_datetime")
@@ -106,9 +99,9 @@ def index_events(events_qs, last_visible):
         events_by_date.setdefault(ev.start_datetime.date(), []).append(data) # add the event to the list for its start date
 
         if ev.recurrence != 'none':
-            create_recurrence(ev, last_visible, now_date, events_by_date) 
+            create_recurrence(ev, last_visible, now_date, events_by_date)
 
-    return events_by_date 
+    return events_by_date
 
 def create_dict(ev, start_dt, end_dt, now_date):
     """Helper function to create a dict for an event that can be used by template"""
@@ -214,116 +207,3 @@ def event_status(start_dt, end_dt, now):
         return 'Past'
     else:
         return 'Upcoming'
-
-@login_required
-@require_POST
-def apply_session_schedule(request):
-    """Bulk-update study session times after AI reschedule confirmation."""
-    try:
-        sessions = json.loads(request.POST.get('sessions', '[]'))
-    except json.JSONDecodeError:
-        return JsonResponse({'success': False, 'error': 'Invalid data.'}, status=400)
-
-    updated = 0
-    for s in sessions:
-        try:
-            event = Event.objects.get(
-                pk=s['id'],
-                creator=request.user,
-                event_type=Event.EventType.STUDY_SESSION,
-            )
-            event.start_datetime = parse_aware_dt(s['start'])
-            event.end_datetime = parse_aware_dt(s['end'])
-            event.save()
-            updated += 1
-        except (Event.DoesNotExist, KeyError):
-            continue
-
-    return JsonResponse({'success': True, 'count': updated})
-
-@login_required
-@require_POST
-def subscribe_event(request, pk):
-    """Subscribe to a public event by creating a private copy for the user."""
-    original = get_object_or_404(Event, pk=pk, visibility=Event.Visibility.PUBLIC)
-    if original.creator == request.user:
-        return JsonResponse({'success': False, 'error': 'You own this event.'}, status=400)
-    already = Event.objects.filter(
-        creator=request.user,
-        title=original.title,
-        start_datetime=original.start_datetime).exists()
-    if already:
-        return JsonResponse({'success': False, 'error': 'Already subscribed.'}, status=400)
-    Event.objects.create(
-        creator=request.user,
-        title=original.title,
-        event_type=original.event_type,
-        start_datetime=original.start_datetime,
-        end_datetime=original.end_datetime,
-        location=original.location,
-        description=original.description,
-        visibility=Event.Visibility.PRIVATE,
-        is_all_day=original.is_all_day,
-        recurrence=original.recurrence)
-    return JsonResponse({'success': True})
-
-def _parse_event_datetimes(request, is_all_day):
-    """Parse and validate start/end datetimes from POST data."""
-    start_datetime = request.POST.get("start_datetime")
-    end_datetime = request.POST.get("end_datetime")
-
-    if is_all_day:
-        if not start_datetime:
-            messages.error(request, "Please select a date for an all-day event.")
-            return None, None
-        date_part = start_datetime.split("T")[0]
-        return f"{date_part}T00:00", f"{date_part}T23:59"
-
-    if not start_datetime or not end_datetime:
-        messages.error(request, "Start and end times are required.")
-        return None, None
-
-    return start_datetime, end_datetime
-
-def _build_event_from_post(request, start_datetime, end_datetime, is_all_day):
-    """Construct an Event from POST data and parsed datetimes."""
-    return EventService.build_from_data(request.user, {
-        'title': request.POST["title"],
-        'event_type': request.POST.get("event_type", "other"),
-        'start_datetime': parse_aware_dt(start_datetime),
-        'end_datetime': parse_aware_dt(end_datetime),
-        'location': request.POST.get("location", ""),
-        'description': request.POST.get("description", ""),
-        'allow_conflict': allow_conflict,
-        'visibility': request.POST.get("visibility", "public"),
-        'is_all_day': is_all_day,
-        'recurrence': request.POST.get("recurrence", "none"),
-    })
-
-
-@login_required
-@require_POST
-def event_create(request):
-    """Create a new calendar event from form POST data."""
-    is_all_day = request.POST.get("is_all_day") == "on"
-    start_datetime, end_datetime = _parse_event_datetimes(request, is_all_day)
-    if start_datetime is None: return redirect("calendar")
-    event = _build_event_from_post(request, start_datetime, end_datetime, is_all_day)
-    try:
-        event.full_clean()
-        event.save()
-        messages.success(request, f'"{event.title}" added to calendar.')
-    except ValidationError as e:
-        messages.error(request, '; '.join(e.messages))
-    return redirect("calendar")
-
-@login_required
-@require_POST
-def dismiss_alert(request):
-    """AJAX endpoint to dismiss a specific alert by key."""
-    from timeout.models import DismissedAlert
-    key = request.POST.get('key', '').strip()
-    if not key:
-        return JsonResponse({'success': False}, status=400)
-    DismissedAlert.objects.get_or_create(user=request.user, alert_key=key)
-    return JsonResponse({'success': True})
