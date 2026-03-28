@@ -1,3 +1,8 @@
+"""
+oauth_tags.py - Defines a custom template tag to check if Google OAuth is available by verifying the existence of a configured SocialApp with credentials.
+"""
+
+
 from django import template
 from django.conf import settings
 
