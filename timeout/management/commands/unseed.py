@@ -14,7 +14,7 @@ from django.contrib.sites.models import Site
 from django.core.management.base import BaseCommand
 
 from allauth.socialaccount.models import SocialApp
-from timeout.models import Note, StudyLog, Event
+from timeout.models import Note, StudyLog, Event, Conversation
 
 User = get_user_model()
 
@@ -38,15 +38,18 @@ class Command(BaseCommand):
         """Delete notes and study logs for non-superusers, then remove those users."""
         notes = Note.objects.exclude(owner__in=excluded_users).delete()[0]
         logs = StudyLog.objects.exclude(user__in=excluded_users).delete()[0]
+        # Conversations are M2M — delete those that won't have any remaining participants
+        convs = Conversation.objects.exclude(participants__in=excluded_users).distinct().delete()[0]
         User.objects.exclude(username=SUPERUSER_USERNAME).delete()
-        return notes, logs
+        return notes, logs, convs
 
     def _delete_all_data(self):
-        """Delete all notes, study logs, and users from the database."""
+        """Delete all notes, study logs, conversations, and users from the database."""
         notes = Note.objects.all().delete()[0]
         logs = StudyLog.objects.all().delete()[0]
+        convs = Conversation.objects.all().delete()[0]
         User.objects.all().delete()
-        return notes, logs
+        return notes, logs, convs
 
     def _delete_global_records(self):
         """Delete global events, Google SocialApp, and Site(id=1)."""
@@ -64,15 +67,15 @@ class Command(BaseCommand):
             return
         if keep_super:
             self.stdout.write('Mode: Removing seeded data (keeping @johndoe)')
-            notes_deleted, logs_deleted = self._delete_user_data(
+            notes_deleted, logs_deleted, convs_deleted = self._delete_user_data(
                 User.objects.filter(username=SUPERUSER_USERNAME))
         else:
             self.stdout.write(self.style.WARNING('Mode: Removing ALL data (including superusers)'))
-            notes_deleted, logs_deleted = self._delete_all_data()
+            notes_deleted, logs_deleted, convs_deleted = self._delete_all_data()
         global_events_deleted = self._delete_global_records()
         users_removed = total_users_before - User.objects.count()
         self.stdout.write(self.style.SUCCESS(
             f'Removed {users_removed} user(s), {notes_deleted} notes, '
-            f'{logs_deleted} study logs, {global_events_deleted} global events, '
-            f'Site(id=1), and Google SocialApp.'))
+            f'{logs_deleted} study logs, {convs_deleted} conversation(s), '
+            f'{global_events_deleted} global events, Site(id=1), and Google SocialApp.'))
         self.stdout.write(f'Remaining users: {User.objects.count()}')
