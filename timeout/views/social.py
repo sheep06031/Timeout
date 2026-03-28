@@ -37,6 +37,7 @@ from timeout.views.profile import get_profile_event
 from timeout.services.social_service import (_get_conversation_sidebar,
     _get_follow_request_info, _get_block_status, _can_view_profile,
     _serialize_search_result, _search_users_queryset, are_blocked)
+from django.db.models import Q
 
 def _get_user_post_relationships(user):
     """Return liked and bookmarked post ID sets for the given user."""
@@ -219,15 +220,24 @@ def user_profile(request, username):
     return render(request, 'social/user_profile.html', context)
 
 def _handle_private_follow(from_user, to_user):
-    """Toggle a follow request for a private account. Returns True if created."""
-    notif_filter = Notification.objects.filter(user=to_user, type=Notification.Type.FOLLOW, message=f"{from_user.username} requested to follow you")
+    notif_filter = Notification.objects.filter(
+        user=to_user,
+        type=Notification.Type.FOLLOW,
+        message=f"{from_user.username} requested to follow you"
+    )
     req, created = FollowRequest.objects.get_or_create(from_user=from_user, to_user=to_user)
     if not created:
         req.delete()
         notif_filter.delete()
         return False
     notif_filter.delete()
-    Notification.objects.create(user=to_user, title="New Follow Request", message=f"{from_user.username} requested to follow you", type=Notification.Type.FOLLOW)
+    Notification.objects.create(
+        user=to_user,
+        title="New Follow Request",
+        message=f"{from_user.username} requested to follow you",
+        type=Notification.Type.FOLLOW,
+        sender=from_user 
+    )
     return True
 
 @login_required

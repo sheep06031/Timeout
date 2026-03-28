@@ -66,6 +66,13 @@ class Notification(CreatedAtMixin, models.Model):
         on_delete=models.CASCADE,
         related_name="notifications"
     )
+    sender = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='sent_notifications'
+    )
 
     class Meta:
         """Order notifications by most recent first."""

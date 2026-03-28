@@ -57,12 +57,12 @@ urlpatterns = [
     path('bookmarks/', social.bookmarks, name='bookmarks'),
 
     # User profiles and following
-    path('user/<str:username>/', social.user_profile, name='user_profile'),
-    path('user/<str:username>/follow/', social.follow_user, name='follow_user'),
-    path('user/<str:username>/block/', social.block_user, name='block_user'),
     path('user/<str:username>/follow/accept/', social.accept_follow_request, name='accept_follow_request'),
     path('user/<str:username>/follow/reject/', social.reject_follow_request, name='reject_follow_request'),
-    path('status/update/', social.update_status, name='update_status'),
+    path('user/<str:username>/follow/', social.follow_user, name='follow_user'),
+    path('user/<str:username>/block/', social.block_user, name='block_user'),
+    path('user/<str:username>/', social.user_profile, name='user_profile'),  
+    path('status/update/', social.update_status, name='update_status'), 
     path('focus/reset-timer/', social.reset_focus_timer, name='reset_focus_timer'),
 
     # Friends & follow lists (own)
@@ -70,7 +70,6 @@ urlpatterns = [
     path('followers/', social_api.followers_api, name='followers_api'),
     path('following/', social_api.following_api, name='following_api'),
     path('blocked/', social.blocked_users_api, name='blocked_users_api'),
-
 
     # User search
     path('search/', social.search_users, name='search_users'),

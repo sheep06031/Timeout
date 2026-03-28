@@ -95,12 +95,23 @@ document.addEventListener("DOMContentLoaded", () => {
      */
     async function _handleFollowAction(notifItem, target) {
         var username = target.dataset.username;
+        var notificationId = notifItem.id.replace("notif-", "");
         var action = target.classList.contains("accept-follow-btn") ? "accept" : "reject";
         try {
-            await _postRequest("/social/user/" + username + "/follow/" + action + "/");
+            const res = await _postRequest("/social/user/" + username + "/follow/" + action + "/");
+            if (!res.ok) return;
+
+            await _postRequest("/notifications/read/" + notificationId + "/");
             if (notifItem.classList.contains("notification-unread")) decreaseUnread();
-            notifItem.remove();
-            _hideIfEmpty();
+
+            notifItem.classList.remove("notification-unread");
+            notifItem.classList.add("notification-read");
+
+            const actionsDiv = notifItem.querySelector(".notification-actions");
+            actionsDiv.innerHTML = `
+                <button class="mark-unread-btn notif-btn" data-id="${notificationId}">Unread</button>
+                <button class="delete-notif-btn notif-btn notif-btn-delete" data-id="${notificationId}">Delete</button>
+            `;
         } catch (err) { console.error("Follow request error:", err); }
     }
 
