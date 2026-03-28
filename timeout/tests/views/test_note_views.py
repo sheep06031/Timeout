@@ -1,3 +1,11 @@
+"""
+Tests for the note views in the timeout app, including notes, note_create, note_edit, note_delete, note_toggle_pin, and note_share.
+Includes tests for:
+- Authentication and permissions: ensuring that only logged-in users can access the views and that they can only edit/delete their own notes
+- Successful operations: verifying that notes are created, edited, deleted, pinned/unpinned, and shared correctly, with appropriate redirects and database updates
+- Handling of edge cases: such as attempting to edit/delete a non-existent note, sharing a note that belongs to another user, and ensuring that the content formatting of shared posts is correct
+These tests ensure that the note functionality works correctly, enforces proper permissions, and handles various edge cases appropriately.
+"""
 import json
 
 from django.test import TestCase

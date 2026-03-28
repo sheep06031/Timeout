@@ -1,3 +1,18 @@
+"""
+Tests for the ai_calendar views in the timeout app, specifically the ai_create_event view that handles POST requests to create calendar events based on natural language input processed by an AI model.
+Includes tests for:
+- Authentication requirements (redirects unauthenticated users to login)
+- Allowed HTTP methods (only POST is allowed)
+- Validation of input data (empty or missing user_input returns 400)
+- Handling of missing OpenAI API key (returns 500 with error message)
+- Successful event creation with valid AI response (returns 200 and creates Event in database)
+- Response format (JSON includes event fields)
+- Special handling for all-day events (sets start to 00:00 and end to 23:59)
+- Parsing of AI responses wrapped in markdown fences
+- Handling of invalid JSON from AI (returns 500 with error message)
+- Handling of exceptions from the OpenAI client (returns 500 with error message)
+- Handling of model validation errors when creating the Event (returns 400 with error message)
+"""
 import json
 from unittest.mock import MagicMock, patch
 

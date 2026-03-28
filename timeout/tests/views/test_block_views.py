@@ -1,3 +1,18 @@
+"""
+Tests for the block and unblock functionality in the timeout app, including the block_user view, the blocked_users_api view, and the context variables set in the user profile and search views related to blocking.
+Includes tests for:
+- Blocking a user creates a Block record and returns the correct JSON response
+- Unblocking a user removes the Block record and returns the correct JSON response
+- Users cannot block themselves
+- Blocking a user removes follow relationships in both directions
+- Users cannot follow a user they have blocked or who has blocked them
+- The blocked users API returns the correct list of blocked users
+- The user profile view sets the correct context variables for blocking status
+- The search users API excludes users that the current user has blocked or who have blocked the current user
+- Block relationships are respected across different feed types (discover, following, bookmarks)
+- Block relationships prevent messaging between users in both directions
+- Block relationships prevent liking and commenting on posts in both directions
+"""
 from django.test import TestCase, Client
 from django.urls import reverse
 from django.contrib.auth import get_user_model

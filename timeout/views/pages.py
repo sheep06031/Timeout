@@ -13,6 +13,8 @@ from django.db.models import Q
 from django.shortcuts import redirect, render
 from django.utils import timezone
 from timeout.models import User, Note, Message, Conversation
+from timeout.models.like import Like
+from timeout.models.bookmark import Bookmark
 from timeout.models.event import Event
 from timeout.services import FeedService, DeadlineService
 from timeout.views.statistics import get_focus_stats, build_context
@@ -87,6 +89,8 @@ def profile(request):
         'event': event,
         'event_status': event_status,
         'friends_count': friends_count,
+        'liked_ids': set(Like.objects.filter(user=request.user).values_list('post_id', flat=True)),
+        'bookmarked_ids': set(Bookmark.objects.filter(user=request.user).values_list('post_id', flat=True)),
     }
     return render(request, 'pages/profile.html', context)
 

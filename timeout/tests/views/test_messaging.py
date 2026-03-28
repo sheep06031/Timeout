@@ -1,3 +1,11 @@
+"""
+Tests for the messaging views in the timeout app, including delete_message, send_message, and poll_messages.
+Includes tests for:
+- delete_message: successful deletion by staff, non-staff access denied, login required, method requirements, handling of non-existent messages
+- send_message: successful sending by a conversation participant, message saved to database, empty messages rejected, non-participants cannot send, response contains formatted time
+- poll_messages: successful polling by a conversation participant, returns all messages after last_id, is_me flag correct, polled messages marked as read, non-participants cannot poll
+These tests ensure that the messaging functionality works correctly, enforces proper permissions, handles various edge cases, and that the user experience is consistent with expectations (e.g. messages marked as read when polled, correct response format when sending messages).
+"""
 import json
 from django.test import TestCase, Client
 from django.urls import reverse

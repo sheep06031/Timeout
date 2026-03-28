@@ -1,3 +1,11 @@
+"""
+Tests for the calendar view in the timeout app, including navigation (month/year parsing, wrapping, prev/next links), the weeks grid context (today flag and in_month flag), and recurring event expansion.
+Includes tests for:
+- Navigation: default month/year, explicit month/year, invalid month/year, month wrapping, prev/next month calculations, authentication requirement
+- Weeks grid: correct setting of 'is_today' flag, correct setting of 'in_month' flag for current vs adjacent month cells
+- Recurring events: daily, weekly, monthly recurrences, handling of end-of-month and year boundaries, non-recurring events appearing only on their start date
+These tests ensure that the calendar view correctly handles various edge cases in date parsing and navigation, accurately identifies today's date in the grid, distinguishes between days in the current month and adjacent months, and properly expands recurring events according to their recurrence rules.
+"""
 import json
 from datetime import date, datetime, timedelta
 from unittest.mock import patch

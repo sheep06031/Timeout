@@ -1,3 +1,10 @@
+"""
+Tests for the calendar-related views in the timeout app, including event creation, applying session schedules, and subscribing to events.
+Includes tests for:
+- Event creation: normal events, recurring events, all-day events, validation errors, optional fields, allow_conflict checkbox, authentication and method guards
+- Applying session schedules: successful updates, invalid JSON, non-existent events, wrong event types, missing keys, empty sessions list, authentication and method guards
+- Subscribing to events: successful subscription, owner cannot subscribe, already subscribed, private event 404, nonexistent event 404, authentication and method guards
+"""
 import json
 from datetime import date, datetime, timedelta
 from unittest.mock import patch

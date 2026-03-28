@@ -1,3 +1,13 @@
+"""
+Tests for the follow request system in the timeout app, including sending follow requests, accepting/rejecting requests, and how follow requests are indicated in user profiles.
+Includes tests for:
+- Sending follow requests: following a public user should immediately create a follower relationship, while following a private user should create a FollowRequest object. Attempting to follow oneself should return a 400 error.
+- Canceling follow requests: if a follow request already exists, posting to follow again should cancel the request.
+- Accepting follow requests: should create a follower relationship, delete the FollowRequest object, and create a notification for the requester.
+- Rejecting follow requests: should delete the FollowRequest object without creating a follower relationship or notification.
+- Profile indications: when viewing a user's profile, it should indicate if there is a pending follow request from the logged-in user, and when viewing one's own profile, it should show incoming follow requests.
+- Authentication requirements: ensuring that only logged-in users can send follow requests and accept/reject them.
+"""
 import json
 
 from django.test import TestCase
@@ -11,10 +21,7 @@ User = get_user_model()
 
 
 class FollowRequestTest(TestCase):
-    """
-    Tests for the follow request system
-
-    """
+    """Tests for the follow request system."""
 
     def setUp(self):
         """Create two users, one public and one private, for testing."""

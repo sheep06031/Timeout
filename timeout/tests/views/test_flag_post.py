@@ -1,3 +1,14 @@
+"""
+Tests for the flag_post view in the timeout app, which allows users to report inappropriate content by flagging posts.
+Includes tests for:
+- Successful flagging of a post with valid reason and description, resulting in a PostFlag object being created in the database
+- Handling of duplicate flags by the same user on the same post, ensuring that it does not create multiple PostFlag objects and returns appropriate success/created flags in the response
+- Validation of the reason field, ensuring that invalid reasons default to 'other' and that all valid reasons can be used
+- Handling of missing reason and description fields, ensuring that they default to 'other' and an empty string respectively
+- Authentication requirements, ensuring that only logged-in users can flag posts and that unauthenticated requests are redirected to the login page
+- Method requirements, ensuring that only POST requests are allowed and that GET requests return a 405 Method Not Allowed response
+- Handling of attempts to flag non-existent posts, ensuring that a 404 Not Found response is returned
+"""
 import json
 
 from django.contrib.auth import get_user_model
@@ -13,6 +24,7 @@ class FlagPostViewTest(TestCase):
     """Tests for the flag_post view."""
 
     def setUp(self):
+        """Create a user, an author, and a post for testing."""
         self.user = User.objects.create_user(username="reporter", password="pass")
         self.author = User.objects.create_user(username="author", password="pass")
         self.post = Post.objects.create(

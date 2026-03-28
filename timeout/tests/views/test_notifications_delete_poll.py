@@ -1,9 +1,10 @@
 """
-test_notifications_delete_poll.py - Tests for notification soft-deletion (is_dismissed), bulk dismissal,
-and unread count polling via AJAX, covering auth requirements, ownership enforcement, and JSON responses.
-"""
-
-
+Tests for the notification views in the timeout app, including delete_notification, delete_all_notifications, and poll_notifications.
+Includes tests for:
+- delete_notification: successful deletion by the owner, non-owners cannot delete, login required, method requirements, handling of non-existent notifications, ensuring that the notification is not hard-deleted from the database
+- delete_all_notifications: successful deletion of all notifications by the owner, non-owners cannot delete, login required, method requirements, handling of users with no notifications, ensuring that notifications are not hard-deleted from the database
+- poll_notifications: successful polling by a logged-in user, returns only their notifications, includes unread_count, respects last_id for incremental polling, excludes dismissed notifications, includes expected fields in the response, handles invalid last_id gracefully
+These tests ensure that the notification functionality works"""
 from django.test import TestCase, Client
 from django.urls import reverse
 from django.contrib.auth import get_user_model

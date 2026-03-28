@@ -364,7 +364,9 @@ class ConfirmSessionsViewTests(TestCase):
 
 class BuildPromptTests(TestCase):
     """Tests for the build_prompt function that generates a prompt string for the GPT scheduling model based on a deadline event and parameters for hours needed, session length, and candidate free slots."""
+
     def setUp(self):
+        """Create a test user for the build_prompt tests."""
         self.user = User.objects.create_user(username='prompt_u', password='pass')
 
     def test_returns_string_with_deadline_info(self):

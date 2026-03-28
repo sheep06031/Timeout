@@ -1,3 +1,10 @@
+"""
+Tests for the calendar helper functions in the timeout app, including advance_date and event_status.
+Includes tests for:
+- advance_date: daily, weekly, monthly recurrences, handling of end-of-month, unknown recurrence patterns
+- event_status: ongoing, past, upcoming events based on start and end datetimes
+These helper functions are used in various views such as profile and calendar to determine how to display events and calculate next occurrences of recurring events.
+"""
 from datetime import date
 from django.test import TestCase
 from django.utils import timezone

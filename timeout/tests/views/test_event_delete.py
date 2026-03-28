@@ -1,3 +1,10 @@
+"""
+Tests for the event_delete view in the timeout app, which allows users to delete their own events. 
+Includes tests for:
+- Authentication requirements: ensuring that only logged-in users can access the view and that they can only delete their own events
+- Successful deletion: verifying that the event is removed from the database, that any linked notifications are also deleted, and that the user is redirected to the calendar with a success message containing the event title
+- Handling of edge cases: such as attempting to delete a non-existent event, ensuring that other events and notifications are not affected, and testing the deletion of different event types (e.g. deadline, exam, public event with linked post)
+"""
 from django.test import TestCase, Client
 from django.urls import reverse
 from django.contrib.auth import get_user_model

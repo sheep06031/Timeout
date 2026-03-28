@@ -1,3 +1,13 @@
+"""
+Tests for the core functionality of the Note model and NoteService in the timeout app, which includes properties and methods related to note urgency, time spent display, permissions, study logs, pomodoro logging, XP awarding, daily progress calculation, heatmap data generation, and streak tracking.
+Includes tests for:
+- Note urgency: ensuring that the urgency property correctly categorizes notes based on their due date (overdue, urgent, soon, upcoming)
+- Time spent display: verifying that the time_spent_display property formats time spent in a human-readable way (e.g. "1h 30m")
+- Permissions: testing the can_edit and can_delete methods to ensure that only the owner (and staff for deletion) can edit/delete a note
+- StudyLog model: checking the string representation and activity level calculation based on pomodoros, notes created/edited, and focus minutes
+- NoteService: testing log_pomodoro creates/increments StudyLogs, award_pomodoro_xp increases XP, get_daily_progress returns the correct structure, get_heatmap_data includes today's data after logging a pomodoro, and update_streak_and_xp correctly updates note streaks and awards XP based on note-related activity
+These tests ensure that the core logic related to notes and study tracking works correctly, enforces proper permissions, and handles various edge cases appropriately.
+"""
 import datetime
 import json
 

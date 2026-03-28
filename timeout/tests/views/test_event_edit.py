@@ -1,3 +1,10 @@
+"""
+Tests for the event_edit view in the timeout app, which allows users to edit their own events.
+Includes tests for:
+- Authentication and permissions: ensuring that only logged-in users can access the view and that they can only edit their own events
+- Successful editing: verifying that the event is updated in the database with the new information, that the user is redirected to the calendar, and that a success message is shown
+- Handling of edge cases: such as attempting to edit a non-existent event, invalid input data (e.g. invalid datetimes), and ensuring that linked study sessions are only set for deadlines
+"""
 from django.test import TestCase, Client
 from django.urls import reverse
 from django.contrib.auth import get_user_model

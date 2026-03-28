@@ -1,3 +1,17 @@
+"""
+Tests for the note productivity views in the timeout app, including pomodoro_complete, note_share, update_daily_goals, daily_progress, heatmap_data, notes_stats, note_edit, note_delete, and note_toggle_pin.
+Includes tests for:
+- pomodoro_complete: awarding XP, updating note time spent, handling missing/invalid note_id
+- note_share: creating a public post with the note's content and category
+- update_daily_goals: updating user's daily goals with valid data, clamping invalid data, handling non-integer input
+- daily_progress: returning current progress towards daily goals in JSON response
+- heatmap_data: returning daily activity data for the past year in JSON response
+- notes_stats: returning user's XP, level, and note streak stats in JSON response
+- note_edit: handling invalid form data, ensuring only the owner can edit
+- note_delete: allowing owners and staff to delete notes, preventing non-owners from deleting
+- note_toggle_pin: toggling the pinned state of a note, ensuring only the owner can toggle
+These tests ensure that the note productivity features work correctly, enforce proper permissions, handle various edge cases, and that the JSON responses contain the expected data for frontend consumption.
+"""
 import json
 
 from django.contrib.auth import get_user_model
