@@ -4,6 +4,8 @@
       {% if request.user.is_authenticated %}
         data-theme="{{ request.user.theme }}"
         data-colorblind="{{ request.user.colorblind_mode }}"
+        data-user-status="{{ request.user.status }}"
+        data-auto-online="{{ request.user.auto_online|lower }}"
       {% endif %}>
   <head>
     <meta charset="UTF-8" />
@@ -85,6 +87,22 @@
     {% endblock %}
 
 <script src="{% static 'js/notification_poll.js' %}" data-poll-url="{% url 'poll_notifications' %}"></script>
+
+  <!-- Reset focus timer on page load if needed -->
+  <script>
+    (function() {
+      const userStatus = document.documentElement.getAttribute('data-user-status');
+      const autoOnline = document.documentElement.getAttribute('data-auto-online');
+
+      // If user is in focus mode and auto_online is OFF, reset timer to create a new session
+      if (userStatus === 'focus' && autoOnline !== 'true') {
+        const data = new FormData();
+        data.append('csrfmiddlewaretoken', getCSRFToken());
+        navigator.sendBeacon('{% url "reset_focus_timer" %}', data);
+      }
+    })();
+  </script>
+
   <!-- Footer -->
   {% include 'partials/_footer.html' %}
   </body>

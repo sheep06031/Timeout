@@ -35,6 +35,7 @@ urlpatterns = [
     path('user/<str:username>/follow/accept/', social.accept_follow_request, name='accept_follow_request'),
     path('user/<str:username>/follow/reject/', social.reject_follow_request, name='reject_follow_request'),
     path('status/update/', social.update_status, name='update_status'),
+    path('focus/reset-timer/', social.reset_focus_timer, name='reset_focus_timer'),
 
     # Friends & follow lists (own)
     path('friends/', social_api.friends_api, name='friends_api'),

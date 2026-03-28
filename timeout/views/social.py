@@ -291,6 +291,17 @@ def update_status(request):
   
 
 @login_required
+@require_POST
+def reset_focus_timer(request):
+    """Reset focus session timer on page load. Creates a new session with timer at 0."""
+    user = request.user
+    if user.status == 'focus':
+        user.focus_started_at = timezone.now()
+        user.save()
+    return JsonResponse({'success': True})
+
+
+@login_required
 def search_users(request):
     """Search users by username or name (GET ?q=...)."""
     query = request.GET.get('q', '').strip()
