@@ -1,3 +1,10 @@
+"""
+test_check_site.py - Defines CheckSiteCommandTests for testing the check_site management command,
+covering active site/SocialApp configuration reporting, missing records, settings override checks,
+and Google SocialApp client_id and site linkage validation.
+"""
+
+
 from io import StringIO
 from unittest.mock import patch, MagicMock
 

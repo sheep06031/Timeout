@@ -78,26 +78,39 @@
         </div>
       </div>
 
+      <div class="stg-section-header">
+        <div>
+          <p class="stg-section-desc">No less than 10 minutes of study is allowed.</p>
+          <p class="stg-section-desc">Your short breaks can't be longer than the time you study.</p>
+          <p class="stg-section-desc">Your long breaks can't be longer than 1.5× the time you study.</p>
+        </div>
+      </div>
+
+
       <div class="stg-field-row">
         <div class="stg-field stg-field--third">
           <label class="stg-label" for="id_pomo_work_minutes">Work (min)</label>
           <input type="number" name="pomo_work_minutes" id="id_pomo_work_minutes"
                  class="stg-input" min="10" max="60"
                  value="{{ appearance_form.instance.pomo_work_minutes }}">
+          <span class="stg-field-hint">Minimum 10 minutes.</span>
         </div>
         <div class="stg-field stg-field--third">
           <label class="stg-label" for="id_pomo_short_break">Short Break (min)</label>
           <input type="number" name="pomo_short_break" id="id_pomo_short_break"
                  class="stg-input" min="1" max="30"
                  value="{{ appearance_form.instance.pomo_short_break }}">
+          <span class="stg-field-hint" id="shortBreakHint">Maximum = work duration.</span>
         </div>
         <div class="stg-field stg-field--third">
           <label class="stg-label" for="id_pomo_long_break">Long Break (min)</label>
           <input type="number" name="pomo_long_break" id="id_pomo_long_break"
                  class="stg-input" min="5" max="60"
                  value="{{ appearance_form.instance.pomo_long_break }}">
+          <span class="stg-field-hint" id="longBreakHint">Maximum = 1.5× work duration.</span>
         </div>
       </div>
+
 
       <div class="stg-field">
         <label class="stg-toggle-row">
@@ -126,13 +139,6 @@
         <div class="stg-field stg-field--half">
           <label class="stg-label" for="id_default_note_category">Default Category</label>
           {{ appearance_form.default_note_category }}
-        </div>
-        <div class="stg-field stg-field--half">
-          <label class="stg-label" for="id_daily_study_reminder">Daily Study Reminder</label>
-          <input type="time" name="daily_study_reminder" id="id_daily_study_reminder"
-                 class="stg-input"
-                 value="{% if appearance_form.instance.daily_study_reminder %}{{ appearance_form.instance.daily_study_reminder|time:'H:i' }}{% endif %}">
-          <span class="stg-field-hint">Get a reminder to study at this time daily.</span>
         </div>
       </div>
     </div>

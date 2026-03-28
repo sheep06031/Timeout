@@ -222,4 +222,9 @@
   .post-card-body {
     padding: 14px 16px;
   }
+
+  .profile-edit-btn {
+    width: 100%;
+    text-align: center;
+  }
 }

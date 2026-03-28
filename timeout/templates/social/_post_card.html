@@ -3,7 +3,15 @@
 
     <!-- Header -->
     <div class="post-header">
-      <div>
+      <div class="d-flex align-items-center gap-2">
+        <a href="{% url 'user_profile' post.author.username %}" class="post-author-avatar">
+          {% if post.author.profile_picture %}
+            <img src="{{ post.author.profile_picture.url }}" alt="{{ post.author.username }}">
+          {% else %}
+            {{ post.author.username|first|upper }}
+          {% endif %}
+        </a>
+        <div>
         <a href="{% url 'user_profile' post.author.username %}" class="post-author-link">
           {{ post.author.username }}
         </a>
@@ -12,6 +20,7 @@
           {% if post.privacy == 'followers_only' %}
             <span class="badge-followers">Followers Only</span>
           {% endif %}
+        </div>
         </div>
       </div>
       <div class="d-flex gap-2 align-items-center">
@@ -46,13 +55,21 @@
     <!-- Linked Event -->
     {% if post.event %}
       <div class="post-event-tag" style="display:flex; align-items:center; justify-content:space-between;">
-        <div style="display:flex; align-items:center; gap:8px;">
+        {% if post.event.creator == user %}
+          <a href="{% url 'calendar' %}?open_event={{ post.event.id }}" style="text-decoration:none; color:inherit; display:flex; align-items:center; gap:8px;">
+        {% else %}
+          <div style="display:flex; align-items:center; gap:8px;">
+        {% endif %}
           <i class="bi bi-calendar-event"></i>
           <div>
             <div>{{ post.event.title }}</div>
             <div class="event-date">{{ post.event.start_datetime|date:"F j, Y g:i A" }}</div>
           </div>
-        </div>
+        {% if post.event.creator == user %}
+          </a>
+        {% else %}
+          </div>
+        {% endif %}
         {% if post.event.visibility == 'public' and post.event.creator != user %}
           <button class="btn-subscribe-event"
                   data-url="{% url 'subscribe_event' post.event.id %}"
@@ -98,7 +115,13 @@
 
         {% for comment in post.comments.all %}
           <div class="comment-item {% if comment.parent %}reply{% endif %}">
-            <div class="comment-avatar">{{ comment.author.username|first|upper }}</div>
+            <div class="comment-avatar">
+              {% if comment.author.profile_picture %}
+                <img src="{{ comment.author.profile_picture.url }}" alt="{{ comment.author.username }}">
+              {% else %}
+                {{ comment.author.username|first|upper }}
+              {% endif %}
+            </div>
             <div class="comment-bubble">
               <div class="d-flex align-items-center justify-content-between">
                 <div>

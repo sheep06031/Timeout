@@ -1,9 +1,14 @@
+"""
+user_admin.py - Admin interface for User model in Timeout application.
+"""
+
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from timeout.models import User
 
 @admin.register(User)
 class UserAdmin(BaseUserAdmin):
+    """Admin interface for User model."""
     list_display = (
         'username', 'email', 'first_name', 'last_name',
         'university', 'year_of_study', 'is_staff',

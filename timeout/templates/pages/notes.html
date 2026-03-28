@@ -214,14 +214,11 @@
                 <div class="nt-item__actions" onclick="event.preventDefault(); event.stopPropagation();">
                   <button class="nt-action-btn" onclick="togglePin({{ note.id }}, this)" data-pinned="{{ note.is_pinned|yesno:'true,false' }}">
                     {{ note.is_pinned|yesno:"Unpin,Pin" }}</button>
-                  <form method="post" action="{% url 'note_delete' note.id %}" class="nt-delete-form">
-                    {% csrf_token %}
-                    <button
-                      type="submit"
-                      class="nt-action-btn nt-action-btn--danger"
-                      onclick="return confirm('Delete this note?')"
-                    >Delete</button>
-                  </form>
+                  <button
+                    type="button"
+                    class="nt-action-btn nt-action-btn--danger"
+                    onclick="deleteNote({{ note.id }}, '{% url 'note_delete' note.id %}')"
+                  >Delete</button>
                 </div>
               </a>
             {% endfor %}

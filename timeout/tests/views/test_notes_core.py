@@ -1,10 +1,12 @@
+"""
+Tests for the core functionality of the Note model and NoteService in the timeout app, which includes properties and methods related to note urgency, time spent display, permissions, study logs, pomodoro logging, XP awarding, daily progress calculation, heatmap data generation, and streak tracking.
+"""
 import datetime
-
+import json
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AnonymousUser
 from django.test import TestCase
 from django.utils import timezone
-
 from timeout.models import Note, StudyLog
 from timeout.services import NoteService
 

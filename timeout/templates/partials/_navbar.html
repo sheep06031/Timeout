@@ -36,7 +36,7 @@
               {% with user.unread_count as unread_count %}
               <span id="nav-notif-badge"
                     class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
-                    {% if unread_count == 0 or user.status == 'focus' %}style="display:none"{% endif %}>
+                    {% if unread_count == 0 %}style="display:none"{% endif %}>
                     {% if unread_count > 99 %}99+{% else %}{{ unread_count }}{% endif %}
               </span>
               {% endwith %}
@@ -88,20 +88,18 @@
         <a class="nav-status-pill" href="{% url 'profile' %}">
           <span id="nav-status-dot" class="nav-status-dot status-{{ user.status }}"></span>
           <span id="nav-status-text">{{ user.get_status_display }}</span>
-          <span id="nav-focus-timer"
-                {% if user.status == 'focus' and user.focus_started_at %}
-                  data-focus-started-at="{{ user.focus_started_at|date:'U' }}"
-                {% else %}
-                  style="display:none"
-                {% endif %}>
-            · <span class="focus-timer-display">00:00</span>
-          </span>
         </a>
 
         <!-- User dropdown -->
         <div class="dropdown">
           <button class="nav-user-dropdown-btn dropdown-toggle" type="button" id="navUserDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-            <span class="nav-user-avatar">{{ user.username|first|upper }}</span>
+            <span class="nav-user-avatar">
+              {% if user.profile_picture %}
+                <img src="{{ user.profile_picture.url }}?t={{ user.id }}" alt="Profile" class="nav-user-avatar-img">
+              {% else %}
+                {{ user.username|first|upper }}
+              {% endif %}
+            </span>
             <span class="nav-user-name d-none d-lg-inline">{{ user.username }}</span>
           </button>
           <ul class="dropdown-menu dropdown-menu-end nav-dropdown-menu" aria-labelledby="navUserDropdown">

@@ -31,21 +31,15 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   // Set initial badge state from server-rendered count
-  if (document.body.dataset.userStatus !== 'focus') {
-    updateNotifBadge(currentUnread);
-  }
+  updateNotifBadge(currentUnread);
 
 
   let lastNotifId = parseInt(_nav?.dataset.latestNotifId) || 0;
 
   /**
    * Poll for new notifications and update badge/tooltip if any exist.
-   * Skips polling when user is in focus mode.
    */
   function pollNotifications() {
-    if (document.body.dataset.userStatus === 'focus') {
-      fetch(`/notifications/poll/?last_id=${lastNotifId}`).catch(() => {});
-      return;}
     fetch(`/notifications/poll/?last_id=${lastNotifId}`)
       .then(res => res.json())
       .then(data => {
@@ -59,7 +53,6 @@ document.addEventListener("DOMContentLoaded", function () {
           updateNotifBadge(currentUnread + newUnread);}})
       .catch(err => console.error("Polling error:", err));}
       
-  window.addEventListener('focusModeEnded', pollNotifications);
   setInterval(pollNotifications, 10000);
 
 });

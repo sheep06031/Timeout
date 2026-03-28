@@ -1,3 +1,9 @@
+"""
+test_focus_session.py - Defines FocusSessionModelTests for testing the FocusSession model's functionality, including string representation,
+ordering, cascade deletion, and duration storage.
+"""
+
+
 from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.utils import timezone
@@ -8,6 +14,7 @@ User = get_user_model()
 
 
 class FocusSessionModelTests(TestCase):
+    """Tests for the FocusSession model, which represents a user's focused work sessions with start and end times, duration, and related user information."""
 
     def setUp(self):
         """Set up test user and focus session."""

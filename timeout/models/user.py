@@ -1,3 +1,8 @@
+"""
+user.py - Defines the custom User model for the Timeout application, including fields for profile information, preferences, gamification, and social features.
+"""
+
+
 import math
 
 from django.contrib.auth.models import AbstractUser
@@ -71,8 +76,6 @@ class User(AbstractUser):
         )),
         default='', blank=True,
     )
-    daily_study_reminder = models.TimeField(null=True, blank=True)
-
     # Daily Study Goals 
     daily_pomo_goal = models.PositiveSmallIntegerField(default=4)
     daily_notes_goal = models.PositiveSmallIntegerField(default=3)

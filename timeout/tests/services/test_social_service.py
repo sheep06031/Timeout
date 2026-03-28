@@ -1,3 +1,9 @@
+"""
+test_social_service.py - Defines TestSocialService and FeedServiceTest for testing the social_service helper functions and FeedService query logic, including conversation sidebar data,
+follow request info, block status, profile visibility, user search functionality, and feed content based on following and discover criteria.
+"""
+
+
 from django.test import TestCase
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AnonymousUser

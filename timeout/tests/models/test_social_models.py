@@ -1,3 +1,9 @@
+"""
+test_social_models.py - Defines SocialModelsTest for testing the social-related models (Post, Comment, Like, Bookmark) in the application, including their methods,
+constraints, and behavior with authenticated and anonymous users.
+"""
+
+
 from django.test import TestCase
 from django.contrib.auth import get_user_model
 from django.db import IntegrityError

@@ -48,28 +48,7 @@ const BLOCKED_URL   = _cfg?.dataset.blockedUrl   ?? '';
   }
 
   /**
-   * Update focus mode timer display based on status change.
-   */
-  function _updateFocusTimers(data) {
-    const navTimer = document.getElementById('nav-focus-timer');
-    const profileTimer = document.getElementById('profile-focus-timer');
-    if (data.status === 'focus' && data.focus_started_at) {
-      [navTimer, profileTimer].forEach(el => {
-        if (!el) return;
-        el.dataset.focusStartedAt = data.focus_started_at;
-        el.style.display = '';
-      });
-    } else {
-      [navTimer, profileTimer].forEach(el => {
-        if (!el) return;
-        el.style.display = 'none';
-        delete el.dataset.focusStartedAt;
-      });
-    }
-  }
-
-  /**
-   * Apply status update to all UI elements and dispatch focus mode event.
+   * Apply status update to all UI elements.
    */
   function _applyStatusUpdate(data) {
     if (!data?.status) return;
@@ -78,10 +57,6 @@ const BLOCKED_URL   = _cfg?.dataset.blockedUrl   ?? '';
     if (navText) navText.textContent = data.status_display;
     setNavDot(data.status);
     document.body.dataset.userStatus = data.status;
-    if (data.status != 'focus') {
-      window.dispatchEvent(new CustomEvent('focusModeEnded'));
-    }
-    _updateFocusTimers(data);
   }
 
   document.querySelectorAll('.status-btn').forEach((btn) => {

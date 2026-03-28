@@ -1,3 +1,9 @@
+"""
+note_service.py - Defines NoteService for querying and filtering notes, managing XP and streaks,
+logging study activity (notes, Pomodoros, focus), and retrieving heatmap and daily progress data.
+"""
+
+
 import datetime
 
 from django.db.models import Q
@@ -41,10 +47,20 @@ class NoteService:
         user.save(update_fields=['xp', 'note_streak', 'longest_note_streak', 'last_note_date'])
 
     @staticmethod
-    def award_pomodoro_xp(user):
-        """Award XP for completing a Pomodoro session."""
-        user.xp += NoteService.XP_POMODORO
+    def award_pomodoro_xp(user, elapsed_minutes=None):
+        """Award XP for completing a Pomodoro work session.
+
+        XP scales with actual study time (1 XP per minute) with a minimum of
+        10 XP.  ``elapsed_minutes`` defaults to ``XP_POMODORO`` equivalent when
+        not provided so existing call-sites are unaffected.
+        """
+        if elapsed_minutes is None:
+            xp_gain = NoteService.XP_POMODORO
+        else:
+            xp_gain = max(10, int(elapsed_minutes))
+        user.xp += xp_gain
         user.save(update_fields=['xp'])
+        return xp_gain
 
 
     @staticmethod

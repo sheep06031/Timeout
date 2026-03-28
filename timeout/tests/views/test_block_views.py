@@ -1,3 +1,6 @@
+"""
+Tests for the block and unblock functionality in the timeout app, including the block_user view, the blocked_users_api view, and the context variables set in the user profile and search views related to blocking.
+"""
 from django.test import TestCase, Client
 from django.urls import reverse
 from django.contrib.auth import get_user_model

@@ -1,3 +1,7 @@
+"""
+View for editing an existing event. Handles both GET (show form) and POST (process form submission) requests. Includes helper functions to parse datetimes and apply form data to the event model.
+"""
+
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, get_object_or_404, redirect
@@ -26,7 +30,6 @@ def _apply_event_fields(event, post_data, start_dt, end_dt):
     event.end_datetime = end_dt
     event.location = post_data.get("location")
     event.description = post_data.get("description")
-    event.allow_conflict = bool(post_data.get("allow_conflict"))
     event.save()
     if event.event_type == Event.EventType.DEADLINE:
         event.linked_study_sessions.set(post_data.getlist("linked_study_sessions"))

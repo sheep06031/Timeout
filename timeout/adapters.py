@@ -1,3 +1,8 @@
+"""
+adapters.py - Custom django-allauth adapters for the Timeout application.
+"""
+
+
 from django.contrib.auth import get_user_model
 from django.shortcuts import resolve_url
 

@@ -1,3 +1,6 @@
+"""
+Tests for the event_delete view in the timeout app, which allows users to delete their own events. 
+"""
 from django.test import TestCase, Client
 from django.urls import reverse
 from django.contrib.auth import get_user_model

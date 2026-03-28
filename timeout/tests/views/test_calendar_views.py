@@ -1,10 +1,11 @@
+"""
+Tests for the calendar view in the timeout app, including navigation (month/year parsing, wrapping, prev/next links), the weeks grid context (today flag and in_month flag), and recurring event expansion.
+"""
 from datetime import date, datetime
-
 from django.contrib.auth import get_user_model
 from django.test import TestCase, Client
 from django.urls import reverse
 from django.utils import timezone
-
 from timeout.models import Event
 
 User = get_user_model()

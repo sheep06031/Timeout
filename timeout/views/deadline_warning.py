@@ -1,3 +1,6 @@
+"""
+View for generating warnings about upcoming deadlines that have no linked study sessions. Accessible only to logged-in users.
+"""
 from datetime import timedelta
 from django.utils import timezone
 from timeout.models import Event

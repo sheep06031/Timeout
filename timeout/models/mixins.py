@@ -1,3 +1,8 @@
+"""
+mixins.py - Defines reusable model mixins for common fields and permissions.
+"""
+
+
 from django.db import models
 
 

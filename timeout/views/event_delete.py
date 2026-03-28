@@ -1,3 +1,7 @@
+"""
+View for deleting an existing event. Handles the deletion of related objects and ensures database integrity.
+"""
+
 from django.shortcuts import get_object_or_404, redirect
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required

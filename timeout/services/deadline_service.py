@@ -1,3 +1,9 @@
+"""
+deadline_service.py - Defines DeadlineService for retrieving and filtering user deadlines,
+marking them complete or incomplete, and computing urgency labels and time-remaining strings.
+"""
+
+
 from django.utils import timezone
 from timeout.models import Event
 from timeout.utils import urgency_label, time_string, time_passed

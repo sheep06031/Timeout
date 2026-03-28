@@ -1,3 +1,6 @@
+"""
+Tests for the user status functionality in the timeout app, including the User model's status field and the view that updates the user's status via POST requests to the 'update_status' endpoint.
+"""
 import json
 from django.test import TestCase, Client
 from django.urls import reverse

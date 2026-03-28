@@ -1,3 +1,6 @@
+"""
+Views for managing deadlines, including listing, filtering, and marking deadlines as complete/incomplete. Accessible only to logged-in users.
+"""
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from django.shortcuts import render
@@ -36,6 +39,7 @@ def deadline_list_view(request):
 
 
 def build_context(request, deadlines, status_filter, sort_order, event_type):
+    """Build context for the deadline list view, including counts and filter options."""
     return {
         'deadlines': deadlines,
         'total_count': len(deadlines),

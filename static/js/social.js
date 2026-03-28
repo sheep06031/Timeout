@@ -330,4 +330,10 @@ document.addEventListener('DOMContentLoaded', function() {
     initSubscribeButtons();
     initHighlightPost();
     initFabModal();
+
+    if (new URLSearchParams(window.location.search).get('add') === 'true') {
+        setTimeout(() => {
+            document.getElementById('cpOverlay')?.classList.add('open');
+        }, 150);
+    }
 });

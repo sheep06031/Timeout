@@ -1,3 +1,10 @@
+"""
+test_notification_model.py - Defines NotificationModelTest for testing the Notification model's fields,
+methods, and constraints, including type choices, foreign key behavior, is_read/is_dismissed flags,
+ordering, filtering helpers, and user isolation.
+"""
+
+
 from django.test import TestCase
 from django.contrib.auth import get_user_model
 from django.utils import timezone

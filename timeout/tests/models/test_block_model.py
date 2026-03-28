@@ -1,3 +1,9 @@
+"""
+test_block_model.py - Defines BlockModelTest for testing the Block model's functionality, including creation, string representation,
+uniqueness constraints, directional blocking behavior, and cascade deletion when a user is deleted.
+"""
+
+
 from django.test import TestCase
 from django.contrib.auth import get_user_model
 from django.db import IntegrityError
@@ -8,6 +14,7 @@ User = get_user_model()
 
 
 class BlockModelTest(TestCase):
+    """Tests for the Block model, which represents user blocks in the social features of the application."""
     def setUp(self):
         """Set up test users for block tests."""
         self.u1 = User.objects.create_user(username="u1", password="pass123")

@@ -1,3 +1,6 @@
+"""
+Tests for the follow request system in the timeout app, including sending follow requests, accepting/rejecting requests, and how follow requests are indicated in user profiles.
+"""
 import json
 
 from django.test import TestCase
@@ -11,10 +14,7 @@ User = get_user_model()
 
 
 class FollowRequestTest(TestCase):
-    """
-    Tests for the follow request system
-
-    """
+    """Tests for the follow request system."""
 
     def setUp(self):
         """Create two users, one public and one private, for testing."""

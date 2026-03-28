@@ -1,3 +1,6 @@
+"""
+Tests for the note productivity views in the timeout app, including pomodoro_complete, note_share, update_daily_goals, daily_progress, heatmap_data, notes_stats, note_edit, note_delete, and note_toggle_pin.
+"""
 import json
 
 from django.contrib.auth import get_user_model

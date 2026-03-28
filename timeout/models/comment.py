@@ -1,3 +1,8 @@
+"""
+comment.py - Defines the Comment model for posts, including threaded replies and notifications.
+"""
+
+
 from django.conf import settings
 from django.db import models
 from timeout.models.notification import Notification

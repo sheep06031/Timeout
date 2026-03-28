@@ -1,3 +1,7 @@
+"""
+Views for the password reset flow, allowing users to request a reset code, verify it, and set a new password.
+"""
+
 import random
 import time
 
@@ -27,6 +31,7 @@ def forgot_password(request):
 
 
 def _mask_email(email):
+    """Mask an email address for privacy, showing only the first 2 characters of the local part."""
     local, domain = email.split('@')
     return local[:2] + '***@' + domain
 

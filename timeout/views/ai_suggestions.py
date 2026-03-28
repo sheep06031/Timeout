@@ -1,3 +1,6 @@
+"""
+View for generating AI-based suggestions to optimize the user's day based on their scheduled events. Accessible only to logged-in users. Caches results for 1 hour to optimize performance and reduce API calls.
+"""
 import json
 from django.conf import settings
 from django.core.cache import cache

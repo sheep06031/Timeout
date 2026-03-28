@@ -38,11 +38,17 @@
         </div>
 
         <div class="dash-quick-actions">
-          <a href="{% url 'calendar' %}" class="dash-action-btn dash-action--event"><span class="dash-action-icon">+</span> New Event</a>
+          <a href="{% url 'calendar' %}?add=true" class="dash-action-btn dash-action--event">
+              <span class="dash-action-icon">+</span> New Event
+          </a>
 
-          <a href="{% url 'notes' %}" class="dash-action-btn dash-action--note"><span class="dash-action-icon">+</span> New Note</a>
+          <a href="{% url 'notes' %}?add=true" class="dash-action-btn dash-action--note">
+              <span class="dash-action-icon">+</span> New Note
+          </a>
 
-          <a href="{% url 'social_feed' %}" class="dash-action-btn dash-action--post"><span class="dash-action-icon">+</span> New Post</a>
+          <a href="{% url 'social_feed' %}?add=true" class="dash-action-btn dash-action--post">
+              <span class="dash-action-icon">+</span> New Post
+          </a>
         </div>
       </div>
 

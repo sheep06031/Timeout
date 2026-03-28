@@ -1,3 +1,9 @@
+"""
+test_profile_edit_form.py - Defines tests for ChangeUsernameForm and ProfileEditForm, covering validation rules for username changes,
+university selection logic, and form initialization behavior.
+"""
+
+
 from django.test import TestCase
 from django.contrib.auth import get_user_model
 
@@ -10,6 +16,7 @@ User = get_user_model()
 
 
 class ChangeUsernameFormTest(TestCase):
+    """Tests for ChangeUsernameForm validation rules and edge cases."""
 
     def setUp(self):
         """Set up a user for testing."""

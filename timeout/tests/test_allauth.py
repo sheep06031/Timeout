@@ -1,3 +1,7 @@
+"""
+Tests for the custom AccountAdapter and SocialAccountAdapter in the timeout app.
+Includes tests to verify that the signup redirect URL is set correctly and that the pre_social_login method correctly links social accounts to existing users based on email.
+"""
 from unittest.mock import MagicMock
 
 from django.test import TestCase, RequestFactory

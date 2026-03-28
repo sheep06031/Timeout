@@ -1,3 +1,6 @@
+"""
+Tests for the calendar helper functions in the timeout app, including advance_date and event_status.
+"""
 from datetime import date
 from django.test import TestCase
 from django.utils import timezone

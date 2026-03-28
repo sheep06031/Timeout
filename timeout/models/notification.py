@@ -1,3 +1,9 @@
+"""
+notification.py - Defines the Notification model representing user notifications for various activities such as 
+deadlines, events, messages, likes, comments, bookmarks, follows, exams, classes, meetings, and study sessions.
+"""
+
+
 from django.conf import settings
 from django.db import models
 from timeout.models.mixins import CreatedAtMixin
@@ -58,6 +64,13 @@ class Notification(CreatedAtMixin, models.Model):
         blank=True,
         on_delete=models.CASCADE,
         related_name="notifications"
+    )
+    sender = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='sent_notifications'
     )
 
     class Meta:

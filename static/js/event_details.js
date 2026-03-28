@@ -63,7 +63,6 @@ function formatCountdown(startD, endD) {
 }
 
 /* Modal population */
-
 const eventDetailsModal = document.getElementById('eventDetailsModal');
 if (eventDetailsModal) {
     eventDetailsModal.addEventListener('show.bs.modal', function (event) {

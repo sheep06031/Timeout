@@ -1,3 +1,6 @@
+"""
+Tests for the note views in the timeout app, including notes, note_create, note_edit, note_delete, note_toggle_pin, and note_share.
+"""
 import json
 
 from django.test import TestCase

@@ -1,3 +1,10 @@
+"""
+test_social_views_actions.py - Defines SocialViewsActionsTest for testing social view actions:
+post creation/deletion, likes, bookmarks, comments, follow/unfollow, and public vs followers-only
+post visibility permissions enforcement.
+"""
+
+
 import json
 
 from django.test import TestCase

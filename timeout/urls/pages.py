@@ -1,9 +1,12 @@
+"""
+URL patterns for the timeout app's main pages.
+"""
+
 from django.urls import path
 from timeout.views import pages
 from timeout.views import profile as profile_views
 from timeout.views import settings as settings_views
 
-"""URL patterns for the timeout app's main pages."""
 urlpatterns = [
     path('banned/', pages.banned, name='banned'),
     path('', pages.landing, name='landing'),

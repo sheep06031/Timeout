@@ -1,3 +1,9 @@
+"""
+Tests for the AI rescheduling views in the timeout app, including reschedule_study_sessions and ai_reschedule.
+These tests cover various scenarios such as authentication requirements, input validation, handling of missing API keys, response formats, and error handling for AI responses. 
+The tests verify that the views behave as expected under different conditions, including successful AI suggestions for rescheduling study sessions, handling of invalid or non-existent events, and proper parsing of AI responses even when wrapped in markdown fences. 
+Additionally, the tests ensure that the views return appropriate status codes and error messages for various failure scenarios, such as no upcoming sessions, invalid JSON from the AI, and exceptions raised by the OpenAI client.
+"""
 import json
 from datetime import timedelta
 from unittest.mock import MagicMock, patch

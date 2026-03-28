@@ -1,3 +1,10 @@
+"""
+Tests for the calendar-related views in the timeout app, including event creation, applying session schedules, and subscribing to events.
+Includes tests for:
+- Event creation: normal events, recurring events, all-day events, validation errors, optional fields, authentication and method guards
+- Applying session schedules: successful updates, invalid JSON, non-existent events, wrong event types, missing keys, empty sessions list, authentication and method guards
+- Subscribing to events: successful subscription, owner cannot subscribe, already subscribed, private event 404, nonexistent event 404, authentication and method guards
+"""
 import json
 from datetime import timedelta
 from unittest.mock import patch
@@ -92,17 +99,6 @@ class EventCreateTests(TestCase):
         self.assertEqual(event.event_type, "other")
         self.assertEqual(event.location, "")
         self.assertEqual(event.description, "")
-
-    def test_allow_conflict_checkbox(self):
-        """If the allow_conflict checkbox is checked, the created event should have allow_conflict=True."""
-        self.client.post(self.url, {
-            "title": "Conflicting",
-            "event_type": "other",
-            "start_datetime": "2025-04-10T09:00",
-            "end_datetime": "2025-04-10T10:00",
-            "allow_conflict": "on",
-        })
-        self.assertTrue(Event.objects.get(title="Conflicting").allow_conflict)
 
     def test_unauthenticated_post_redirects(self):
         """Unauthenticated users should be redirected to the login page when trying to create an event."""

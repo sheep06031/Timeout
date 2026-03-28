@@ -1,3 +1,7 @@
+"""
+openai_service.py - Provides utility functions to interact with the OpenAI API for generating chat completions and parsing JSON responses, including handling markdown code fences in the output.
+"""
+
 import json
 from django.conf import settings
 

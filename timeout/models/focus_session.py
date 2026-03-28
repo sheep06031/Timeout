@@ -1,3 +1,8 @@
+"""
+focus_session.py - Defines the FocusSession model representing a user's focus session.
+"""
+
+
 from django.db import models
 from django.conf import settings
 

@@ -1,3 +1,7 @@
+"""
+Views for note management, including listing, creating, editing, deleting, and sharing notes.
+"""
+
 import json
 
 from django.contrib import messages
@@ -180,6 +184,8 @@ def note_delete(request, note_id):
         return HttpResponseForbidden('You cannot delete this note.')
 
     note.delete()
+    if request.headers.get('X-CSRFToken'):
+        return JsonResponse({'ok': True})
     messages.success(request, 'Note deleted successfully!')
     return redirect('notes')
 
@@ -225,14 +231,25 @@ def _update_note_time(user, note_id, minutes):
 @login_required
 @require_POST
 def pomodoro_complete(request):
-    """Award XP when a Pomodoro work session is completed."""
+    """Award XP when a Pomodoro work session is completed.
+
+    Accepts an optional ``elapsed_minutes`` POST parameter so XP scales with
+    how long the user actually studied.  Falls back to the configured work
+    duration when the parameter is absent (e.g. from older clients).
+    """
     user = request.user
-    _update_note_time(user, request.POST.get('note_id'), user.pomo_work_minutes)
-    NoteService.award_pomodoro_xp(user)
-    NoteService.log_pomodoro(user, user.pomo_work_minutes)
+    try:
+        elapsed_minutes = max(1, int(float(request.POST.get('elapsed_minutes', user.pomo_work_minutes))))
+    except (TypeError, ValueError):
+        elapsed_minutes = user.pomo_work_minutes
+
+    _update_note_time(user, request.POST.get('note_id'), elapsed_minutes)
+    xp_gained = NoteService.award_pomodoro_xp(user, elapsed_minutes)
+    NoteService.log_pomodoro(user, elapsed_minutes)
     user.refresh_from_db()
     return JsonResponse({
         'xp': user.xp,
+        'xp_gained': xp_gained,
         'level': user.level,
         'xp_progress_pct': user.xp_progress_pct,
         'xp_for_next_level': user.xp_for_next_level,

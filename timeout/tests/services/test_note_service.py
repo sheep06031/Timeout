@@ -1,3 +1,9 @@
+"""
+test_note_service.py - Defines NoteServiceTest for testing the NoteService's query methods, including retrieval of user notes, filtering by category and event,
+search functionality, and behavior with anonymous users.
+"""
+
+
 from django.test import TestCase
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AnonymousUser

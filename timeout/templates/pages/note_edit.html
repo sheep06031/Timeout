@@ -92,6 +92,16 @@
 
 </div>
 
+<!-- Pomodoro Mini-Bar (visible only when a session is active and was started on the notes page) -->
+<div id="pomoMiniBar" class="pomo-mini-bar" style="display:none;">
+  <span style="font-size:1.3rem">&#127813;</span>
+  <span id="pomoMiniPhase" class="pomo-mini-phase">Work Session</span>
+  <span id="pomoMiniTime" class="pomo-mini-time">25:00</span>
+  <button id="pomoPauseBtn" class="btn btn-sm btn-outline-primary" style="padding:3px 14px;">Pause</button>
+  <button id="pomoStartBtn" class="btn btn-sm btn-primary" style="padding:3px 14px;display:none;">Resume</button>
+  <button id="pomoSkipBtn"  class="btn btn-sm btn-outline-secondary" style="padding:3px 14px;">Skip</button>
+</div>
+
 <!-- Focus Mode Overlay -->
 <div class="nt-focus-overlay" id="focusOverlay" style="display:none">
   <div class="nt-focus-bar">
@@ -127,6 +137,11 @@
     autosaveUrl: '{% url "note_autosave" note.id %}',
     notePageMode: '{{ note.page_mode }}',
     noteTitle: '{{ note.title|escapejs }}',
+    pomoWork:  {{ request.user.pomo_work_minutes }},
+    pomoShort: {{ request.user.pomo_short_break }},
+    pomoLong:  {{ request.user.pomo_long_break }},
+    sounds: {{ request.user.notification_sounds|yesno:"true,false" }},
+    currentNoteId: {{ note.id }},
   };
 </script>
 <script src="{% static 'js/notes.js' %}"></script>

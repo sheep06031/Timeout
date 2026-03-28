@@ -1,3 +1,8 @@
+"""
+study_log.py - Defines the StudyLog model for tracking daily study activity, including pomodoros, notes created/edited, and focus minutes, with a method to calculate activity level for heatmap visualization.
+"""
+
+
 from django.conf import settings
 from django.db import models
 

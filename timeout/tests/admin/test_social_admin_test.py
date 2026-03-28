@@ -1,3 +1,9 @@
+"""
+test_social_admin_test.py - Defines SocialAdminCoverageTest for testing admin helper methods in PostAdmin, CommentAdmin, LikeAdmin, and BookmarkAdmin.
+This test case focuses on coverage of methods that generate content previews and count related objects, without testing the admin UI itself.
+"""
+
+
 from django.test import TestCase
 from django.contrib.admin.sites import AdminSite
 from django.contrib.auth import get_user_model

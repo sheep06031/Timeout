@@ -1,3 +1,10 @@
+"""
+test_check_notifications.py - Defines CheckNotificationsCommandTests for testing the check_notifications
+management command, covering notification creation for deadlines/events, duplicate prevention, and edge cases
+with completed, far-future events, and no users or events.
+"""
+
+
 from io import StringIO
 from unittest.mock import patch, call
 

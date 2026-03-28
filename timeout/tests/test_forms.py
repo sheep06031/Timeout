@@ -1,3 +1,8 @@
+"""
+Tests for the forms in the timeout app, including SignupForm, LoginForm, and CompleteProfileForm.
+These tests cover validation logic, such as password strength and similarity checks, as well as form field configurations and save behavior. 
+The tests ensure that the forms behave as expected under various input conditions, including edge cases like duplicate emails and university choices. 
+"""
 from django.test import TestCase
 from django.contrib.auth import get_user_model
 

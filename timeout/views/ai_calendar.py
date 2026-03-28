@@ -1,3 +1,7 @@
+"""
+Views for AI-powered calendar event parsing. 
+Accessible only to logged-in users. Uses OpenAI to parse natural language input into structured event data, which can then be saved to the user's calendar. Handles the serialization of existing events for conflict context and parsing of AI responses.
+"""
 import json
 from django.conf import settings
 from django.contrib.auth.decorators import login_required

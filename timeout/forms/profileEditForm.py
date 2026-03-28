@@ -1,3 +1,8 @@
+"""
+profileEditForm.py - Forms for editing user profile details in the Timeout application.
+"""
+
+
 from django import forms
 from django.contrib.auth import get_user_model
 

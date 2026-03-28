@@ -13,13 +13,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
   /**
    * Fetch unread notification count from server and update badge display.
-   * Skips fetch if user is in focus mode, only sends fire-and-forget request.
    */
   async function updateNotifications() {
-    if (document.body.dataset.userStatus === 'focus') {
-      fetch(pollUrl).catch(() => {});
-      return;
-    }
     try {
       const response = await fetch(pollUrl);
       if (!response.ok) return;
@@ -38,8 +33,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  /* Poll notifications immediately on page load, when focus mode ends, and every 10 seconds */
+  /* Poll notifications immediately on page load and every 10 seconds */
   updateNotifications();
-  window.addEventListener('focusModeEnded', updateNotifications);
   setInterval(updateNotifications, 10000);
 });

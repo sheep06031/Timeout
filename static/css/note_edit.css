@@ -4,6 +4,56 @@
   margin: 0 auto;
   padding: 16px 16px 0;
 }
+
+/* Pomodoro mini-bar (note_edit page) */
+.pomo-mini-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 1050;
+  background: #fff;
+  border-top: 2px solid #5B73E8;
+  padding: 10px 24px;
+  align-items: center;
+  gap: 18px;
+  box-shadow: 0 -2px 12px rgba(0,0,0,0.10);
+}
+.pomo-mini-phase {
+  font-weight: 600;
+  font-size: .95rem;
+  color: var(--text-primary, #1a202c);
+}
+.pomo-mini-time {
+  font-family: monospace;
+  font-size: 1.15rem;
+  color: #5B73E8;
+  font-weight: 700;
+}
+[data-theme="dark"] .pomo-mini-bar {
+  background: var(--bg-card, #1e2035);
+  border-top-color: var(--accent, #7b8ef0);
+  box-shadow: 0 -2px 12px rgba(0,0,0,0.40);
+}
+[data-theme="dark"] .pomo-mini-bar .btn-outline-primary {
+  color: var(--accent, #7b8ef0);
+  border-color: var(--accent, #7b8ef0);
+}
+[data-theme="dark"] .pomo-mini-bar .btn-outline-primary:hover {
+  background: var(--accent, #7b8ef0);
+  color: #fff;
+}
+[data-theme="dark"] .pomo-mini-bar .btn-primary {
+  background: var(--accent, #7b8ef0);
+  border-color: var(--accent, #7b8ef0);
+}
+[data-theme="dark"] .pomo-mini-bar .btn-outline-secondary {
+  color: var(--text-secondary, #a0a8c4);
+  border-color: var(--text-secondary, #a0a8c4);
+}
+[data-theme="dark"] .pomo-mini-time {
+  color: var(--accent, #7b8ef0);
+}
 .note-editor-topbar {
   display: flex;
   align-items: center;
@@ -183,8 +233,7 @@
   line-height: 1.7;
   padding: 24px 28px;
 }
-
-/* ── Paged mode ────────────────────────────────────────────── */
+/* Paged mode */
 /* Gray backdrop behind the editor so gaps between pages are visible */
 .note-editor-main.paged-active {
   background: var(--page-gap-bg, #e0e4ea);
@@ -201,7 +250,6 @@
   z-index: 1;
   background: transparent;
 }
-
 /* White page card behind content — one per page */
 .page-card {
   position: absolute;
@@ -213,7 +261,6 @@
   z-index: 0;
   border-radius: 2px;
 }
-
 /* Gray gap between pages */
 .page-gap {
   position: absolute;
@@ -223,7 +270,6 @@
   pointer-events: none;
   z-index: 2;
 }
-
 /* Page number label centered in the gap */
 .page-number-label {
   position: absolute;
@@ -263,7 +309,6 @@
   left: 28px;
   right: 28px;
 }
-
 /* Dark mode*/
 [data-theme="dark"] .note-editor-topbar,
 [data-theme="dark"] .note-editor-meta {

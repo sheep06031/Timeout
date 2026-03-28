@@ -1,3 +1,9 @@
+"""
+notification_service.py - Defines NotificationService for creating user notifications for upcoming
+deadlines, calendar events, and new messages, with deduplication to prevent repeated alerts.
+"""
+
+
 from django.utils import timezone
 from timeout.models.notification import Notification
 from timeout.models.event import Event

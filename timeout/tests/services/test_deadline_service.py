@@ -1,9 +1,6 @@
 """
-Tests for DeadlineService.get_active_deadlines, DeadlineService.mark_complete,
-DeadlineService.get_filtered_deadlines, and the helper functions
-time_string and time_passed.
-
-All time-dependent tests mock timezone.now() for deterministic results.
+test_deadline_service.py - Tests for DeadlineService covering get_active_deadlines, mark_complete,
+get_filtered_deadlines, and the time_string/time_passed helpers, with mocked timezone for determinism.
 """
 
 from datetime import datetime, timedelta

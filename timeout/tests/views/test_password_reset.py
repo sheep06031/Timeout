@@ -1,3 +1,10 @@
+"""
+test_password_reset.py - Defines ForgotPasswordViewTests and ResetPasswordViewTests for testing the
+two-step password reset flow (request code via email, then verify and reset), covering form validation,
+SendGrid email sending, session/code handling, expiry, and password strength checks.
+"""
+
+
 import time
 
 from unittest.mock import patch

@@ -1,3 +1,7 @@
+"""
+Views for AI-powered rescheduling of study sessions. Accessible only to logged-in users. Uses OpenAI to suggest optimal times for rescheduling missed or cancelled study sessions, as well as redistributing all upcoming sessions into a balanced schedule. 
+Handles the serialization of events for the AI prompt and parsing of AI responses.
+"""
 import json
 from datetime import timedelta
 
@@ -9,6 +13,7 @@ from django.views.decorators.http import require_POST
 
 from timeout.models import Event
 from timeout.services import DeadlineService
+
 
 
 def _query_reschedule_events(user, now, lookahead):

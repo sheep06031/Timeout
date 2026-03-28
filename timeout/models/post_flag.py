@@ -1,3 +1,8 @@
+"""
+post_flag.py - Defines the PostFlag model representing user-submitted reports/flags on posts for moderation purposes.
+"""
+
+
 from django.conf import settings
 from django.db import models
 from timeout.models.mixins import CreatedAtMixin

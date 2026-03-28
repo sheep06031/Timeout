@@ -1,3 +1,7 @@
+"""
+auth.py - Forms for user authentication and profile setup in the Timeout application.
+"""
+
 import re
 import uuid
 from django import forms

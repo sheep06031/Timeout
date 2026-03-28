@@ -1,3 +1,9 @@
+"""
+social_admin.py - Admin interface for social features in Timeout application.
+Admin interfaces include list displays, filters, search capabilities, and
+inline editing for related models to facilitate efficient content management.
+"""
+
 from django.contrib import admin
 from timeout.models import Event, Post, Comment, Like, Bookmark, PostFlag
 

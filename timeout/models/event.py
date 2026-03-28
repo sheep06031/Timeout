@@ -1,3 +1,8 @@
+"""
+event.py - Defines the Event model representing calendar events such as deadlines, exams, classes, meetings, and study sessions.
+"""
+
+
 from django.conf import settings
 from django.db import models
 from django.utils import timezone
@@ -76,10 +81,6 @@ class Event(TimestampMixin, models.Model):
         blank=True,
         default=EventRecurrence.NONE,
     )
-    allow_conflict = models.BooleanField(
-        default=False,
-        help_text='if true, event overlaps with others'
-    )
     visibility = models.CharField(
         max_length=10,
         choices=Visibility.choices,
@@ -126,23 +127,9 @@ class Event(TimestampMixin, models.Model):
         - Ensures end time is after start time and prevents overlapping  for certain events"""
         if self.start_datetime >= self.end_datetime:
             raise ValidationError("End time must be after start time.")
-        non_overlapping_types = [
-            self.EventType.CLASS,
-            self.EventType.STUDY_SESSION,
-            self.EventType.EXAM,
-            self.EventType.MEETING]
-        if self.event_type not in non_overlapping_types:
-            return  # deadlines & "other" can overlap freely
+        
         if self.status == self.EventStatus.CANCELLED:
             return
-        overlapping_events = Event.objects.filter(creator=self.creator,
-            start_datetime__lt=self.end_datetime,
-            end_datetime__gt=self.start_datetime).exclude(pk=self.pk).filter(event_type__in=non_overlapping_types)
-        if overlapping_events.exists():
-            conflict = overlapping_events.first()
-            raise ValidationError(f'This event conflicts with "{conflict.title}" '
-                f'({conflict.start_datetime:%d %b %H:%M} - '
-                f'{conflict.end_datetime:%H:%M}).')
 
     def save(self, *args, **kwargs):
         """Save the event and synchronise it with a social post.

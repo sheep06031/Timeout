@@ -1,3 +1,6 @@
+"""
+Tests for the flag_post view in the timeout app, which allows users to report inappropriate content by flagging posts.
+"""
 import json
 
 from django.contrib.auth import get_user_model
@@ -13,6 +16,7 @@ class FlagPostViewTest(TestCase):
     """Tests for the flag_post view."""
 
     def setUp(self):
+        """Create a user, an author, and a post for testing."""
         self.user = User.objects.create_user(username="reporter", password="pass")
         self.author = User.objects.create_user(username="author", password="pass")
         self.post = Post.objects.create(

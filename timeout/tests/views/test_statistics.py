@@ -1,3 +1,10 @@
+"""
+test_statistics.py - Tests for the statistics view and helper functions, covering duration formatting,
+event counting by type, weekly/monthly breakdowns, urgency filtering, focus stats calculation,
+friend leaderboard sorting, login requirements, and correct context data in the statistics view.
+"""
+
+
 from datetime import timedelta
 from unittest.mock import patch
 
@@ -34,7 +41,6 @@ def make_event(user, event_type=Event.EventType.OTHER, hours_from_now=24, durati
         event_type=event_type,
         start_datetime=start,
         end_datetime=start + timedelta(hours=duration_hours),
-        allow_conflict=True,
         **kwargs,
     )
 
@@ -134,7 +140,6 @@ class EventsLastNWeeksTests(TestCase):
             event_type=Event.EventType.OTHER,
             start_datetime=now - timedelta(days=2),
             end_datetime=now - timedelta(days=2) + timedelta(hours=1),
-            allow_conflict=True,
         )
         events = get_user_events(self.user)
         result = events_last_n_weeks(events, n=4)
@@ -149,7 +154,6 @@ class EventsLastNWeeksTests(TestCase):
             event_type=Event.EventType.OTHER,
             start_datetime=now - timedelta(weeks=10),
             end_datetime=now - timedelta(weeks=10) + timedelta(hours=1),
-            allow_conflict=True,
         )
         events = get_user_events(self.user)
         result = events_last_n_weeks(events, n=8)
@@ -176,7 +180,6 @@ class EventsLastNMonthsTests(TestCase):
             event_type=Event.EventType.OTHER,
             start_datetime=now - timedelta(days=3),
             end_datetime=now - timedelta(days=3) + timedelta(hours=1),
-            allow_conflict=True,
         )
         events = get_user_events(self.user)
         result = events_last_n_months(events, n=6)
@@ -342,6 +345,7 @@ class StatisticsViewTests(TestCase):
         self.assertEqual(response.context['total_events'], 2)
 
 class StatisticsViewDirectTests(TestCase):
+    """Tests for the statistics_view function that directly call the view with a request object, allowing for testing the view's behavior without going through the URL routing and template rendering, and enabling the use of mocks to verify that the view calls the render function with the correct parameters."""
 
     def setUp(self):
         """Set up a test user and request factory for testing the statistics_view function directly, allowing for testing the view's behavior without going through the URL routing and template rendering, and enabling the use of mocks to verify that the view calls the render function with the correct parameters."""

@@ -1,3 +1,6 @@
+"""
+View for rendering the main calendar page, including logic to fetch and display events, handle month navigation, and provide data for AI-generated workload warnings and suggestions. Accessible only to logged-in users.
+"""
 import calendar as cal
 import json
 from datetime import timedelta, date, datetime, time
@@ -121,7 +124,6 @@ def create_dict(ev, start_dt, end_dt, now_date):
         'description': ev.description,
         'is_all_day': ev.is_all_day,
         'visibility': ev.visibility,
-        'allow_conflict': ev.allow_conflict,
         'color': getattr(ev, 'color', ''),
         'status_display': event_status(start_dt, end_dt, now_date),
     }
@@ -262,8 +264,7 @@ def subscribe_event(request, pk):
         description=original.description,
         visibility=Event.Visibility.PRIVATE,
         is_all_day=original.is_all_day,
-        recurrence=original.recurrence,
-        allow_conflict=True)
+        recurrence=original.recurrence)
     return JsonResponse({'success': True})
 
 def _parse_event_datetimes(request, is_all_day):
@@ -284,7 +285,7 @@ def _parse_event_datetimes(request, is_all_day):
 
     return start_datetime, end_datetime
 
-def _build_event_from_post(request, start_datetime, end_datetime, is_all_day, allow_conflict):
+def _build_event_from_post(request, start_datetime, end_datetime, is_all_day):
     """Construct an Event from POST data and parsed datetimes."""
     return EventService.build_from_data(request.user, {
         'title': request.POST["title"],
@@ -305,10 +306,9 @@ def _build_event_from_post(request, start_datetime, end_datetime, is_all_day, al
 def event_create(request):
     """Create a new calendar event from form POST data."""
     is_all_day = request.POST.get("is_all_day") == "on"
-    allow_conflict = request.POST.get("allow_conflict") == "on"
     start_datetime, end_datetime = _parse_event_datetimes(request, is_all_day)
     if start_datetime is None: return redirect("calendar")
-    event = _build_event_from_post(request, start_datetime, end_datetime, is_all_day, allow_conflict)
+    event = _build_event_from_post(request, start_datetime, end_datetime, is_all_day)
     try:
         event.full_clean()
         event.save()
@@ -320,6 +320,7 @@ def event_create(request):
 @login_required
 @require_POST
 def dismiss_alert(request):
+    """AJAX endpoint to dismiss a specific alert by key."""
     from timeout.models import DismissedAlert
     key = request.POST.get('key', '').strip()
     if not key:

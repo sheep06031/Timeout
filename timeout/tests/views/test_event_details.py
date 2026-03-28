@@ -1,3 +1,6 @@
+"""
+Tests for the event_details view in the timeout app, which displays the details of a specific event to its creator.
+"""
 from django.test import TestCase
 from django.urls import reverse
 from django.contrib.auth import get_user_model

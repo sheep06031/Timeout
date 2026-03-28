@@ -1,3 +1,6 @@
+"""
+Tests for the views in the timeout app, covering both public and authenticated pages, as well as the signup, login, logout, and complete_profile views.
+"""
 from django.contrib.sites.models import Site
 from django.test import TestCase
 from django.urls import reverse

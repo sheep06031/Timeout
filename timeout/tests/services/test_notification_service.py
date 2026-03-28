@@ -1,3 +1,8 @@
+"""
+test_notification_service.py - Defines tests for the NotificationService, including mapping of event types to notification types and the deduplication logic of _notify_once.
+"""
+
+
 from django.test import TestCase
 from django.contrib.auth import get_user_model
 from django.utils import timezone

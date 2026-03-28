@@ -1,3 +1,6 @@
+"""
+Tests for the ai_calendar views in the timeout app, specifically the ai_create_event view that handles POST requests to create calendar events based on natural language input processed by an AI model.
+"""
 import json
 from unittest.mock import MagicMock, patch
 

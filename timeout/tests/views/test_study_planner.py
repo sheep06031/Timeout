@@ -1,3 +1,11 @@
+"""
+test_study_planner.py - Tests for the study planner helper functions (get_busy_slots, get_free_slots,
+pick_evenly_spaced_slots, _day_slots, _nearest_slot) and views (plan_sessions, confirm_sessions),
+covering scheduling edge cases (overlapping events, minimum gap enforcement, other users' events),
+GPT integration, invalid input handling, and authentication checks.
+"""
+
+
 import json
 from datetime import date, datetime, timedelta
 from unittest.mock import patch
@@ -31,7 +39,6 @@ def _make_event(creator, title, start, end, event_type=None, **kwargs):
         start_datetime=start,
         end_datetime=end,
         visibility=Event.Visibility.PRIVATE,
-        allow_conflict=True,
         **kwargs,
     )
 
@@ -324,14 +331,13 @@ class ConfirmSessionsViewTests(TestCase):
         self.assertEqual(Event.objects.filter(creator=self.user, event_type=Event.EventType.STUDY_SESSION).count(), 2)
 
     def test_created_events_have_correct_fields(self):
-        """Events created by confirming sessions should have the correct title, start and end datetimes, event type set to STUDY_SESSION, visibility set to PRIVATE, and allow_conflict set to True regardless of what other fields were included in the session dictionaries provided in the POST data."""
+        """Events created by confirming sessions should have the correct title, start and end datetimes, event type set to STUDY_SESSION, visibility set to PRIVATE"""
         self.client.login(username='confirmer', password='pass')
         sessions = json.dumps([{'title': 'Study for Calculus', 'start': '2026-04-05T08:00', 'end': '2026-04-05T10:00'}])
         self.client.post(self.url, {'sessions': sessions})
         event = Event.objects.get(creator=self.user, title='Study for Calculus')
         self.assertEqual(event.event_type, Event.EventType.STUDY_SESSION)
         self.assertEqual(event.visibility, Event.Visibility.PRIVATE)
-        self.assertTrue(event.allow_conflict)
 
     def test_missing_keys_skipped(self):
         """If some session dictionaries in the list provided in the POST data are missing required keys (e.g. title, start, or end), the view should skip those sessions and still create events for the valid ones rather than failing the entire request."""
@@ -356,7 +362,9 @@ class ConfirmSessionsViewTests(TestCase):
 
 class BuildPromptTests(TestCase):
     """Tests for the build_prompt function that generates a prompt string for the GPT scheduling model based on a deadline event and parameters for hours needed, session length, and candidate free slots."""
+
     def setUp(self):
+        """Create a test user for the build_prompt tests."""
         self.user = User.objects.create_user(username='prompt_u', password='pass')
 
     def test_returns_string_with_deadline_info(self):

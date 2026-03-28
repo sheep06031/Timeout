@@ -1,3 +1,8 @@
+"""
+notes.py - Forms for creating and editing notes in the Timeout application.
+"""
+
+
 from django import forms
 from timeout.models import Note
 

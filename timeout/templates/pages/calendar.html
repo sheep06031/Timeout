@@ -150,7 +150,7 @@
             <div class="cal-events">
               {% for ev in day.events %}
               <a href="#"
-                class="cal-chip cal-chip--{{ ev.event_type }} {% if ev.allow_conflict %}cal-chip--conflict{% endif %} {% if forloop.counter > 3 %}cal-chip-hidden{% endif %}"
+                class="cal-chip cal-chip--{{ ev.event_type }} {% if forloop.counter > 3 %}cal-chip-hidden{% endif %}"
                 data-bs-toggle="modal"
                 onclick="event.stopPropagation();"
                 data-bs-target="#eventDetailsModal"

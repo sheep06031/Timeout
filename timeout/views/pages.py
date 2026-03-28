@@ -1,3 +1,7 @@
+"""
+Views for the main pages of the Timeout app, including dashboard, profile, calendar, statistics, and social feed.
+"""
+
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import redirect, render
 from django.utils import timezone
@@ -11,6 +15,7 @@ from timeout.services.ai_service import AIService
 
 
 def banned(request):
+    """Banned page view."""
     return render(request, 'banned.html')
 
 

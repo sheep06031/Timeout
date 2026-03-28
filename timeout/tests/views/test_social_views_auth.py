@@ -1,3 +1,9 @@
+"""
+test_social_views_auth.py - Defines SocialViewsAuthTest for verifying that protected social endpoints
+(feed, bookmarks, like post) redirect unauthenticated users to the login page with the correct next URL.
+"""
+
+
 from django.test import TestCase
 from django.urls import reverse
 from django.contrib.auth import get_user_model

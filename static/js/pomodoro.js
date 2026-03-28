@@ -4,71 +4,136 @@
  */
 var Pomodoro = (function() {
   var cfg = window.NOTES_CONFIG || {};
-  var WORK = (cfg.pomoWork || 25) * 60;
-  var SHORT_BREAK = (cfg.pomoShort || 5) * 60;
-  var LONG_BREAK = (cfg.pomoLong || 15) * 60;
+  var WORK        = Math.max(10, cfg.pomoWork  || 25) * 60;
+  var SHORT_BREAK = Math.min((cfg.pomoShort ||  5) * 60, WORK);
+  var LONG_BREAK  = Math.min((cfg.pomoLong  || 15) * 60, Math.floor(WORK * 1.5));
   var CIRCUMFERENCE = 2 * Math.PI * 54;
+
+  // Minimum seconds actually worked before XP is awarded (50 % of the configured work session).
+  var MIN_WORK_FOR_XP = Math.floor(WORK * 0.5);
 
   var state = {
     phase: 'work',
     remaining: WORK,
     total: WORK,
     running: false,
+    started: false,  // true once started; only cleared by reset()
     session: 0,
     todayCount: 0,
     intervalId: null,
+    elapsedWorkSeconds: 0,  // actual seconds ticked during current work phase
   };
 
-  /**
-   * Load pomodoro state from localStorage if it's today's session.
-   */
-  function loadState() {
-    try {
-      var saved = JSON.parse(localStorage.getItem('pomo_state'));
-      if (saved && saved.date === new Date().toDateString()) {
-        state.todayCount = saved.todayCount || 0;
-      }
-    } catch(e) {}
-  }
+  //  Persistence 
 
   /**
-   * Save current pomodoro session count and date to localStorage.
+   * Persist the full timer state to sessionStorage so it survives page navigation.
    */
   function saveState() {
-    localStorage.setItem('pomo_state', JSON.stringify({
+    sessionStorage.setItem('pomo_state', JSON.stringify({
+      phase: state.phase,
+      remaining: state.remaining,
+      total: state.total,
+      running: state.running,
+      started: state.started,
+      session: state.session,
+      todayCount: state.todayCount,
+      elapsedWorkSeconds: state.elapsedWorkSeconds,
+      savedAt: Date.now(),
+    }));
+    // Keep today's count in localStorage so it survives session clears.
+    localStorage.setItem('pomo_today', JSON.stringify({
       date: new Date().toDateString(),
       todayCount: state.todayCount,
     }));
   }
 
+  /** Restore today's completed-session count from localStorage. */
+  function _loadTodayCount() {
+    try {
+      var ls = JSON.parse(localStorage.getItem('pomo_today'));
+      if (ls && ls.date === new Date().toDateString()) {
+        state.todayCount = ls.todayCount || 0;
+      }
+    } catch(e) {}
+  }
+
+  /** Apply a saved state snapshot that has already expired, then fire phase-end. */
+  function _applyExpiredState(saved) {
+    state.phase              = saved.phase;
+    state.session            = saved.session;
+    state.todayCount         = saved.todayCount;
+    state.elapsedWorkSeconds = saved.elapsedWorkSeconds || 0;
+    state.total              = saved.total;
+    state.remaining          = 0;
+    state.running            = false;
+    _processPhaseEnd(false);
+  }
+
+  /** Apply a saved state snapshot that still has time remaining. */
+  function _applyResumedState(saved, remaining) {
+    state.phase              = saved.phase;
+    state.remaining          = remaining;
+    state.total              = saved.total;
+    state.running            = false;
+    state.started            = saved.started || true;
+    state.session            = saved.session;
+    state.todayCount         = saved.todayCount;
+    state.elapsedWorkSeconds = saved.elapsedWorkSeconds || 0;
+  }
+
   /**
-   * Get duration in seconds for the given phase (work, short break, long break).
+   * Restore state from sessionStorage, accounting for time spent navigating.
+   * Returns true if a running session was successfully restored.
    */
+  function loadState() {
+    _loadTodayCount();
+    try {
+      var saved = JSON.parse(sessionStorage.getItem('pomo_state'));
+      if (!saved || !saved.running) return false;
+      var elapsed   = Math.floor((Date.now() - saved.savedAt) / 1000);
+      var remaining = saved.remaining - elapsed;
+      if (remaining <= 0) {
+        _applyExpiredState(saved);
+        return false;
+      }
+      _applyResumedState(saved, remaining);
+      return true;
+    } catch(e) { return false; }
+  }
+
+  // Helpers
+
+  /**  
+   * Get the configured duration for a given phase, enforcing limits based on work duration. 
+  */
   function getDuration(phase) {
-    if (phase === 'work') return WORK;
+    if (phase === 'work')       return WORK;
     if (phase === 'long_break') return LONG_BREAK;
     return SHORT_BREAK;
   }
 
-  /**
-   * Get human-readable label for the given phase.
+  /** 
+   * Get the display label for a given phase. 
    */
   function getPhaseLabel(phase) {
-    if (phase === 'work') return 'Work Session';
+    if (phase === 'work')        return 'Work Session';
     if (phase === 'short_break') return 'Short Break';
     return 'Long Break';
   }
 
-  /**
-   * Get the currently selected note ID from dropdown if available.
+  /** 
+   * Get the currently linked note ID from the dropdown, or fallback to the one in config. 
    */
   function getLinkedNoteId() {
     var sel = document.getElementById('pomoNoteSelect');
-    return sel ? sel.value : '';
+    return sel ? sel.value : (cfg.currentNoteId || '');
   }
 
-  /**
-   * Render progress ring with appropriate color and offset for current phase.
+  // Rendering
+
+  /** 
+   * Update the circular progress ring based on the current phase and remaining time. 
    */
   function _renderRing() {
     var ringEl = document.getElementById('pomoRing');
@@ -78,8 +143,8 @@ var Pomodoro = (function() {
     ringEl.style.stroke = state.phase === 'work' ? '#5B73E8' : '#4ECDC4';
   }
 
-  /**
-   * Toggle start/pause button visibility based on running state.
+  /** 
+   * Show/hide start and pause buttons based on whether the timer is running. 
    */
   function _renderButtons() {
     var startBtn = document.getElementById('pomoStartBtn');
@@ -91,134 +156,182 @@ var Pomodoro = (function() {
   }
 
   /**
-   * Update all UI elements (timer, phase label, count, ring, buttons).
+   * Update all UI elements (timer, phase label, count, ring, buttons, mini-bar).
    */
   function render() {
     var mins = Math.floor(state.remaining / 60);
     var secs = state.remaining % 60;
+    var timeStr = String(mins).padStart(2, '0') + ':' + String(secs).padStart(2, '0');
     var timeEl = document.getElementById('pomoTime');
-    if (timeEl) timeEl.textContent = String(mins).padStart(2, '0') + ':' + String(secs).padStart(2, '0');
-
+    if (timeEl) timeEl.textContent = timeStr;
     _renderRing();
-
     var phaseEl = document.getElementById('pomoPhase');
     var countEl = document.getElementById('pomodoroCount');
     if (phaseEl) phaseEl.textContent = getPhaseLabel(state.phase);
     if (countEl) countEl.textContent = state.todayCount;
-
     _renderButtons();
-
     var dots = document.querySelectorAll('#pomoDots .nt-pomo-dot');
     dots.forEach(function(dot, i) {
       dot.classList.toggle('nt-pomo-dot--filled', i < state.session);
-      dot.classList.toggle('nt-pomo-dot--active', i === state.session && state.phase === 'work');
-    });
+      dot.classList.toggle('nt-pomo-dot--active', i === state.session && state.phase === 'work');});
+    var miniBar = document.getElementById('pomoMiniBar');
+    if (miniBar) {
+      // On note_edit (no full panel), keep mini-bar visible while a session is active, even if paused.
+      var hasPanel = !!document.getElementById('pomoPanel');
+      var showMini = state.running || (state.started && !hasPanel);
+      miniBar.style.display = showMini ? 'flex' : 'none';
+      var miniPhase = document.getElementById('pomoMiniPhase');
+      var miniTime  = document.getElementById('pomoMiniTime');
+      if (miniPhase) miniPhase.textContent = getPhaseLabel(state.phase);
+      if (miniTime)  miniTime.textContent  = timeStr;}
   }
 
-  /**
-   * Decrement timer by one second and check for phase end.
-   */
+  // Timer logic
+
   function tick() {
     if (state.remaining <= 0) {
-      onPhaseEnd();
+      _processPhaseEnd(false);
       return;
     }
     state.remaining--;
+    if (state.phase === 'work') state.elapsedWorkSeconds++;
+    saveState();
     render();
   }
 
   /**
-   * Submit completed pomodoro to server and award XP.
+   * Award XP for completing a work session.
+   * Skips are never rewarded.  Minimum 50 % of configured work time must have been ticked.
    */
-  function _awardWorkXP() {
+  function _awardWorkXP(wasSkipped) {
+    if (wasSkipped) return;
+    if (state.elapsedWorkSeconds < MIN_WORK_FOR_XP) return;
     if (!cfg.pomodoroCompleteUrl) return;
+
+    var minutes = Math.floor(state.elapsedWorkSeconds / 60);
     var body = new FormData();
     var noteId = getLinkedNoteId();
     if (noteId) body.append('note_id', noteId);
+    body.append('elapsed_minutes', minutes);
 
     postJSON(cfg.pomodoroCompleteUrl, { body: body })
-    .then(function(data) {
-      updateStatsUI(data);
-      showXpToast(25);
-      if (data.daily_progress) DailyGoals.render(data.daily_progress);
-    })
-    .catch(function() {});
+      .then(function(data) {
+        if (typeof updateStatsUI === 'function') updateStatsUI(data);
+        if (data.xp_gained && typeof showXpToast === 'function') showXpToast(data.xp_gained);
+        if (data.daily_progress && typeof DailyGoals !== 'undefined') DailyGoals.render(data.daily_progress);
+      })
+      .catch(function() {});
   }
 
   /**
-   * Advance to next phase (work->break->work) and update session count.
+   * Transition to the next phase and, for work → break, award XP when earned.
    */
-  function _advancePhase() {
+  function _advancePhase(wasSkipped) {
     if (state.phase === 'work') {
       state.session++;
       state.todayCount++;
-      saveState();
-      _awardWorkXP();
+      _awardWorkXP(wasSkipped);
+      state.elapsedWorkSeconds = 0;
       state.phase = state.session >= 4 ? 'long_break' : 'short_break';
       if (state.session >= 4) state.session = 0;
     } else {
       state.phase = 'work';
+      state.elapsedWorkSeconds = 0;
     }
   }
 
   /**
-   * Handle phase completion: stop timer, play alarm, advance phase, reset duration.
+   * Core phase-end handler: stop, play alarm, advance, reset duration, render.
    */
-  function onPhaseEnd() {
+  function _processPhaseEnd(wasSkipped) {
     clearInterval(state.intervalId);
     state.running = false;
-    playAlarm();
-    _advancePhase();
-    state.total = getDuration(state.phase);
+    if (typeof playAlarm === 'function') playAlarm();
+    _advancePhase(wasSkipped);
+    state.total     = getDuration(state.phase);
     state.remaining = state.total;
+    saveState();
     render();
   }
 
-  /**
-   * Start the pomodoro timer interval.
-   */
+  // Public controls  
+
   function start() {
     if (state.running) return;
     state.running = true;
+    state.started = true;
     state.intervalId = setInterval(tick, 1000);
+    saveState();
     render();
   }
 
   /**
-   * Pause the pomodoro timer without resetting progress.
+   * Pause the timer, keeping all state intact for resumption.  No XP is awarded since the session isn't complete.
    */
   function pause() {
     clearInterval(state.intervalId);
     state.running = false;
+    saveState();
     render();
   }
 
   /**
-   * Skip to end of current phase immediately.
+   * Skip the current phase.  Work skips never award XP.
    */
   function skip() {
     clearInterval(state.intervalId);
     state.running = false;
     state.remaining = 0;
-    onPhaseEnd();
+    _processPhaseEnd(true);   // wasSkipped = true → no XP
   }
 
   /**
-   * Reset timer to initial work phase state.
+   * Reset the entire timer state, clearing sessions and counts.  No XP is awarded since the session isn't complete.
    */
   function reset() {
     clearInterval(state.intervalId);
     state.running = false;
-    state.phase = 'work';
+    state.started = false;
+    state.phase   = 'work';
     state.session = 0;
-    state.total = WORK;
+    state.total   = WORK;
     state.remaining = WORK;
+    state.elapsedWorkSeconds = 0;
+    sessionStorage.removeItem('pomo_state');
     render();
   }
 
+  // Navigation guard 
+
   /**
-   * Populate note dropdown with user's notes.
+   * Intercept link clicks while a work session is running.
+   * Links within /notes/ are always allowed (the timer resumes on the next page).
+   * All other navigation asks for confirmation; if accepted the session ends.
    */
+  function _setupNavigationGuard() {
+    document.addEventListener('click', function(e) {
+      if (!state.running || state.phase !== 'work') return;
+      var link = e.target.closest('a[href]');
+      if (!link) return;
+      var href = link.getAttribute('href') || '';
+      // Allow navigation within the notes section freely.
+      if (/^\/(notes|notes\/)/.test(href) || href === '/notes' || href.startsWith('/notes/')) return;
+      // Warn before leaving the notes ecosystem.
+      e.preventDefault();
+      if (window.confirm('You have an active work session. Leaving will end your Pomodoro. Are you sure?')) {
+        reset();  // clears state + sessionStorage; sets running=false so beforeunload won't re-save
+        window.location.href = href;
+      }
+    });
+
+    // Always persist state on unload so the next notes page can restore it.
+    window.addEventListener('beforeunload', function() {
+      if (state.running) saveState();
+    });
+  }
+
+  //  Note-select population 
+
   function populateNoteSelect() {
     var sel = document.getElementById('pomoNoteSelect');
     if (!sel) return;
@@ -227,27 +340,40 @@ var Pomodoro = (function() {
       var opt = document.createElement('option');
       opt.value = notes[i][0];
       opt.textContent = notes[i][1].length > 35 ? notes[i][1].substring(0, 35) + '...' : notes[i][1];
+      // Pre-select the note being edited on note_edit pages.
+      if (cfg.currentNoteId && String(notes[i][0]) === String(cfg.currentNoteId)) {
+        opt.selected = true;
+      }
       sel.appendChild(opt);
     }
   }
 
+  //  Init 
+
   /**
-   * Initialize pomodoro module with state load and event listeners.
+   * Initialise the Pomodoro module.
+   * Restores a running session from sessionStorage when navigating between notes pages.
+   * Called unconditionally by notes.js on both notes.html and note_edit.html.
    */
   function init() {
-    loadState();
+    var hadRunningSession = loadState();    // restore from sessionStorage
     populateNoteSelect();
     render();
 
-    var startBtn = document.getElementById('pomoStartBtn');
-    var pauseBtn = document.getElementById('pomoPauseBtn');
-    var skipBtn = document.getElementById('pomoSkipBtn');
-    var resetBtn = document.getElementById('pomoResetBtn');
+    var startBtn  = document.getElementById('pomoStartBtn');
+    var pauseBtn  = document.getElementById('pomoPauseBtn');
+    var skipBtn   = document.getElementById('pomoSkipBtn');
+    var resetBtn  = document.getElementById('pomoResetBtn');
 
-    if (startBtn) startBtn.addEventListener('click', start);
-    if (pauseBtn) pauseBtn.addEventListener('click', pause);
-    if (skipBtn) skipBtn.addEventListener('click', skip);
-    if (resetBtn) resetBtn.addEventListener('click', reset);
+    if (startBtn)  startBtn.addEventListener('click', start);
+    if (pauseBtn)  pauseBtn.addEventListener('click', pause);
+    if (skipBtn)   skipBtn.addEventListener('click', skip);
+    if (resetBtn)  resetBtn.addEventListener('click', reset);
+
+    _setupNavigationGuard();
+
+    // Auto-resume timer if a session was active.
+    if (hadRunningSession) start();
   }
 
   return { init: init };

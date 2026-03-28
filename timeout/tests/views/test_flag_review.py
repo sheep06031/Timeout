@@ -1,3 +1,7 @@
+"""
+Tests for the flag review views in the timeout app, including approve_flag, deny_flag, and the review_flags tab on the social feed.
+These tests ensure that the flag review functionality works correctly, enforces proper permissions, and handles various edge cases appropriately.
+"""
 import json
 
 from django.contrib.auth import get_user_model

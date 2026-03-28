@@ -93,7 +93,7 @@ class SettingsViewTests(TestCase):
 # Profile Edit View
 
 class ProfileEditViewTests(TestCase):
-
+    """Tests for the profile edit view."""
     def setUp(self):
         """Set up a test user and client for profile edit view tests."""
         self.user = make_user(university='Oxford University')

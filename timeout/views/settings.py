@@ -1,4 +1,8 @@
+"""
+Views for the user settings page, allowing users to update appearance, change password, and delete account.
+"""
 
+import json
 from django.contrib import messages
 from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.decorators import login_required

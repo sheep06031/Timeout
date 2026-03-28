@@ -19,7 +19,7 @@
             You have <span id="page-unread-count">{{ unread_count }}</span> unread notifications
         </p>
     </div>
-    <div style="display:flex; gap:8px; align-items:center;">
+    <div class="notif-toolbar-actions">
         <button id="mark-all-read-btn" class="notif-clear-btn">Mark all read</button>
         <button id="mark-all-unread-btn" class="notif-clear-btn">Mark all unread</button>
         <button id="delete-all-btn" class="notif-clear-btn">Delete all</button>
@@ -44,9 +44,9 @@
             <div id="notif-{{ n.id }}"
                 class="notification-item {% if not n.is_read %}notification-unread{% else %}notification-read{% endif %}"
                 data-type="{{ n.type }}"
-                data-event-id="{{ n.deadline.id }}"
-                data-convo-id="{{ n.conversation.id }}"
-                data-post-id="{{ n.post.id }}">
+                data-event-id="{{ n.deadline.id|default:'' }}"
+                data-convo-id="{{ n.conversation.id|default:'' }}"
+                data-post-id="{{ n.post.id|default:'' }}">
 
             <div class="notification-main">
                 <div class="notification-title">
@@ -58,9 +58,9 @@
             </div>
 
             <div class="notification-actions">
-                {% if n.follow_request_username %}
-                    <button class="accept-follow-btn notif-btn notif-btn-read" data-id="{{ n.id }}" data-username="{{ n.follow_request_username }}">Accept</button>
-                    <button class="reject-follow-btn notif-btn notif-btn-delete" data-id="{{ n.id }}" data-username="{{ n.follow_request_username }}">Reject</button>
+                {% if n.type == 'follow' and n.sender and not n.is_read %}
+                    <button class="accept-follow-btn notif-btn notif-btn-read" data-id="{{ n.id }}" data-username="{{ n.sender.username }}">Accept</button>
+                    <button class="reject-follow-btn notif-btn notif-btn-delete" data-id="{{ n.id }}" data-username="{{ n.sender.username }}">Reject</button>
                 {% else %}
                     {% if not n.is_read %}
                         <button class="mark-read-btn notif-btn notif-btn-read" data-id="{{ n.id }}">Read</button>

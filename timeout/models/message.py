@@ -1,3 +1,8 @@
+"""
+message.py - Defines the Conversation and Message models for user messaging functionality.
+"""
+
+
 from django.conf import settings
 from django.db import models
 from timeout.models.mixins import TimestampMixin, CreatedAtMixin

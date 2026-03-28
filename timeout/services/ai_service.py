@@ -1,3 +1,8 @@
+"""
+ai_service.py - Defines AIService for generating a cached weekly study summary briefing using OpenAI,
+based on user stats (study hours, missed deadlines, most productive day, events) from the past week.
+"""
+
 import json
 import logging
 from collections import Counter
@@ -113,7 +118,10 @@ def openai_prompt(stats):
  
     prompt = (
         f"Review these student stats for the past week: {json.dumps(stats)}. "
-        "Write a 2-sentence 'Morning Briefing' that is encouraging and concise. "
+        "'completed_tasks' counts all event types marked done (not just deadlines). "
+        "'missed_deadlines' counts only deadline-type events past due and not completed. "
+        "Write a 2-sentence briefing that is encouraging and concise. "
+        "Start with 'Hello' instead of any time-based greeting. "
         "Mention one specific win. Do not use markdown formatting."
     )
     return api_call(prompt)

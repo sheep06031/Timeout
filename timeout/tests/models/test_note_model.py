@@ -1,3 +1,9 @@
+"""
+test_note_model.py - Defines NoteModelTest for testing the Note model's fields, methods, and constraints,
+including string representation, category color mapping, edit/delete permissions, pinned ordering, and cascade deletion.
+"""
+
+
 from django.test import TestCase
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AnonymousUser

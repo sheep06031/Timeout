@@ -1,3 +1,6 @@
+"""
+URL patterns for the timeout app's notifications features.
+"""
 from django.urls import path 
 from timeout.views.notifications import (
     notifications_view,

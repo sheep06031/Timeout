@@ -1,3 +1,6 @@
+"""
+Tests for the custom User model in the timeout app.
+"""
 from django.test import TestCase
 from django.contrib.auth import get_user_model
 

@@ -1,3 +1,6 @@
+"""
+Calendar and event management related URL patterns for the timeout app.
+"""
 from django.urls import path
 from timeout.views import calendar as cal_views
 from timeout.views import deadlines as deadline_views
@@ -7,8 +10,6 @@ from timeout.views import event_edit as edit_views
 from timeout.views import event_details as detail_views
 from timeout.views import event_delete as delete_views
 from timeout.views.notifications import delete_notification, mark_notification_read, notifications_view, poll_notifications
-
-""" Calendar and event management related URL patterns for the timeout app. """
 
 urlpatterns = [
     path('calendar/', cal_views.calendar_view, name='calendar'),

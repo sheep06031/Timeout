@@ -1,3 +1,10 @@
+"""
+test_social_forms.py - Defines SocialFormsTest for testing PostForm and CommentForm validation behavior.
+This test case focuses on verifying that the forms validate correctly with various inputs, including edge cases for
+optional fields and form initialization without a user. It does not test form rendering or specific error messages.
+"""
+
+
 from django.test import TestCase
 from django.contrib.auth import get_user_model
 

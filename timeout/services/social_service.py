@@ -1,8 +1,15 @@
+"""
+social_service.py - Defines SocialService for managing social interactions: fetching conversation
+sidebar data, checking follow/block relationships, and searching users while respecting blocks.
+"""
+
+
 from django.db.models import Q
 from timeout.models import (Conversation, Block, FollowRequest, User)
 from timeout.services.feed_service import _get_blocked_ids
 
 def _get_conversation_sidebar(user):
+    """Get recent conversations for sidebar, with other participant and last message."""
     convs = Conversation.objects.filter(participants=user).prefetch_related('participants', 'messages').order_by('-updated_at')[:5]
     return [{'conv': c, 'other': c.get_other_participant(user), 'last': c.get_last_message()} for c in convs]
 

@@ -106,4 +106,22 @@
       document.documentElement.setAttribute('data-colorblind', this.value);
     });
   });
+
+  /**
+   * Update short-break and long-break hint text to reflect the current work duration.
+   */
+  function updatePomoHints() {
+    var workEl = document.getElementById('id_pomo_work_minutes');
+    var sbHint = document.getElementById('shortBreakHint');
+    var lbHint = document.getElementById('longBreakHint');
+    if (!workEl || !sbHint || !lbHint) return;
+    var w = parseInt(workEl.value, 10);
+    if (!w || w < 10) w = 10;
+    sbHint.textContent = 'Maximum ' + w + ' min (= work duration).';
+    lbHint.textContent = 'Maximum ' + Math.floor(w * 1.5) + ' min (= 1.5× work duration).';
+  }
+
+  var workInput = document.getElementById('id_pomo_work_minutes');
+  if (workInput) workInput.addEventListener('input', updatePomoHints);
+  updatePomoHints();
 })();

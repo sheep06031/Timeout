@@ -1,3 +1,7 @@
+"""
+social.py - Forms for social features in the Timeout application.
+"""
+
 from django import forms
 from timeout.models import Post, Comment
 

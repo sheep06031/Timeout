@@ -1,3 +1,9 @@
+"""
+Tests for the admin moderation views in the timeout app, including delete_comment, ban_user, and unban_user.
+These tests cover various scenarios such as permissions (author, staff, non-author), HTTP methods (POST vs GET), existence of the target comment or user, and AJAX requests. 
+The tests verify that the views behave as expected, including proper redirections, status codes, database changes (deletion of comments, banning/unbanning users), and messages shown to the user. 
+Additionally, there are tests for the BannedUserMiddleware to ensure that banned users are properly logged out and redirected, and that non-banned users are unaffected.
+"""
 from django.contrib.auth import get_user_model
 from django.contrib.messages import get_messages
 from django.test import TestCase, RequestFactory

@@ -1,3 +1,7 @@
+"""
+Views for the messaging system, allowing users to have private conversations with each other.
+"""
+
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404

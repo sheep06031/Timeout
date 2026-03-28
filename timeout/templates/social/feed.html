@@ -27,7 +27,13 @@
             {% if conversation_data %}
               {% for item in conversation_data %}
                 <a href="{% url 'conversation' item.conv.id %}" class="msg-row">
-                  <div class="msg-avatar">{{ item.other.username|first|upper }}</div>
+                  <div class="msg-avatar">
+                    {% if item.other.profile_picture %}
+                      <img src="{{ item.other.profile_picture.url }}" alt="{{ item.other.username }}">
+                    {% else %}
+                      {{ item.other.username|first|upper }}
+                    {% endif %}
+                  </div>
                   <div class="msg-info">
                     <div class="msg-name-row">
                       <span class="msg-name">{{ item.other.username }}</span>

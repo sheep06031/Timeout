@@ -1,3 +1,6 @@
+"""
+Views for user authentication and profile completion. Handles signup, login, logout, and prompting new users to complete their profiles. Accessible to all users for signup/login and only to logged-in users for profile completion.
+"""
 from django.contrib import messages
 from django.contrib.auth import login, logout
 from django.contrib.auth.decorators import login_required
@@ -56,7 +59,6 @@ def login_view(request):
 def logout_view(request):
     """Handle user logout."""
     logout(request)
-    messages.info(request, 'You have been logged out.')
     return redirect('landing')
 
 

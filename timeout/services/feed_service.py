@@ -1,3 +1,8 @@
+"""
+feed_service.py - Defines FeedService for building social feeds (following, discover, profile, bookmarks)
+with privacy filtering, block relationships, and cursor-based pagination.
+"""
+
 from django.db.models import Q
 from timeout.models import Post, Block
 
@@ -24,6 +29,7 @@ class FeedService:
 
     @staticmethod
     def get_following_feed(user, cursor=None):
+        """Get posts from followed users and self, respecting privacy and blocks."""
         if not user.is_authenticated:
             return Post.objects.none()
         
@@ -41,6 +47,7 @@ class FeedService:
 
     @staticmethod
     def get_discover_feed(user, cursor=None):
+        """Get recent public posts from non-followed users, respecting privacy and blocks."""
         qs = Post.objects.filter(
             privacy=Post.Privacy.PUBLIC
         ).exclude(author__is_banned=True)
@@ -58,6 +65,7 @@ class FeedService:
 
     @staticmethod
     def get_user_posts(user, viewer, cursor=None):
+        """Get posts for a user's profile, respecting privacy and blocks."""
         qs = Post.objects.filter(author=user)
         if not (viewer.is_authenticated and viewer.is_staff):
             qs = qs.exclude(author__is_banned=True)
@@ -66,6 +74,7 @@ class FeedService:
 
     @staticmethod
     def get_bookmarked_posts(user, cursor=None):
+        """Get posts bookmarked by the user, respecting privacy and blocks."""
         if not user.is_authenticated:
             return Post.objects.none()
 

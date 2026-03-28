@@ -36,6 +36,23 @@ function togglePin(noteId, btn) {
   .catch(function(err) { console.error('Pin toggle failed:', err); });
 }
 
+/**
+ * Delete a note via API and remove its element from the DOM.
+ */
+function deleteNote(noteId, deleteUrl) {
+  if (!confirm('Delete this note?')) return;
+  fetch(deleteUrl, {
+    method: 'POST',
+    headers: { 'X-CSRFToken': getCSRFToken() },
+  })
+    .then(function(r) {
+      if (!r.ok) throw new Error('Server error');
+      var item = document.getElementById('note-' + noteId);
+      if (item) item.remove();
+    })
+    .catch(function() { alert('Failed to delete note. Please try again.'); });
+}
+
 
 /**
  * Display XP reward toast notification with fade animation.
@@ -259,6 +276,10 @@ function initWordCount() {
   var counter = document.getElementById('wordCount');
   if (!textarea || !counter) return;
 
+  /**
+   * Recount words in the textarea and update the counter element.
+   * Splits on whitespace to count words, displaying singular or plural label.
+   */
   function update() {
     var text = textarea.value.trim();
     var words = text ? text.split(/\s+/).length : 0;
@@ -272,9 +293,13 @@ function initWordCount() {
 
 /* Init */
 document.addEventListener('DOMContentLoaded', function() {
-  if (document.getElementById('pomoPanel')) Pomodoro.init();
+  Pomodoro.init();
   FocusMode.init();
   initWordCount();
   DailyGoals.init();
   Heatmap.init();
+
+  if (new URLSearchParams(window.location.search).get('add') === 'true') {
+    new bootstrap.Modal(document.getElementById('newNoteModal')).show();
+  }
 });

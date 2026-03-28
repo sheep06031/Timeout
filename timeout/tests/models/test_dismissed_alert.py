@@ -1,3 +1,9 @@
+"""
+test_dismissed_alert.py - Defines DismissedAlertModelTest for testing the DismissedAlert model's functionality, including creation,
+uniqueness constraints, and behavior across different users.
+"""
+
+
 from django.test import TestCase
 from django.contrib.auth import get_user_model
 from timeout.models import DismissedAlert
@@ -6,6 +12,7 @@ User = get_user_model()
 
 
 class DismissedAlertModelTest(TestCase):
+    """Tests for the DismissedAlert model, which tracks alerts dismissed by users."""
     def setUp(self):
         """Set up test user for dismissed alert tests."""
         self.user = User.objects.create_user(username='testuser', password='pass')

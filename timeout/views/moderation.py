@@ -1,3 +1,7 @@
+"""
+Views for moderation actions like flagging posts and banning users. Staff-only actions return JSON for AJAX calls and redirect with messages for regular requests.
+"""
+
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse, HttpResponseForbidden

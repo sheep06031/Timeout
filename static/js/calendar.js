@@ -7,9 +7,24 @@
 function persistDismissAlert(key) {
     const meta = document.querySelector('meta[name="dismiss-alert-url"]');
     if (!meta) return;
-    postJSON(meta.content, { body: `key=${encodeURIComponent(key)}` }).catch(function() {});
+    const csrf = document.querySelector('meta[name="csrf-token"]')?.content;
+    const form = new FormData();
+    form.append('key', key);
+    fetch(meta.content, {
+        method: 'POST',
+        headers: { 'X-CSRFToken': csrf },
+        body: form
+    }).catch(function() {});
 }
 
+
+/**
+ * Dismiss an alert element from the DOM and persist the dismissal to the server.
+ * Removes the closest `.alert` ancestor of the clicked button, then calls
+ * persistDismissAlert so the dismissal is remembered across page loads.
+ * @param {string} key - Unique key identifying the alert to dismiss.
+ * @param {HTMLElement} btn - The button element that triggered the dismissal.
+ */
 function dismissAlert(key, btn) {
     const alertEl = btn.closest('.alert');
     if (alertEl) alertEl.remove();
@@ -34,6 +49,9 @@ function openAddEvent(dateStr) {
 (function () {
     const params = new URLSearchParams(window.location.search);
     const openId = params.get("open_event");
+    if (params.get('add') === 'true') {
+        openAddEvent(new Date().toISOString().slice(0, 10));
+    }
     if (openId) {
         const chip = document.querySelector(`[data-event-id="${openId}"]`);
         if (chip) {
@@ -54,7 +72,6 @@ window.AI_ADD_URL = document.querySelector('meta[name="ai-add-url"]').content;
 window.AI_CSRF_TOKEN = document.querySelector('meta[name="csrf-token"]').content;
 window.SP_PLAN_URL = document.querySelector('meta[name="sp-plan-url"]').content;
 window.SP_CONFIRM_URL = document.querySelector('meta[name="sp-confirm-url"]').content;
-window.RESCHEDULE_URL = document.querySelector('meta[name="reschedule-url"]').content;
 window.RESCHEDULE_CANCEL_URL_TPL = '/calendar/{id}/cancel/';
 window.EVENT_CREATE_URL = document.querySelector('meta[name="event-create-url"]').content;
 window.RS_SUGGEST_URL = document.querySelector('meta[name="rs-suggest-url"]').content;

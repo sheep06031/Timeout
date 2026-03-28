@@ -1,3 +1,8 @@
+"""
+note.py - Defines the Note model representing a user's personal note, which can be linked to calendar events and categorized for organization.
+"""
+
+
 from django.conf import settings
 from django.db import models
 from django.utils import timezone

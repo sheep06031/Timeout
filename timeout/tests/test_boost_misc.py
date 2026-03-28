@@ -361,6 +361,8 @@ class CallGptTests(TestCase):
         self.assertIsInstance(result, list)
 
 class CheckSiteCommandTests(TestCase):
+    """Tests for the check_site management command."""
+    
     def test_check_site_runs(self):
         """Test that the check_site management command runs successfully."""
         from django.core.management import call_command
