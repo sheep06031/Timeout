@@ -205,7 +205,7 @@
       <h3 class="mb-3">Upcoming Urgent Events</h3>
       <div class="d-flex flex-column gap-2">
         {% for event in urgent_events %}
-          <div class="urgent-event-item">
+          <a href="{% url 'calendar' %}?open_event={{ event.id }}" class="urgent-event-item" style="text-decoration:none; color:inherit;">
             <div class="d-flex align-items-center gap-3">
               <div class="urgent-dot"></div>
               <div>
@@ -217,7 +217,7 @@
               <p class="mb-0 fw-medium small">{{ event.start_datetime|date:'M d' }}</p>
               <p class="text-muted mb-0" style="font-size: 0.75rem;">{{ event.start_datetime|date:'Y' }}</p>
             </div>
-          </div>
+          </a>
         {% endfor %}
       </div>
     </div>

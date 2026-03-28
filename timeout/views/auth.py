@@ -59,7 +59,6 @@ def login_view(request):
 def logout_view(request):
     """Handle user logout."""
     logout(request)
-    messages.info(request, 'You have been logged out.')
     return redirect('landing')
 
 
