@@ -46,10 +46,15 @@ def _find_candidate_slots(user, deadline, hours_needed, session_length):
     Returns (None, 0) if no free time is available."""
     _MIN_REMAINDER = 1 / 60  # ignore remainders shorter than 1 minute
     now = timezone.now()
-    num_full = max(1, int(hours_needed / session_length))
+    num_full = int(hours_needed / session_length)
     remainder_hours = round(hours_needed - num_full * session_length, 6)
     has_remainder = remainder_hours >= _MIN_REMAINDER
-    free_slots = get_free_slots(user, now, deadline.start_datetime, session_length)
+    # Edge case: hours_needed < session_length → one short session, no full sessions
+    if num_full == 0:
+        has_remainder = True
+        remainder_hours = round(hours_needed, 6)
+    min_slot = remainder_hours if num_full == 0 else session_length
+    free_slots = get_free_slots(user, now, deadline.start_datetime, min_slot)
     if not free_slots:
         return None, 0
     total_slots = num_full + (1 if has_remainder else 0)
@@ -60,9 +65,17 @@ def _find_candidate_slots(user, deadline, hours_needed, session_length):
     return candidates, remainder_hours if has_remainder else 0
 
 
+def _add_titles(candidates, deadline_title):
+    """Annotate each candidate slot with a numbered session title in-place."""
+    n = len(candidates)
+    for i, slot in enumerate(candidates, 1):
+        slot['title'] = f"Study Session {i} of {n} - {deadline_title}"
+
+
 def _schedule_with_gpt(deadline, hours_needed, session_length, candidates, remainder_hours=0.0):
     """Call GPT to schedule sessions and return the JSON response."""
     if not getattr(settings, 'OPENAI_API_KEY', ''):
+        _add_titles(candidates, deadline.title)
         return JsonResponse({'success': True, 'sessions': candidates})
     try:
         sessions = call_gpt(deadline, hours_needed, session_length, candidates, remainder_hours)
@@ -71,6 +84,7 @@ def _schedule_with_gpt(deadline, hours_needed, session_length, candidates, remai
     except Exception as e:
         return JsonResponse({'success': False, 'error': f'AI error: {str(e)}'}, status=500)
     if not sessions:
+        _add_titles(candidates, deadline.title)
         return JsonResponse({'success': True, 'sessions': candidates})
     return JsonResponse({'success': True, 'sessions': sessions})
 
@@ -160,6 +174,7 @@ def build_prompt(deadline, hours_needed, session_length, candidates, remainder_h
         f"{json.dumps(candidates)}\n\n"
         f"For each slot, schedule a session that starts within the available window.\n"
         f"Return ONLY a valid JSON array of exactly {num_sessions} sessions, no markdown:\n"
-        f'[{{"title": "Study for {deadline.title}", "start": "YYYY-MM-DDTHH:MM", "end": "YYYY-MM-DDTHH:MM"}}]\n\n'
+        f'[{{"title": "Study Session 1 of {num_sessions} - {deadline.title}", "start": "YYYY-MM-DDTHH:MM", "end": "YYYY-MM-DDTHH:MM"}}, ...]\n\n'
         f"Rules to follow:\n{rules}\n"
+        f"5) Title each session \"Study Session X of {num_sessions} - {deadline.title}\" where X increments from 1\n"
     )
