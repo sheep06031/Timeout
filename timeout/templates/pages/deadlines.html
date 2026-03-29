@@ -59,8 +59,8 @@
             List
           </a>
         </div>
-        <a href="#" class="dl-add-btn" onclick="openAddEvent(new Date().toISOString().slice(0,10))"> 
-          + <span class="dl-add-label">Add Deadline</span>
+        <a href="#" class="dl-add-btn" data-bs-toggle="modal" data-bs-target="#addEventModal">
+          + <span class="dl-add-label">Add Event</span>
         </a>
 
         
@@ -203,7 +203,7 @@
           {% else %}
           <p class="dl-empty__text">No active deadlines, you're all caught up!</p>
           {% endif %}
-          <a href="#" class="dl-add-btn" data-bs-toggle="modal" data-bs-target="#addEventModal">+ Add Deadline</a>
+          <a href="#" class="dl-add-btn" data-bs-toggle="modal" data-bs-target="#addEventModal">+ Add Event</a>
         </div>
       {% endif %}
     </div>
@@ -262,7 +262,7 @@
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
-          <button type="submit" class="btn text-white" style="background:#5b5ddf;">Add Deadline</button>
+          <button type="submit" class="btn text-white" style="background:#5b5ddf;">Add Event</button>
         </div>
       </form>
     </div>
@@ -273,7 +273,7 @@
 {% include "pages/_event_details_modal.html" %}
 
 <!-- Mobile FAB -->
-<a href="#" class="dl-fab" onclick="openAddEvent(new Date().toISOString().slice(0,10))" aria-label="Add deadline">+</a>
+<a href="#" class="dl-fab" data-bs-toggle="modal" data-bs-target="#addEventModal" aria-label="Add event">+</a>
 {% endblock %}
 
 {% block extra_js %}
