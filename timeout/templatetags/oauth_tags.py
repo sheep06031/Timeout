@@ -12,16 +12,17 @@ register = template.Library()
 
 @register.simple_tag
 def google_oauth_available():
-    """Return True when Google OAuth credentials are available.
-
-    Checks two sources in order:
-    1. Environment variables (GOOGLE_CLIENT_ID) — set via .env
-    2. A configured SocialApp in the database (Django Admin ▸ Social Applications)
-    """
+    """Return True if Google OAuth is available (credentials in settings or DB)."""
+    provider_cfg = getattr(settings, 'SOCIALACCOUNT_PROVIDERS', {}).get('google', {})
+    if 'APP' in provider_cfg:
+        try:
+            from allauth.socialaccount.models import SocialApp
+            SocialApp.objects.filter(provider='google').delete()
+        except Exception:
+            pass
+        return True
     if os.environ.get('GOOGLE_CLIENT_ID'):
         return True
-
-    # Fallback: credentials stored in the database
     try:
         from allauth.socialaccount.models import SocialApp
         app = SocialApp.objects.filter(
