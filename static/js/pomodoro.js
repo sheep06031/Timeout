@@ -243,7 +243,7 @@ var Pomodoro = (function() {
   function _advancePhase(wasSkipped) {
     if (state.phase === 'work') {
       state.session++;
-      state.todayCount++;
+      if (!wasSkipped) state.todayCount++;
       _awardWorkXP(wasSkipped);
       state.elapsedWorkSeconds = 0;
       state.phase = state.session >= 4 ? 'long_break' : 'short_break';
