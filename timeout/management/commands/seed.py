@@ -366,8 +366,22 @@ class Command(BaseCommand):
         self.stdout.write(self.style.SUCCESS(f'  Site(id=1, domain="{SITE_DOMAIN}") ready.'))
 
     def _setup_google_social_app(self):
-        """Create the Google SocialApp from environment variables."""
+        """Create the Google SocialApp from environment variables.
+
+        If settings already provides credentials via the APP dict, skip the
+        DB record to avoid allauth's MultipleObjectsReturned error.
+        """
         self.stdout.write('\n[2] Setting up Google SocialApp...')
+
+        from django.conf import settings as _s
+        provider_cfg = getattr(_s, 'SOCIALACCOUNT_PROVIDERS', {}).get('google', {})
+        if 'APP' in provider_cfg:
+            SocialApp.objects.filter(provider='google').delete()
+            self.stdout.write(self.style.SUCCESS(
+                '  Google credentials loaded from settings (APP dict). '
+                'Removed any DB SocialApp to avoid duplicates.'))
+            return
+
         load_dotenv()
         client_id = os.environ.get('GOOGLE_CLIENT_ID', '')
         secret = os.environ.get('GOOGLE_CLIENT_SECRET', '')
