@@ -22,14 +22,56 @@
 }
 /* Color Blindness Filters*/
 /* SVG filter definitions live in base.html as an inline <svg> */
-[data-colorblind="protanopia"] {
+/* Applied to <body> rather than <html> — browsers do not reliably render
+   CSS filter on the root element, but do on <body>. */
+html[data-colorblind="protanopia"] #cb-filter-layer {
     filter: url(#cb-protanopia);
 }
-[data-colorblind="deuteranopia"] {
+html[data-colorblind="deuteranopia"] #cb-filter-layer {
     filter: url(#cb-deuteranopia);
 }
-[data-colorblind="tritanopia"] {
+html[data-colorblind="tritanopia"] #cb-filter-layer {
     filter: url(#cb-tritanopia);
+}
+/* filter on a parent creates an isolated group that breaks backdrop-filter
+   on child elements — make the navbar fully opaque when colorblind is active */
+html[data-colorblind="protanopia"] .timeout-nav,
+html[data-colorblind="deuteranopia"] .timeout-nav,
+html[data-colorblind="tritanopia"] .timeout-nav {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    background: #ffffff !important;
+}
+html[data-colorblind="protanopia"][data-theme="dark"] .timeout-nav,
+html[data-colorblind="deuteranopia"][data-theme="dark"] .timeout-nav,
+html[data-colorblind="tritanopia"][data-theme="dark"] .timeout-nav {
+    background: var(--nav-bg, #1a1f36) !important;
+}
+/* Disable backdrop-filter on social cards/overlays when colorblind is active
+   (parent filter creates an isolated group that breaks backdrop-filter) */
+html[data-colorblind="protanopia"] .glass-card,
+html[data-colorblind="deuteranopia"] .glass-card,
+html[data-colorblind="tritanopia"] .glass-card,
+html[data-colorblind="protanopia"] .post-card,
+html[data-colorblind="deuteranopia"] .post-card,
+html[data-colorblind="tritanopia"] .post-card {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+}
+html[data-colorblind="protanopia"] .cp-overlay,
+html[data-colorblind="deuteranopia"] .cp-overlay,
+html[data-colorblind="tritanopia"] .cp-overlay {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+}
+/* position:fixed breaks inside a filtered parent (becomes relative to the
+   filter layer instead of the viewport). Use position:absolute + make the
+   filter layer the containing block so FAB/overlay still work correctly. */
+html[data-colorblind="protanopia"] #cb-filter-layer,
+html[data-colorblind="deuteranopia"] #cb-filter-layer,
+html[data-colorblind="tritanopia"] #cb-filter-layer {
+    position: relative;
+    min-height: 100vh;
 }
 
 /* Footer */

@@ -51,6 +51,9 @@
         </filter>
       </defs>
     </svg>
+    <!-- Color blindness filter wrapper (SVG defs above must stay outside this div
+         so that filter: url(#id) does not create a circular reference on body) -->
+    <div id="cb-filter-layer" class="d-flex flex-column flex-grow-1">
     <!-- Navigation Bar -->
     {% include 'partials/_navbar.html' %}
 
@@ -85,5 +88,6 @@
 
   <!-- Footer -->
   {% include 'partials/_footer.html' %}
+    </div><!-- /#cb-filter-layer -->
   </body>
 </html>
