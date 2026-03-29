@@ -240,5 +240,13 @@ SOCIALACCOUNT_PROVIDERS = {
             'prompt': 'select_account',   # always show the account-picker
         },
         'FETCH_USERINFO': True,            # pull name/avatar from userinfo endpoint
+        # Load credentials from .env so the button works without a DB record.
+        # If GOOGLE_CLIENT_ID is not set the key is omitted and allauth falls
+        # back to the database (Django Admin ▸ Social Applications).
+        **({'APP': {
+            'client_id': os.environ['GOOGLE_CLIENT_ID'],
+            'secret':    os.environ['GOOGLE_CLIENT_SECRET'],
+            'key':       '',
+        }} if os.environ.get('GOOGLE_CLIENT_ID') else {}),
     },
 }
