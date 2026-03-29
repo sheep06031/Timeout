@@ -2,19 +2,114 @@
 
 **A Study Productivity Hub for University Students**
 
-Timeout is a web app designed to help university students stay organized, focused, and connected. It combines a Pomodoro focus timer, smart note-taking, calendar and deadline management, a social community, gamification, and productivity analytics into one platform.
+Timeout is a web app designed to help university students stay organised, focused, and connected. It combines a Pomodoro focus timer, smart note-taking, calendar and deadline management, a social community, gamification, and productivity analytics into one platform.
+
+**Deployed at:** https://kcltimeout.com
+
+---
+
+## Authors
+
+- Bader Al Homood
+- Elif Haciyanli
+- Erin Ozdemir
+- Hikmet Ozan Kaya
+- Juyeop Lee
+- Som Ajmera
+- Duru Yildiz
+
+---
+
+### Regular Demo Users
+25 additional student accounts are seeded with randomised data. All seeded users have the password `Password123`. Their usernames can be found via the admin panel.
+
+---
+
+## Setup (Nix)
+
+### Prerequisites
+- [Nix package manager](https://nixos.org/download/) with flakes enabled
+
+Add the following to `~/.config/nix/nix.conf` to enable flakes:
+```
+experimental-features = nix-command flakes
+```
+
+### Installation & Running
+
+```bash
+git clone https://github.com/ozankaya4/Timeout.git
+cd Timeout
+cp .env.example .env   # add API keys if needed (see below)
+nix run .#init         # migrate, seed database, create demo user
+nix run .#run          # start server at http://127.0.0.1:8000
+```
+
+### All Nix Commands
+
+| Command          | Description |
+|------------------|-------------|
+| `nix run .#init` | Run migrations, seed database, create demo superuser |
+| `nix run .#run`  | Start development server at http://127.0.0.1:8000 |
+| `nix run .#tests`| Run all tests and generate HTML coverage report in `./coverage/` |
+| `nix run .#seed` | Re-seed database without re-running migrations |
+| `nix run .#unseed` | Remove all seeded data |
+
+### Environment Variables
+
+Copy `.env.example` to `.env`. All keys except `SECRET_KEY` are optional — the app runs fully without them.
+
+| Variable               | Required | Purpose |
+|------------------------|----------|---------|
+| `SECRET_KEY`           | Yes      | Django secret key |
+| `OPENAI_API_KEY`       | No       | AI calendar event creation and dashboard briefing |
+| `SENDGRID_API_KEY`     | No       | Transactional email (password reset) |
+| `SENDGRID_FROM_EMAIL`  | No       | Sender address for outbound emails |
+| `GOOGLE_CLIENT_ID`     | No       | Google OAuth social login |
+| `GOOGLE_CLIENT_SECRET` | No       | Google OAuth social login |
+
+---
+
+## Third-Party Code & Libraries
+
+The following third-party software was used directly or relied upon heavily in building this project.
+
+### Python / Backend
+
+| Library | Version | Purpose | Source |
+|---------|---------|---------|--------|
+| Django | 5.x | Web framework (MVT architecture, ORM, auth) | https://www.djangoproject.com |
+| django-allauth | latest | Social authentication (Google, GitHub, Discord) | https://allauth.org |
+| Pillow | latest | Profile picture image processing | https://python-pillow.org |
+| openai | latest | AI calendar event creation and study briefing | https://github.com/openai/openai-python |
+| SendGrid | 6.11.0 | Transactional email delivery | https://github.com/sendgrid/sendgrid-python |
+| python-dotenv | latest | `.env` file loading | https://github.com/theskumar/python-dotenv |
+| Faker | latest | Seed data generation | https://faker.readthedocs.io |
+| coverage.py | latest | Test coverage reporting | https://coverage.readthedocs.io |
+| argon2-cffi | latest | Password hashing | https://github.com/hynek/argon2-cffi |
+
+### JavaScript / Frontend
+
+| Library | Version | Purpose | Source |
+|---------|---------|---------|--------|
+| Bootstrap | 5.3.2 | UI component framework and grid layout | https://getbootstrap.com |
+| Bootstrap Icons | 1.11.0 | Icon set | https://icons.getbootstrap.com |
+| Chart.js | 4.4.0 | Statistics charts and heatmap visualisation | https://www.chartjs.org |
+| Quill | 2.0.3 | Rich text editor for notes | https://quilljs.com |
+
+All JavaScript libraries are loaded via CDN (jsDelivr). No npm build step is required.
 
 ---
 
 ## Features
 
 ### Dashboard
-- Centralized view of upcoming events, deadlines, recent notes, social feed, and messages
+- Centralised view of upcoming events, deadlines, recent notes, social feed, and messages
 - Time-aware greeting and quick action buttons
 - Weekly focus statistics bar
 
 ### Pomodoro Focus Timer
-- Customizable work, short break, and long break durations
+- Customisable work, short break, and long break durations
 - Focus mode integrated into the notes page
 - Session history tracking with daily pomodoro counts
 - Earns 25 XP per completed session
@@ -24,19 +119,18 @@ Timeout is a web app designed to help university students stay organized, focuse
 - Categories: Lecture, To-Do, Study Plan, Personal, Other
 - Search and filter by category
 - Link notes to calendar events
-- Rich text support (up to 5000 characters)
+- Rich text support via Quill editor
 
 ### Calendar & Deadlines
-- Month-view calendar with color-coded event chips
+- Month-view calendar with colour-coded event chips
 - Event types: Deadline, Exam, Class, Meeting, Study Session, Other
-- Priority levels (Low, Medium, High) and recurrence (Daily, Weekly, Monthly)
-- Schedule conflict detection
+- Priority levels and recurrence (Daily, Weekly, Monthly)
 - AI-powered event creation via OpenAI
 - Dedicated deadlines view with urgency indicators (Overdue, Urgent, On Track)
 
 ### Gamification
 - **XP System**: Earn XP for creating notes (10 XP), editing notes (5 XP), completing focus sessions (25 XP), and maintaining streaks (5 XP/day bonus)
-- **Levels**: Calculated from total XP, level up as you study more
+- **Levels**: Calculated from total XP
 - **Streaks**: Track consecutive days of note-taking with longest streak records
 
 ### Social Community
@@ -44,6 +138,7 @@ Timeout is a web app designed to help university students stay organized, focuse
 - Like, comment (with threaded replies), and bookmark posts
 - Follow/unfollow users and discover classmates via search
 - User profiles with stats and post history
+- Privacy settings and block/report functionality
 - Status updates: Focus Mode, Social, Inactive
 
 ### Direct Messaging
@@ -61,7 +156,7 @@ Timeout is a web app designed to help university students stay organized, focuse
 - Colorblind modes: Protanopia, Deuteranopia, Tritanopia
 - Adjustable font size (80%–150%)
 - Notification sounds toggle
-- Customizable Pomodoro durations
+- Customisable Pomodoro durations
 - Daily study reminder time
 - Default note category
 
@@ -69,72 +164,3 @@ Timeout is a web app designed to help university students stay organized, focuse
 - Email-based signup and login
 - Social login via Google, GitHub, and Discord
 - Profile completion flow on first login
-
----
-
-## Deployment
-
-The deployed version of this app can be accessed through https://kcltimeout.com
-
----
-
-## Installation
-
-### Prerequisites
-- Python 3.10+
-- pip
-
-### Local Setup
-
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/yourusername/timeout.git
-   cd timeout
-   ```
-
-2. **Create and activate a virtual environment**
-   ```bash
-   python -m venv venv
-   ```
-   - Windows:
-     ```bash
-     venv\Scripts\activate
-     ```
-   - macOS/Linux:
-     ```bash
-     source venv/bin/activate
-     ```
-
-3. **Install dependencies**
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-4. **Set up environment variables**
-
-   Copy `.env.example` to `.env` and fill in your keys:
-   ```
-   GOOGLE_CLIENT_ID=your-client-id
-   GOOGLE_CLIENT_SECRET=your-client-secret
-   OPENAI_API_KEY=your-openai-api-key
-   ```
-
-5. **Run database migrations**
-   ```bash
-   python manage.py makemigrations
-   python manage.py migrate
-   ```
-
-6. **Create a superuser (optional)**
-   ```bash
-   python manage.py createsuperuser
-   ```
-
-7. **Start the development server**
-   ```bash
-   python manage.py runserver
-   ```
-
-8. **Access the application**
-
-   Open your browser and navigate to `http://127.0.0.1:8000`
