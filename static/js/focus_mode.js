@@ -163,3 +163,26 @@ var FocusMode = (function() {
 
   return { init: init };
 })();
+
+/**
+ * Reset focus timer on page load when needed.
+ * If the user is in focus mode and auto-online is OFF, send a beacon to reset
+ * the session so a fresh session is created on the next focus-mode entry.
+ *
+ * The reset URL is read from the data-reset-url attribute on this script's
+ * own <script> tag so that no Django template URL tag is needed in JS.
+ */
+(function () {
+  var userStatus = document.documentElement.getAttribute('data-user-status');
+  var autoOnline = document.documentElement.getAttribute('data-auto-online');
+
+  if (userStatus === 'focus' && autoOnline !== 'true') {
+    var scripts = document.querySelectorAll('script[data-reset-url]');
+    var resetUrl = scripts.length ? scripts[scripts.length - 1].getAttribute('data-reset-url') : null;
+    if (resetUrl) {
+      var data = new FormData();
+      data.append('csrfmiddlewaretoken', getCSRFToken());
+      navigator.sendBeacon(resetUrl, data);
+    }
+  }
+}());
