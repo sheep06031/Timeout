@@ -7,6 +7,7 @@ from timeout.views import messaging
 
 urlpatterns = [
     path('inbox/', messaging.inbox, name='inbox'),
+    path('inbox/mark-all-read/', messaging.mark_all_conversations_read, name='mark_all_conversations_read'),
     path('conversation/<int:conversation_id>/', messaging.conversation, name='conversation'),
     path('conversation/start/<str:username>/', messaging.start_conversation, name='start_conversation'),
     path('conversation/<int:conversation_id>/send/', messaging.send_message, name='send_message'),

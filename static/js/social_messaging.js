@@ -114,3 +114,41 @@ document.addEventListener('DOMContentLoaded', function() {
     initMessaging();
     initLoadMore();
 });
+
+/**
+ * Inbox helpers — mark a conversation as unread / mark all conversations as read.
+ * Depends on the meta[name="csrf-token"] tag being present in the page.
+ */
+function _csrfToken() {
+    const meta = document.querySelector('meta[name="csrf-token"]');
+    return meta ? meta.content : '';
+}
+
+/**
+ * Mark a single conversation as unread.
+ * Called by the "Unread" button on each inbox row.
+ */
+function markUnread(event, btn) {
+    event.preventDefault();
+    event.stopPropagation();
+    fetch(btn.dataset.url, {
+        method: 'POST',
+        headers: { 'X-CSRFToken': _csrfToken() },
+    }).then(r => r.json()).then(data => {
+        if (data.success) location.reload();
+    });
+}
+
+/**
+ * Mark all conversations as read.
+ * Called by the "Mark all as read" button in the inbox header.
+ */
+function markAllRead(btn) {
+    btn.disabled = true;
+    fetch(btn.dataset.url, {
+        method: 'POST',
+        headers: { 'X-CSRFToken': _csrfToken() },
+    }).then(r => r.json()).then(data => {
+        if (data.success) location.reload();
+    }).catch(() => { btn.disabled = false; });
+}

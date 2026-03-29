@@ -18,7 +18,16 @@
 
   <div class="inbox-header">
     <h4 class="inbox-title">💬 Inbox</h4>
-    <a href="{% url 'social_feed' %}" class="btn-back">← Feed</a>
+    <div class="inbox-header-actions">
+      {% if total_unread > 0 %}
+      <button
+        class="inbox-mark-all-read-btn"
+        data-url="{% url 'mark_all_conversations_read' %}"
+        onclick="markAllRead(this)"
+      >✓ Mark all as read</button>
+      {% endif %}
+      <a href="{% url 'social_feed' %}" class="btn-back">← Feed</a>
+    </div>
   </div>
 
   {% if conversations %}
@@ -80,18 +89,5 @@
 
 {% block extra_js %}
 <script src="{% static 'js/social.js' %}"></script>
-<script>
-function markUnread(event, btn) {
-  event.preventDefault();
-  event.stopPropagation();
-  const url = btn.dataset.url;
-  const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
-  fetch(url, {
-    method: 'POST',
-    headers: { 'X-CSRFToken': csrfToken },
-  }).then(r => r.json()).then(data => {
-    if (data.success) location.reload();
-  });
-}
-</script>
+<script src="{% static 'js/social_messaging.js' %}"></script>
 {% endblock %}

@@ -31,7 +31,7 @@ def inbox(request):
             'unread_count': unread_count,
         })
 
-    context = {'conversations': conversation_data}
+    context = {'conversations': conversation_data, 'total_unread': sum(c['unread_count'] for c in conversation_data)}
     return render(request, 'messaging/inbox.html', context)
 
 
@@ -121,6 +121,17 @@ def send_message(request, conversation_id):
     conv.save()
     _notify_receiver(receiver, request.user, content, conv)
     return JsonResponse(_serialize_message(message))
+
+
+@login_required
+@require_POST
+def mark_all_conversations_read(request):
+    """Mark all received messages across all conversations as read."""
+    from timeout.models import Message as Msg
+    Msg.objects.filter(
+        conversation__participants=request.user
+    ).exclude(sender=request.user).update(is_read=True)
+    return JsonResponse({'success': True})
 
 
 @login_required
