@@ -21,10 +21,14 @@ def inbox(request):
 
     conversation_data = []
     for conv in conversations:
+        unread_count = conv.messages.filter(
+            is_read=False
+        ).exclude(sender=request.user).count()
         conversation_data.append({
             'conv': conv,
             'other': conv.get_other_participant(request.user),
             'last': conv.get_last_message(),
+            'unread_count': unread_count,
         })
 
     context = {'conversations': conversation_data}
@@ -117,6 +121,25 @@ def send_message(request, conversation_id):
     conv.save()
     _notify_receiver(receiver, request.user, content, conv)
     return JsonResponse(_serialize_message(message))
+
+
+@login_required
+@require_POST
+def mark_conversation_unread(request, conversation_id):
+    """Mark the most recent received message in a conversation as unread."""
+    conv = get_object_or_404(
+        Conversation, id=conversation_id, participants=request.user
+    )
+    last_received = (
+        conv.messages
+        .exclude(sender=request.user)
+        .order_by('-created_at', '-pk')
+        .first()
+    )
+    if last_received:
+        last_received.is_read = False
+        last_received.save(update_fields=['is_read'])
+    return JsonResponse({'success': True})
 
 
 @login_required

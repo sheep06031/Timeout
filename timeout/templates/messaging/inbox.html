@@ -9,6 +9,10 @@
 <link rel="stylesheet" href="{% static 'css/social-messaging.css' %}">
 {% endblock %}
 
+{% block extra_head %}
+<meta name="csrf-token" content="{{ csrf_token }}">
+{% endblock %}
+
 {% block content %}
 <div class="feed-wrapper" style="max-width: 680px;">
 
@@ -19,26 +23,49 @@
 
   {% if conversations %}
     {% for item in conversations %}
-      <a href="{% url 'conversation' item.conv.id %}" class="inbox-row glass-card">
+      <a href="{% url 'conversation' item.conv.id %}" class="inbox-row glass-card {% if item.unread_count > 0 %}inbox-row--unread{% endif %}">
         <div class="msg-avatar">
           {% if item.other.profile_picture %}
             <img src="{{ item.other.profile_picture.url }}" alt="{{ item.other.username }}">
           {% else %}
             {{ item.other.username|first|upper }}
           {% endif %}
+          {% if item.unread_count > 0 %}
+            <span class="inbox-unread-dot"></span>
+          {% endif %}
         </div>
         <div class="msg-info">
           <div class="msg-name-row">
-            <span class="msg-name">{{ item.other.username }}</span>
+            <span class="msg-name {% if item.unread_count > 0 %}msg-name--unread{% endif %}">{{ item.other.username }}</span>
             <span class="status-dot status-{{ item.other.status }}"></span>
+            {% if item.unread_count > 0 %}
+              <span class="inbox-unread-badge">{{ item.unread_count }}</span>
+            {% endif %}
           </div>
-          <div class="msg-preview">
+          <div class="msg-preview {% if item.unread_count > 0 %}msg-preview--unread{% endif %}">
             {% if item.last %}{{ item.last.content|truncatechars:55 }}{% else %}No messages yet{% endif %}
           </div>
         </div>
-        {% if item.last %}
-          <div class="inbox-time">{{ item.last.created_at|timesince }} ago</div>
-        {% endif %}
+        <div class="inbox-row-right">
+          {% if item.last %}
+            <div class="inbox-time">{{ item.last.created_at|timesince }} ago</div>
+          {% endif %}
+          {% if item.last and item.unread_count == 0 %}
+            <button
+              class="inbox-mark-unread-btn"
+              title="Mark as unread"
+              data-conv-id="{{ item.conv.id }}"
+              data-url="{% url 'mark_conversation_unread' item.conv.id %}"
+              onclick="markUnread(event, this)"
+            >
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="7" cy="7" r="6" stroke="currentColor" stroke-width="1.4"/>
+                <circle cx="7" cy="7" r="2.5" fill="currentColor"/>
+              </svg>
+              Unread
+            </button>
+          {% endif %}
+        </div>
       </a>
     {% endfor %}
   {% else %}
@@ -53,4 +80,18 @@
 
 {% block extra_js %}
 <script src="{% static 'js/social.js' %}"></script>
+<script>
+function markUnread(event, btn) {
+  event.preventDefault();
+  event.stopPropagation();
+  const url = btn.dataset.url;
+  const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
+  fetch(url, {
+    method: 'POST',
+    headers: { 'X-CSRFToken': csrfToken },
+  }).then(r => r.json()).then(data => {
+    if (data.success) location.reload();
+  });
+}
+</script>
 {% endblock %}
