@@ -67,6 +67,9 @@
                 {% if user.bio %}
                   <p class="my-2">{{ user.bio }}</p>
                 {% endif %}
+                {% if user.academic_interests %}
+                  <p class="my-2 text-muted small">📚 {{ user.academic_interests }}</p>
+                {% endif %}
 
                 <div class="mt-3">
                   <span class="badge bg-light text-dark me-2">{{ posts|length }} Posts</span>
