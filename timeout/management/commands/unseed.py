@@ -39,7 +39,8 @@ class Command(BaseCommand):
         notes = Note.objects.exclude(owner__in=excluded_users).delete()[0]
         logs = StudyLog.objects.exclude(user__in=excluded_users).delete()[0]
         # Conversations are M2M — delete those that won't have any remaining participants
-        convs = Conversation.objects.exclude(participants__in=excluded_users).distinct().delete()[0]
+        conv_ids = Conversation.objects.exclude(participants__in=excluded_users).distinct().values_list('id', flat=True)
+        convs = Conversation.objects.filter(id__in=conv_ids).delete()[0]
         User.objects.exclude(username=SUPERUSER_USERNAME).delete()
         return notes, logs, convs
 
