@@ -191,5 +191,5 @@ All JavaScript libraries are loaded via CDN (jsDelivr). No npm build step is req
 
 ### Authentication
 - Email-based signup and login
-- Social login via Google, GitHub, and Discord
+- Social login via Google
 - Profile completion flow on first login
