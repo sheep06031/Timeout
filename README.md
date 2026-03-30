@@ -16,7 +16,7 @@ Timeout is a web app designed to help university students stay organised, focuse
 - Hikmet Ozan Kaya
 - Juyeop Lee
 - Som Ajmera
-- Duru Yildiz
+- Duru Atay
 
 ---
 
