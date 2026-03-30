@@ -21,7 +21,7 @@ Timeout is a web app designed to help university students stay organised, focuse
 ---
 
 ### Regular Demo Users
-25 additional student accounts are seeded with randomised data. All seeded users have the password `Password123`. Their usernames can be found via the admin panel.
+80 additional student accounts are seeded with randomised data. All seeded users have the password `Student@123`. Their usernames can be found via the admin panel.
 
 ---
 
@@ -57,11 +57,10 @@ nix run .#run          # start server at http://127.0.0.1:8000
 
 ### Environment Variables
 
-Copy `.env.example` to `.env`. All keys except `SECRET_KEY` are optional — the app runs fully without them.
+Copy `.env.example` to `.env`. All keys are optional, the app runs fully without them.
 
 | Variable               | Required | Purpose |
 |------------------------|----------|---------|
-| `SECRET_KEY`           | Yes      | Django secret key |
 | `OPENAI_API_KEY`       | No       | AI calendar event creation and dashboard briefing |
 | `SENDGRID_API_KEY`     | No       | Transactional email (password reset) |
 | `SENDGRID_FROM_EMAIL`  | No       | Sender address for outbound emails |
