@@ -31,7 +31,7 @@ The following credentials are created automatically when running `nix run .#init
 | Username | `johndoe`              |
 | Email    | `john.doe@email.com`   |
 
-The admin account has full access to the Django admin panel and all moderation features within the application. We don't want to disclose admin password here, you can run nix .#init to see the admin credentials.
+The admin account has full access to the Django admin panel and all moderation features within the application. We don't want to disclose admin password here, you can run "nix run .#init" to see the admin credentials.
 
 ### Regular Demo Users
 80 additional student accounts are seeded with randomised data. All seeded users share the password below. Their usernames can be found via the admin panel or the user search on the social page.
