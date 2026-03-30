@@ -20,8 +20,27 @@ Timeout is a web app designed to help university students stay organised, focuse
 
 ---
 
+---
+
+## Access Credentials
+
+The following credentials are created automatically when running `nix run .#init`.
+
+### Admin / Superuser
+| Field    | Value                  |
+|----------|------------------------|
+| URL      | `/admin/`              |
+| Username | `johndoe`              |
+| Email    | `john.doe@email.com`   |
+
+The admin account has full access to the Django admin panel and all moderation features within the application. We don't want to disclose admin password here, you can run nix .#init to see the admin credentials.
+
 ### Regular Demo Users
-80 additional student accounts are seeded with randomised data. All seeded users have the password `Student@123`. Their usernames can be found via the admin panel.
+80 additional student accounts are seeded with randomised data. All seeded users share the password below. Their usernames can be found via the admin panel or the user search on the social page.
+
+| Field    | Value         |
+|----------|---------------|
+| Password | `Student@123` |
 
 ---
 
@@ -66,6 +85,19 @@ Copy `.env.example` to `.env`. All keys are optional, the app runs fully without
 | `SENDGRID_FROM_EMAIL`  | No       | Sender address for outbound emails |
 | `GOOGLE_CLIENT_ID`     | No       | Google OAuth social login |
 | `GOOGLE_CLIENT_SECRET` | No       | Google OAuth social login |
+
+---
+
+## AI Disclosure
+
+AI assistance (GitHub Copilot / Claude Code) was used during the development of this project in the following areas:
+
+- **Frontend design and implementation** — This was the area where AI assistance was used the most. AI helped with structuring UI components, writing and debugging HTML/CSS layouts, and implementing responsive design patterns.
+- **CSS implementation** — AI was used to implement and refine styling, including dark mode overrides, colorblind accessibility modes, and component-level CSS.
+- **Test case discovery** — AI helped identify edge cases and suggest test scenarios to improve coverage across views, services, and models.
+- **Backend bug finding** — AI assisted in identifying and diagnosing backend bugs, particularly in view logic, model behaviour, and API response handling.
+
+All AI-generated code was reviewed, understood, and integrated by team members. No AI output was used blindly or without verification.
 
 ---
 
